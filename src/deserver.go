@@ -2,15 +2,16 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"flag"
-	"fmt"
+	"github.com/golang/glog"
 	"github.com/gorilla/mux"
 	"github.com/mattbaird/elastigo/api"
 	"github.com/mattbaird/elastigo/core"
-	"log"
-	"net/http"
-	"strings"
 	"io"
+	"net/http"
+	"strconv"
+	"strings"
 )
 
 // add single go struct entity
@@ -20,29 +21,29 @@ type Ad struct {
 	Languages         []string `json:"languages,omitempty"`
 	Locations         []string `json:"locations,omitempty"`
 	ExcludedLocations []string `json:"excluded_locations,omitempty"`
-	AdFormats         []string `json:"ad_formats,omitempty"`
+	AdFormats         []int    `json:"ad_formats,omitempty"`
 	Account           string   `json:"account_id,omitempty"`
 	VideoUrl          string   `json:"video_url,omitempty"`
 	ThumbnailUrl      string   `json:"thumbnail_url,omitempty"`
 	Description       string   `json:"description,omitempty"`
 	Title             string   `json:"title,omitempty"`
 	TacticId          string   `json:"tactic_id,omitempty"`
-	AuthorId          string   `json:"author_id,omitempty"`
-	Author            string   `json:"author,omitempty"`
-	IsPaused          bool   `json:"is_paused,omitempty"`
-	GoalReached		  bool     `json:"goal_reached,omitempty"`
+	ChannelId         string   `json:"channel_id,omitempty"`
+	ChannelUrl        string   `json:"channel_url,omitempty"`
+	IsPaused          bool     `json:"is_paused,omitempty"`
+	GoalReached       bool     `json:"goal_reached,omitempty"`
 }
 type SearchQuery struct {
 	Languages []string `json:"languages,omitempty"`
 	Locations []string `json:"locations,omitempty"`
-	AdFormat  string   `json:"ad_format,omitempty"`
+	AdFormat  int      `json:"ad_format,omitempty"`
 }
 
 func (ad Ad) marshallAd() ([]byte, error) {
 	jsonBytes, err := json.Marshal(ad)
 	return jsonBytes, err
 }
-func (ad Ad) CreateAd() (response api.BaseResponse, err error) {
+func (ad Ad) createAd() (response api.BaseResponse, err error) {
 	var index int
 	for index, _ = range ad.Languages {
 		ad.Languages[index] = strings.ToLower(ad.Languages[index])
@@ -50,27 +51,30 @@ func (ad Ad) CreateAd() (response api.BaseResponse, err error) {
 	for index, _ = range ad.Locations {
 		ad.Locations[index] = strings.ToLower(ad.Locations[index])
 	}
-	//doing this for consistency, ad format is generally just a stringified number but that might change?
-	for index, _ = range ad.AdFormats {
-		ad.AdFormats[index] = strings.ToLower(ad.AdFormats[index])
-	}
 	for index, _ = range ad.ExcludedLocations {
 		ad.ExcludedLocations[index] = strings.ToLower(ad.ExcludedLocations[index])
 	}
 
 	jsonBytes, err := ad.marshallAd()
+	//TODO :retry logic goes here - implement a doCommand wrapper here
 	if response, err = core.Index("campaigns", "ads", ad.AdId, nil, jsonBytes); err != nil {
-		//TODO :retry logic goes here
-		fmt.Println(err)
+		glog.Error(err)
 	}
-	fmt.Println(response)
+
 	return response, err
 }
-func (sq SearchQuery) QueryES() (core.SearchResult, error) {
-	sresult, err := core.SearchRequest("campaigns", "ads", nil, sq.CreateESQueryString())
+func (sq SearchQuery) queryES() (core.SearchResult, error) {
+	//TODO :retry logic goes here - implement a doCommand wrapper here
+	//TODO: The wrapper should also track total response latency
+
+	sresult, err := core.SearchRequest("campaigns", "ads", nil, sq.createESQueryString())
+	if &sresult != nil {
+		//TODO: metric data - send to new relic
+		glog.Info(`{"took_ms":`, sresult.Took, `,"timedout":`, sresult.TimedOut, `,"hitct":`, sresult.Hits.Total, "}")
+	}
 	return sresult, err
 }
-func (sq SearchQuery) CreateESQueryString() (q string) {
+func (sq SearchQuery) createESQueryString() (q string) {
 	var err, locerr error
 	var loc []byte
 	q = `{"from": 0,
@@ -81,10 +85,11 @@ func (sq SearchQuery) CreateESQueryString() (q string) {
             "filtered": {
                 "filter":   {`
 	delim := ""
-	useBoolFilter := len(sq.Locations) > 0 || len(sq.Languages) > 0 || len(sq.AdFormat) > 0
+	useMustFilter := len(sq.Locations) > 0 || len(sq.Languages) > 0 || sq.AdFormat > 0
 
-	if useBoolFilter {
-		q += `"bool":{"must":[`
+	q += `"bool":{`
+	if useMustFilter {
+		q += `"must":[`
 		if len(sq.Locations) > 0 {
 			loc, locerr = json.Marshal(sq.Locations)
 			if err == nil {
@@ -101,102 +106,85 @@ func (sq SearchQuery) CreateESQueryString() (q string) {
 			}
 		}
 
-		if len(sq.AdFormat) > 0 {
-			var af string
-			af = string('"') + sq.AdFormat + string('"')
-			q += delim + `{ "query":  {"term": { "ad_formats":` + af + `}}}`
+		if sq.AdFormat > 0 { //ad format values should be greater than 0
+
+			q += delim + `{ "query":  {"term": { "ad_formats":` + strconv.Itoa(sq.AdFormat) + `}}}`
 			delim = ","
 		}
 		q += `]`
-
-		if len(sq.Locations) > 0 && locerr == nil {
-			q += delim + `"must_not":[`
-			//is_paused and goal_reached are separate fields
-			//so they can be changed independently
-			q += `{ "query":  {"terms": { "is_paused": true}}},`
-			q += `{ "query":  {"terms": { "goal_reached": true}}},`
-			q += `{ "query":  {"terms": { "excluded_locations":` + string(loc) + `}}}]`
-			delim = ","
-		}
-		q += "}"
 	}
-	q += `}}},"random_score": {}}}}`
+	q += delim + `"must_not":[`
+	//is_paused and goal_reached are separate fields
+	//so they can be changed independently
+	q += `{ "query":  {"term": { "is_paused": "true"}}}`
+	q += `,{ "query":  {"term": { "goal_reached": "true"}}}`
+	if len(sq.Locations) > 0 && locerr == nil {
+		q += `,{ "query":  {"terms": { "excluded_locations":` + string(loc) + `}}}`
+		delim = ","
+	}
+	q += `]}}}},"random_score": {}}}}`
 
-	log.Println("==== Generated ES query ====>")
-	log.Println(q)
-	log.Println("=============================")
+	glog.Info("==== Generated ES query ====>")
+	glog.Info(q)
+	glog.Info("=============================")
 	return q
 }
-func postAd(resp http.ResponseWriter,req *http.Request) {
+func postAd(resp http.ResponseWriter, req *http.Request) {
 	var ad Ad
 	decoder := json.NewDecoder(req.Body)
 
 	var err error
 
 	if err = decoder.Decode(&ad); err != nil || ad.AdId == "" {
-		resp.WriteHeader(http.StatusInternalServerError)
-	} else if _, err = ad.CreateAd(); err != nil {
-		resp.WriteHeader(http.StatusInternalServerError)
-		log.Println(err)
+		setErrorResponse(resp, http.StatusInternalServerError, err)
+	} else if _, err = ad.createAd(); err != nil {
+		setErrorResponse(resp, http.StatusInternalServerError, err)
 	} else {
-		resp.WriteHeader(http.StatusCreated)
+		setResponse(resp, http.StatusCreated, nil)
 	}
 }
 
-func deleteAd(resp http.ResponseWriter,req *http.Request) {
+func deleteAd(resp http.ResponseWriter, req *http.Request) {
 	var key string
 	if key = mux.Vars(req)["id"]; key == "" {
-		resp.WriteHeader(http.StatusBadRequest)
-		resp.Write(ErrorMessage("no id provided"))
+		setErrorResponse(resp, http.StatusBadRequest, errors.New("no id provided"))
 	} else {
-		log.Println("key to delete: " + key)
+		glog.Info("key to delete: " + key)
 		if qres, err := core.Delete("campaigns", "ads", key, nil); err != nil {
-			resp.WriteHeader(http.StatusInternalServerError)
-			log.Println(err)
+			setErrorResponse(resp, http.StatusInternalServerError, err)
 		} else {
 			if qres.Found {
-				resp.WriteHeader(http.StatusOK)
+				setResponse(resp, http.StatusOK, nil)
 			} else {
-				//response should have this order: writeheader and then write bytes
-				resp.WriteHeader(http.StatusBadRequest)
 				errstr := "ad id " + key + " does not exist"
-				resp.Write(ErrorMessage(errstr))
-				log.Println(errstr)
+				setErrorResponse(resp, http.StatusBadRequest, errors.New(errstr))
 			}
 		}
 	}
 }
-func getAd(resp http.ResponseWriter,req *http.Request) {
+func getAd(resp http.ResponseWriter, req *http.Request) {
 	var key string
 	var responseBytes []byte
 	if key = mux.Vars(req)["id"]; key == "" {
-		resp.WriteHeader(http.StatusBadRequest)
-		resp.Write(ErrorMessage("no id provided"))
+		setErrorResponse(resp, http.StatusBadRequest, errors.New("no id provided"))
 	} else {
-		log.Println(" querying for ad id: " + key)
+		glog.Info(" querying for ad id: " + key)
 		if qres, err := core.Get("campaigns", "ads", key, nil); err != nil {
-			resp.WriteHeader(http.StatusInternalServerError)
-			log.Println(err)
+			setErrorResponse(resp, http.StatusInternalServerError, err)
 		} else if qres.Found {
-				if responseBytes, err = json.Marshal(qres.Source); err != nil {
-					resp.WriteHeader(http.StatusInternalServerError)
-					log.Println("Error while getting response from ES: ", err)
-				} else {
-					resp.WriteHeader(http.StatusOK)
-					resp.Write(responseBytes)
-				}
+			if responseBytes, err = json.Marshal(qres.Source); err != nil {
+				setErrorResponse(resp, http.StatusInternalServerError, err)
+			} else {
+				setResponse(resp, http.StatusOK, responseBytes)
+			}
 		} else {
-				//response should have this order: writeheader and then write bytes
-				resp.WriteHeader(http.StatusBadRequest)
-				errstr := "ad id " + key + " does not exist"
-				resp.Write(ErrorMessage(errstr))
-				log.Println(errstr)
+			errstr := "ad id " + key + " does not exist"
+			setErrorResponse(resp, http.StatusBadRequest, errors.New(errstr))
 		}
 	}
 }
 
-
-func postQuery(resp http.ResponseWriter,req *http.Request) {
+func postQuery(resp http.ResponseWriter, req *http.Request) {
 	var sq SearchQuery
 	var responseBytes []byte
 	var err error
@@ -204,59 +192,60 @@ func postQuery(resp http.ResponseWriter,req *http.Request) {
 
 	decoder := json.NewDecoder(req.Body)
 	err = decoder.Decode(&sq)
-	if err != nil && err != io.EOF {
-		log.Println("Error while decoding request:", err)
-		resp.WriteHeader(http.StatusBadRequest)
-	} else if qresult, err = sq.QueryES(); err != nil {
-		resp.WriteHeader(http.StatusInternalServerError)
-		log.Println("Error while querying ES: ", err)
+
+	if err != nil && err != io.EOF { //if err is EOF, it means the query has no body, so we create a generic query and return result
+		setErrorResponse(resp, http.StatusBadRequest, err)
+	} else if qresult, err = sq.queryES(); err != nil {
+		setErrorResponse(resp, http.StatusInternalServerError, err)
 	} else if &qresult != nil && &qresult.Hits != nil && len(qresult.Hits.Hits) > 0 {
 		if responseBytes, err = json.Marshal(qresult.Hits.Hits[0].Source); err != nil {
-			resp.WriteHeader(http.StatusInternalServerError)
-			log.Println("Error while getting response from ES: ", err)
+			setErrorResponse(resp, http.StatusInternalServerError, err)
 		} else {
-			resp.WriteHeader(http.StatusOK)
-			resp.Write(responseBytes)
+			setResponse(resp, http.StatusOK, responseBytes)
 		}
 	} else {
-		resp.WriteHeader(http.StatusNoContent)
-		log.Println("no match was found for the given query")
+		setErrorResponse(resp, http.StatusNoContent, errors.New("no match was found for the given query"))
 	}
 }
 
-func ErrorMessage(message string) []byte {
-	return []byte(`{"error": "` + message + `"}`)
+func formatError(e string) string {
+	return `{"error":"` + e + `"}`
 }
+
+//since ResponseWriter is an interface and has a pointer inside, we pass it by value
+// and not by reference. see http://stackoverflow.com/questions/22157514/passing-http-responsewriter-by-value-or-reference
+func setResponse(resp http.ResponseWriter, status int, body []byte) {
+	resp.Header().Set("Content-Type", "application/json; charset=utf-8")
+	resp.WriteHeader(status)
+	resp.Write(body)
+	glog.Info(`{"status":`, status, `,"headers":`, `"`, resp.Header(), `"`, `,"body":`, `"`, string(body), `"}`)
+}
+func setErrorResponse(resp http.ResponseWriter, status int, err error) {
+	e := err.Error()
+	body := formatError(e)
+	//setResponse(resp,status,[]byte(body))
+	resp.Header().Set("Content-Type", "application/json; charset=utf-8")
+	resp.WriteHeader(status)
+	resp.Write([]byte(body))
+	glog.Error(`{"status":`, status, `,"headers":`, `"`, resp.Header(), `"`, `,"body":`, `"`, body, `"}`)
+}
+
 func main() {
 
 	var eshost string
-	//var ad Ad
-	//ad.SearchAd(nil.nil.nil)
+
 	flag.StringVar(&eshost, "eshost", "es.pxlad.in", "elasticsearch host ip or hostname")
 	flag.Parse()
 	api.Domain = eshost
 	api.Port = "9200"
-	var q SearchQuery
-	//q.AdFormats = "9"
-	q.Languages = []string{"fr"}
-	//q.Locations = []string{"fr", "fr:1234"}
-
-	qresult, _ := q.QueryES()
-	var responseBody []byte
-	if &qresult != nil && &qresult.Hits != nil && len(qresult.Hits.Hits) > 0 {
-		responseBody, _ = json.Marshal(qresult.Hits.Hits[0].Source)
-	} else {
-		responseBody = ErrorMessage("no matches found")
-	}
-
-	log.Println(string(responseBody))
 
 	rtr := mux.NewRouter()
+	rtr.HandleFunc("/healthcheck", postQuery).Methods("GET")
+
 	rtr.HandleFunc("/de/ads/{id}", getAd).Methods("GET")
 	rtr.HandleFunc("/de/ads", postAd).Methods("PUT")
 	rtr.HandleFunc("/de/ads", postAd).Methods("POST")
 	rtr.HandleFunc("/de/ads/{id}", deleteAd).Methods("DELETE")
-
 
 	rtr.HandleFunc("/de/query", postQuery).Methods("GET")
 	rtr.HandleFunc("/de/query", postQuery).Methods("POST")
@@ -265,6 +254,6 @@ func main() {
 
 	http.Handle("/", rtr)
 
-	log.Println("Listening...")
+	glog.Infoln("Listening on port 3000...")
 	http.ListenAndServe(":3000", nil)
 }
