@@ -5,11 +5,13 @@ import (
 	"github.com/golang/glog"
 	"github.com/mattbaird/elastigo/api"
 	"github.com/mattbaird/elastigo/core"
+	"io"
+	"net/http"
 	"strconv"
 	"strings"
 )
 
-func (ad Ad) indexAd() (response api.BaseResponse, err error) {
+func indexAd(ad *Ad) (*DeError) {
 	var index int
 	for index, _ = range ad.Languages {
 		ad.Languages[index] = strings.ToLower(ad.Languages[index])
@@ -21,53 +23,128 @@ func (ad Ad) indexAd() (response api.BaseResponse, err error) {
 		ad.ExcludedLocations[index] = strings.ToLower(ad.ExcludedLocations[index])
 	}
 
-	jsonBytes, err := json.Marshal(ad)
-	//TODO :retry logic goes here - implement a doCommand wrapper here
-	if response, err = core.Index("campaigns", "ads", ad.AdId, nil, jsonBytes); err != nil {
-		glog.Error(err)
+	if jsonBytes, serr := json.Marshal(ad); serr != nil {
+		return NewError(500, serr)
+	} else if _, serr := core.Index("campaigns", "ads", ad.AdId.Hex(), nil, jsonBytes); serr != nil {
+		glog.Error(serr)
+		return NewError(500, serr)
 	}
-	return response, err
+	return nil
 }
-func (sq SearchQuery) queryES() (core.SearchResult, error) {
-	//TODO :retry logic goes here - implement a doCommand wrapper here
-	//TODO: The wrapper should also track total response latency
+func updateAd(ad *Ad) (*DeError) {
 
-	sresult, err := core.SearchRequest("campaigns", "ads", nil, sq.createESQueryString())
-	if &sresult != nil {
-		//TODO: metric data - send to new relic
-		glog.Info(`{"took_ms":`, sresult.Took, `,"timedout":`, sresult.TimedOut, `,"hitct":`, sresult.Hits.Total, "}")
+	var index int
+	for index, _ = range ad.Languages {
+		ad.Languages[index] = strings.ToLower(ad.Languages[index])
 	}
-	return sresult, err
+	for index, _ = range ad.Locations {
+		ad.Locations[index] = strings.ToLower(ad.Locations[index])
+	}
+	for index, _ = range ad.ExcludedLocations {
+		ad.ExcludedLocations[index] = strings.ToLower(ad.ExcludedLocations[index])
+	}
+	if jsonBytes, serr := json.Marshal(ad); serr != nil {
+		glog.Error(serr)
+		return NewError(500, serr)
+	} else if _, serr := core.UpdateWithPartialDoc("campaigns", "ads", ad.AdId.Hex(), nil, string(jsonBytes),false); serr != nil {
+		glog.Error(serr)
+		return NewError(500, serr)
+	}
+	return nil
+}
+func processQuery(req *http.Request) ([]byte, *DeError) {
+	var (
+		byteArray []byte
+		err       error
+		derr      *DeError
+		ads       []Ad
+		sq        SearchQuery
+		positions int
+	)
+	//decode raw byte to struct for SearchQuery
+	decoder := json.NewDecoder(req.Body)
+	//if a req body is null, we ignore the decoder err and proceed. Note this
+	//means we will return ad(s) when the request body is empty
+	if err = decoder.Decode(&sq); err != nil && err != io.EOF {
+		return nil, NewError(500, err)
+	}
+	//get the positions needed
+	if adcount := req.URL.Query().Get("positions"); adcount == "" {
+		positions = 1
+	} else if positions, err = strconv.Atoi(adcount); err != nil {
+		positions = 1
+	}
+	//send query to es
+	if ads, derr = queryES(positions, sq); derr != nil {
+		return nil, derr
+	} else if byteArray, err = json.MarshalIndent(ads, "", "    "); err != nil {
+		return nil, NewError(500, err)
+	}
+	return byteArray, nil
+}
+func queryES(positions int, sq SearchQuery) ([]Ad, *DeError) {
+	var (
+		byteArray []byte
+		err       error
+		ads       []Ad
+		sresult   core.SearchResult
+	)
+	//run the actual query using elastigo
+	if sresult, err = core.SearchRequest("campaigns", "ads", nil, createESQueryString(positions, sq)); err != nil {
+		return nil, NewError(500, err)
+		//if any results are obtained
+	} else if &sresult != nil && sresult.Hits.Total > 0 {
+
+		ads = make([]Ad, len(sresult.Hits.Hits))
+		for i, hit := range sresult.Hits.Hits {
+			if byteArray, err = hit.Source.MarshalJSON(); err != nil {
+				return nil, NewError(500, err)
+			} else if err = json.Unmarshal(byteArray, &ads[i]); err != nil {
+				return nil, NewError(500, err)
+			}
+		}
+		//send this when empty results are obtained
+	} else {
+		//A degradation logic could be implemented here instead of sending error response
+		return nil, &DeError{Code: http.StatusOK, Msg: "No ads were found matching the target criteria"}
+	}
+	glog.Info(`{"took_ms":`, sresult.Took, `,"timedout":`, sresult.TimedOut, `,"hitct":`, sresult.Hits.Total, "}")
+	return ads, nil
 }
 
-func (sq SearchQuery) createESQueryString() (q string) {
-	var err, locerr error
-	var loc []byte
-	q = `{"from": 0,
-    "size": 1,
-    "query": {
+func createESQueryString(numPositions int, sq SearchQuery) string {
+	var (
+		err error
+		loc []byte
+		q   string
+	)
+
+	q = `{"size":`
+	q += strconv.Itoa(numPositions) + ","
+	q += `"query": {
       "function_score": {
         "query": {
             "filtered": {
                 "filter":   {`
 	delim := ""
-	useMustFilter := len(sq.Locations) > 0 || len(sq.Languages) > 0 || sq.AdFormat > 0
+	useMustFilter := (sq.Locations != nil && len(sq.Locations) > 0) || (sq.Languages != nil && len(sq.Languages) > 0) || sq.AdFormat > 0
+	//useMustFilter := true
 
 	q += `"bool":{`
 	if useMustFilter {
 		q += `"must":[`
-		if len(sq.Locations) > 0 {
-			loc, locerr = json.Marshal(sq.Locations)
+		if sq.Locations != nil && len(sq.Locations) > 0 {
+			loc, err = json.Marshal(sq.Locations)
 			if err == nil {
 				q += `{ "query":  {"terms": { "locations":` + strings.ToLower(string(loc)) + `}}}`
 				delim = ","
 			}
 		}
-		if len(sq.Languages) > 0 {
+		if sq.Languages != nil && len(sq.Languages) > 0 {
 			var lang []byte
 			lang, err = json.Marshal(sq.Languages)
 			if err == nil {
-				q += delim + `{ "query":  {"terms": { "languages":` + string(lang) + `}}}`
+				q += delim + `{ "query":  {"terms": { "languages":` + strings.ToLower(string(lang)) + `}}}`
 				delim = ","
 			}
 		}
@@ -84,8 +161,8 @@ func (sq SearchQuery) createESQueryString() (q string) {
 	//so they can be changed independently
 	q += `{ "query":  {"term": { "is_paused": "true"}}}`
 	q += `,{ "query":  {"term": { "goal_reached": "true"}}}`
-	if len(sq.Locations) > 0 && locerr == nil {
-		q += `,{ "query":  {"terms": { "excluded_locations":` + string(loc) + `}}}`
+	if len(sq.Locations) > 0 && err == nil {
+		q += `,{ "query":  {"terms": { "excluded_locations":` + strings.ToLower(string(loc)) + `}}}`
 		delim = ","
 	}
 	q += `]}}}},"random_score": {}}}}`
@@ -94,4 +171,73 @@ func (sq SearchQuery) createESQueryString() (q string) {
 	glog.Info(q)
 	glog.Info("=============================")
 	return q
+}
+
+func getAdById(id string) ([]byte, *DeError) {
+	var (
+		qres          api.BaseResponse
+		serr          error
+		br            []byte
+		ad            *Ad
+		responseBytes []byte
+	)
+	if qres, serr = core.Get("campaigns", "ads", id, nil); serr != nil {
+		return nil, NewError(500, "Error talking to ES")
+	} else if !qres.Found {
+		return nil, NewError(400, "Could not find id in ES: "+id)
+	} else if br, serr = json.Marshal(qres.Source); serr != nil {
+		return nil, NewError(500, serr)
+	} else if serr = json.Unmarshal(br, ad); serr != nil {
+		return nil, NewError(500, serr)
+	} else if responseBytes, serr = json.Marshal(ad); serr != nil {
+		return nil, NewError(500, serr)
+	}
+	return responseBytes, nil
+}
+func deleteAdById(id string) *DeError {
+	glog.Info("ad to delete: " + id)
+	if qres, err := core.Delete("campaigns", "ads", id, nil); err != nil {
+		return NewError(http.StatusInternalServerError, err)
+	} else {
+		if !qres.Found {
+			errstr := "ad id " + id + " does not exist"
+			return NewError(http.StatusInternalServerError, errstr)
+		}
+	}
+	return nil
+}
+
+func postAdToES(req *http.Request) ([]byte, *DeError) {
+	var (
+		ad   Ad
+		err  *DeError
+		serr error
+	)
+	decoder := json.NewDecoder(req.Body)
+	if serr = decoder.Decode(&ad); serr != nil {
+		return nil, NewError(500, serr)
+	} else if ad.AdId == "" {
+		return nil, NewError(400, "no ad_id found")
+	} else if err = indexAd(&ad); err != nil {
+		return nil, NewError(500, err)
+	} else {
+		//success
+		return nil, nil
+	}
+}
+
+func getAdIdsByCampaign(cid string) ([]string, *DeError) {
+	var (
+		serr    error
+		sresult core.SearchResult
+		ids []string
+	)
+	q := `{"filter": {"bool": {"must": [{"term": {"campaign":"` + cid + `"}}]}},"fields": []}`
+	if sresult, serr = core.SearchRequest("campaigns", "ads", nil, q); serr != nil {
+		return nil, NewError(500, serr)
+	}
+	for _, v := range sresult.Hits.Hits {
+		ids = append(ids, v.Id)
+	}
+	return ids, nil
 }

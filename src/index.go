@@ -24,7 +24,7 @@ func main() {
 	a1.ThumbnailUrl = "http://www.youtube.com/thumbnail-url"
 	a1.CampaignId = a1.AdId
 	//a1.Updated, err = time.Parse(time.RFC3339,time.Now().Format(time.RFC3339))
-	a1.Updated,_ = time.Parse(time.RFC3339,"2013-07-08T00:25:11Z")
+	a1.Updated, _ = time.Parse(time.RFC3339, "2013-07-08T00:25:11Z")
 	if err != nil {
 		panic(err)
 	}
@@ -42,7 +42,7 @@ func main() {
 	a2.CampaignId = a2.AdId
 	a2.ThumbnailUrl = "http://www.youtube.com/thumbnail-url"
 	a2.AdFormats = []int{1, 3}
-	a2.Updated,_ = time.Parse(time.RFC3339,"2013-07-08T00:30:11Z")
+	a2.Updated, _ = time.Parse(time.RFC3339, "2013-07-08T00:30:11Z")
 
 	var a3 Ad
 	a3.TacticId = "1234"
@@ -58,7 +58,7 @@ func main() {
 	a3.IsPaused = false
 	a3.GoalReached = true
 	a3.AdFormats = []int{1, 3}
-	a3.Updated,_ = time.Parse(time.RFC3339,"2013-07-08T00:28:11Z")
+	a3.Updated, _ = time.Parse(time.RFC3339, "2013-07-08T00:28:11Z")
 
 	var a4 Ad
 	a4.TacticId = "1234"
@@ -72,14 +72,14 @@ func main() {
 	a4.AdId = "4"
 	a4.CampaignId = a4.AdId
 	a4.ThumbnailUrl = "http://www.youtube.com/thumbnail-url"
-	a4.Updated,_ = time.Parse(time.RFC3339,"2013-07-08T00:27:11Z")
+	a4.Updated, _ = time.Parse(time.RFC3339, "2013-07-08T00:27:11Z")
 
 	var a5 Ad
 	a5.GoalReached = true
 	a5.Locations = []string{"de"}
 	a5.Languages = []string{"de"}
 	a5.AdFormats = []int{1, 3}
-	a5.Updated,_ = time.Parse(time.RFC3339,"2013-07-08T00:31:11Z")
+	a5.Updated, _ = time.Parse(time.RFC3339, "2013-07-08T00:31:11Z")
 	a5.AdId = "5"
 
 	var r api.BaseResponse

@@ -2,96 +2,50 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"flag"
 	"github.com/golang/glog"
 	"github.com/gorilla/mux"
 	"github.com/mattbaird/elastigo/api"
-	"github.com/mattbaird/elastigo/core"
-	"io"
 	"net/http"
 )
-func postAd(resp http.ResponseWriter, req *http.Request) {
-	var ad Ad
-	decoder := json.NewDecoder(req.Body)
 
-	var err error
+type appHandler func(http.ResponseWriter, *http.Request) ([]byte, *DeError)
 
-	if err = decoder.Decode(&ad); err != nil || ad.AdId == "" {
-		setErrorResponse(resp, http.StatusInternalServerError, err)
-	} else if _, err = ad.indexAd(); err != nil {
-		setErrorResponse(resp, http.StatusInternalServerError, err)
+func (fn appHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if response, e := fn(w, r); e != nil { // e is *DeError, not os.Error.
+		setErrorResponse(w, e)
 	} else {
-		setResponse(resp, http.StatusCreated, nil)
+		setResponse(w, http.StatusOK, response)
 	}
 }
 
-func deleteAd(resp http.ResponseWriter, req *http.Request) {
-	var key string
-	if key = mux.Vars(req)["id"]; key == "" {
-		setErrorResponse(resp, http.StatusBadRequest, errors.New("no id provided"))
+func postAd(resp http.ResponseWriter, req *http.Request) ([]byte, *DeError) {
+	return postAdToES(req)
+}
+
+func deleteAd(resp http.ResponseWriter, req *http.Request) ([]byte, *DeError) {
+	var (
+		id string
+	)
+	if id = mux.Vars(req)["id"]; id == "" {
+		return nil, NewError(400, "no id provided")
 	} else {
-		glog.Info("key to delete: " + key)
-		if qres, err := core.Delete("campaigns", "ads", key, nil); err != nil {
-			setErrorResponse(resp, http.StatusInternalServerError, err)
-		} else {
-			if qres.Found {
-				setResponse(resp, http.StatusOK, nil)
-			} else {
-				errstr := "ad id " + key + " does not exist"
-				setErrorResponse(resp, http.StatusBadRequest, errors.New(errstr))
-			}
-		}
+		return nil, deleteAdById(id)
 	}
 }
-func getAd(resp http.ResponseWriter, req *http.Request) {
-	var key string
-	var responseBytes []byte
-	if key = mux.Vars(req)["id"]; key == "" {
-		setErrorResponse(resp, http.StatusBadRequest, errors.New("no id provided"))
+func getAd(resp http.ResponseWriter, req *http.Request) ([]byte, *DeError) {
+	var (
+		id string
+	)
+	if id = mux.Vars(req)["id"]; id == "" {
+		return nil, NewError(400, "no id provided")
 	} else {
-		glog.Info(" querying for ad id: " + key)
-		if qres, err := core.Get("campaigns", "ads", key, nil); err != nil {
-			setErrorResponse(resp, http.StatusInternalServerError, err)
-		} else if qres.Found {
-			if responseBytes, err = json.Marshal(qres.Source); err != nil {
-				setErrorResponse(resp, http.StatusInternalServerError, err)
-			} else {
-				setResponse(resp, http.StatusOK, responseBytes)
-			}
-		} else {
-			errstr := "ad id " + key + " does not exist"
-			setErrorResponse(resp, http.StatusBadRequest, errors.New(errstr))
-		}
+		return getAdById(id)
 	}
 }
 
-func postQuery(resp http.ResponseWriter, req *http.Request) {
-	var sq SearchQuery
-	var responseBytes []byte
-	var err error
-	var qresult core.SearchResult
-
-	decoder := json.NewDecoder(req.Body)
-	err = decoder.Decode(&sq)
-
-	if err != nil && err != io.EOF { //if err is EOF, it means the query has no body, so we create a generic query and return result
-		setErrorResponse(resp, http.StatusBadRequest, err)
-	} else if qresult, err = sq.queryES(); err != nil {
-		setErrorResponse(resp, http.StatusInternalServerError, err)
-	} else if &qresult != nil && &qresult.Hits != nil && len(qresult.Hits.Hits) > 0 {
-		if responseBytes, err = json.Marshal(qresult.Hits.Hits[0].Source); err != nil {
-			setErrorResponse(resp, http.StatusInternalServerError, err)
-		} else {
-			setResponse(resp, http.StatusOK, responseBytes)
-		}
-	} else {
-		setErrorResponse(resp, http.StatusNoContent, errors.New("no match was found for the given query"))
-	}
-}
-
-func formatError(e string) string {
-	return `{"error":"` + e + `"}`
+func postQuery(resp http.ResponseWriter, req *http.Request) ([]byte, *DeError) {
+	return processQuery(req)
 }
 
 //since ResponseWriter is an interface and has a pointer inside, we pass it by value
@@ -102,14 +56,16 @@ func setResponse(resp http.ResponseWriter, status int, body []byte) {
 	resp.Write(body)
 	glog.Info(`{"status":`, status, `,"headers":`, `"`, resp.Header(), `"`, `,"body":`, `"`, string(body), `"}`)
 }
-func setErrorResponse(resp http.ResponseWriter, status int, err error) {
-	e := err.Error()
-	body := formatError(e)
-	//setResponse(resp,status,[]byte(body))
+func setErrorResponse(resp http.ResponseWriter, err *DeError) {
+	var responseBytes []byte
+	var serr error
+	if responseBytes, serr = json.MarshalIndent(err, "", "    "); serr != nil {
+		panic(serr)
+	}
 	resp.Header().Set("Content-Type", "application/json; charset=utf-8")
-	resp.WriteHeader(status)
-	resp.Write([]byte(body))
-	glog.Error(`{"status":`, status, `,"headers":`, `"`, resp.Header(), `"`, `,"body":`, `"`, body, `"}`)
+	resp.WriteHeader(err.ErrorCode())
+	resp.Write(responseBytes)
+	glog.Error(`{"status":`, err.ErrorCode(), `,"headers":`, `"`, resp.Header(), `"`, `,"body":`, `"`, string(responseBytes), `"}`)
 }
 
 func main() {
@@ -122,16 +78,16 @@ func main() {
 	api.Port = "9200"
 
 	rtr := mux.NewRouter()
-	rtr.HandleFunc("/healthcheck", postQuery).Methods("GET")
+	rtr.Handle("/healthcheck", appHandler(postQuery)).Methods("GET")
 
-	rtr.HandleFunc("/de/ads/{id}", getAd).Methods("GET")
-	rtr.HandleFunc("/de/ads", postAd).Methods("PUT")
-	rtr.HandleFunc("/de/ads", postAd).Methods("POST")
-	rtr.HandleFunc("/de/ads/{id}", deleteAd).Methods("DELETE")
+	rtr.Handle("/de/ads/{id}", appHandler(getAd)).Methods("GET")
+	rtr.Handle("/de/ads", appHandler(postAd)).Methods("PUT")
+	rtr.Handle("/de/ads", appHandler(postAd)).Methods("POST")
+	rtr.Handle("/de/ads/{id}", appHandler(deleteAd)).Methods("DELETE")
 
-	rtr.HandleFunc("/de/query", postQuery).Methods("GET")
-	rtr.HandleFunc("/de/query", postQuery).Methods("POST")
-	rtr.HandleFunc("/de/query", postQuery).Methods("PUT")
+	rtr.Handle("/de/query", appHandler(postQuery)).Methods("GET")
+	rtr.Handle("/de/query", appHandler(postQuery)).Methods("POST")
+	rtr.Handle("/de/query", appHandler(postQuery)).Methods("PUT")
 	//there is no such thing as deleting a query
 
 	http.Handle("/", rtr)
