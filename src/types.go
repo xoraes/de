@@ -27,17 +27,6 @@ type Ad struct {
 	Updated           *time.Time    `bson:"_updated,omitempty" json:"_updated,omitempty"`
 	Created           *time.Time    `bson:"_created,omitempty" json:"_created,omitempty"s`
 }
-type CampaignDb struct {
-	Id                bson.ObjectId `bson:"_id,omitempty"`
-	Updated           *time.Time     `bson:"_updated,omitempty"`
-	Created           *time.Time     `bson:"_created,omitempty"`
-	Paused            bool          `bson:"paused,omitempty"`
-	GoalPeriod        string        `bson:"goal_period,omitempty"`
-	GoalViews         int           `bson:"goal_views,omitempty"`
-	Locations         []string      `bson:"locations,omitempty"`
-	ExcludedLocations []string      `bson:"excluded_locations,omitempty"`
-	Account           bson.ObjectId `bson:"account_id,omitempty"`
-}
 type SearchQuery struct {
 	Languages []string `json:"languages,omitempty"`
 	Locations []string `json:"locations,omitempty"`

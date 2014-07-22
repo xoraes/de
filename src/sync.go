@@ -2,13 +2,13 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/mattbaird/elastigo/api"
 	"github.com/mattbaird/elastigo/core"
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
 	"log"
 	"time"
+	"flag"
 )
 
 const (
@@ -64,12 +64,12 @@ func getESLastUpdatedAdTime() time.Time {
 	return sTime
 }
 
-func getLastUpdatedCampaigns(mongoSession *mgo.Session, coll string, last time.Time) ([]CampaignDb, error) {
+func getLastUpdatedCampaigns(mongoSession *mgo.Session, coll string, last time.Time) ([]Ad, error) {
 
 	var (
 		err        error
-		campaign_s []CampaignDb
-		campaign   CampaignDb
+		campaign_s []Ad
+		campaign   Ad
 	)
 	iter := RunQuery(mongoSession, coll, last)
 
@@ -117,17 +117,17 @@ func getLastUpdatedAds(mongoSession *mgo.Session, coll string, last time.Time) (
 // update themselves with new/update campaign information from campaign db.
 
 func main() {
+	var url string
+
+	flag.StringVar(&url, "url", "mongodb://localhost/pixelle", "mongodb dial url")
+	flag.Parse()
+
 	api.Domain = "localhost"
 	api.Port = "9200"
-	// We need this object to establish a session to our MongoDB.
-	mongoDBDialInfo := &mgo.DialInfo{
-		Addrs:   []string{MongoDBHosts},
-		Timeout: 60 * time.Second,
-	}
 
 	// Create a session which maintains a pool of socket connections
 	// to our MongoDB.
-	mongoSession, err := mgo.DialWithInfo(mongoDBDialInfo)
+	mongoSession, err := mgo.Dial(url)
 	if err != nil {
 		log.Fatalf("CreateSession: %s\n", err)
 	}
@@ -141,42 +141,46 @@ func main() {
 
 	// Perform 10 concurrent queries against the database.
 
-	last := getESLastUpdatedAdTime()
-	log.Println("Last updated timestamp:", last.Format(time.RFC3339))
-	var updatedCampaigns []CampaignDb
-	var updatedAds []Ad
+	for {
+		last := getESLastUpdatedAdTime()
+		log.Println("Last updated timestamp:", last.Format(time.RFC3339))
+		var updatedCampaigns []Ad
+		var updatedAds []Ad
 
-
-	if updatedAds, err = getLastUpdatedAds(mongoSession, "ads", last); err != nil {
-		log.Println("Error while getting latest ads data from mongodb. Last updated timestamp on ES: ", last)
-	}
-	for _,value := range updatedAds {
-		indexAdFromAdData(&value)
-	}
-	if updatedCampaigns, err = getLastUpdatedCampaigns(mongoSession, "campaigns", last); err != nil {
-		log.Println("Error while getting latest campaigns data from mongodb. Last updated timestamp on ES: ", last)
-	}
-	log.Println("Num campaigns to update", len(updatedCampaigns))
-	for _, v := range updatedCampaigns {
-		if adIds, err := getAdIdsByCampaign(v.Id.Hex()); err != nil {
-			panic(err.Error())
-		} else {
-			for _, val := range adIds {
-				fmt.Println("ad id:" + val)
-				if err = indexAdFromCampaignData(&v, val); err != nil {
-					panic(err.Error())
+		if updatedAds, err = getLastUpdatedAds(mongoSession, "ads", last); err != nil {
+			log.Println("Error while getting latest ads data from mongodb. Last updated timestamp on ES: ", last)
+		}
+		log.Println("1. Num ads to update", len(updatedAds))
+		for _, value := range updatedAds {
+			indexAdFromAdData(&value)
+		}
+		time.Sleep(10 * time.Second)
+		if updatedCampaigns, err = getLastUpdatedCampaigns(mongoSession, "campaigns", last); err != nil {
+			log.Println("Error while getting latest campaigns data from mongodb. Last updated timestamp on ES: ", last)
+		}
+		log.Println("2. Num campaigns to update", len(updatedCampaigns))
+		for _, v := range updatedCampaigns {
+			// here the v.AdId is really the campaign Id
+			if adIds, err := getAdIdsByCampaign(v.AdId.Hex()); err != nil {
+				panic(err.Error())
+			} else {
+				for _, val := range adIds {
+					if err = indexAdFromCampaignData(&v, val); err != nil {
+						panic(err.Error())
+					}
 				}
 			}
 		}
+
+		log.Println("All Queries Completed")
+		time.Sleep(1 * time.Minute)
 	}
-
-	log.Println("All Queries Completed")
-
 }
-func indexAdFromCampaignData(c *CampaignDb, ad_id string) *DeError {
+func indexAdFromCampaignData(c *Ad, ad_id string) *DeError {
 	var ad Ad
 	ad.AdId = bson.ObjectIdHex(ad_id)
-	ad.CampaignId = c.Id
+	//here the c.AdId is really the campaign id
+	ad.CampaignId = c.AdId
 	ad.Updated = c.Updated
 	ad.Locations = c.Locations
 	ad.Account = c.Account
@@ -184,7 +188,7 @@ func indexAdFromCampaignData(c *CampaignDb, ad_id string) *DeError {
 	ad.Paused = c.Paused
 	ad.GoalViews = c.GoalViews
 	ad.GoalPeriod = c.GoalPeriod
-	log.Println("Indexing campign data to ads", ad)
+
 	return updateAd(&ad)
 }
 func indexAdFromAdData(addb *Ad) *DeError {

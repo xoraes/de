@@ -9,9 +9,10 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"fmt"
 )
 
-func indexAd(ad *Ad) (*DeError) {
+func indexAd(ad *Ad) *DeError {
 	var index int
 	for index, _ = range ad.Languages {
 		ad.Languages[index] = strings.ToLower(ad.Languages[index])
@@ -31,7 +32,7 @@ func indexAd(ad *Ad) (*DeError) {
 	}
 	return nil
 }
-func updateAd(ad *Ad) (*DeError) {
+func updateAd(ad *Ad) *DeError {
 
 	var index int
 	for index, _ = range ad.Languages {
@@ -46,9 +47,12 @@ func updateAd(ad *Ad) (*DeError) {
 	if jsonBytes, serr := json.Marshal(ad); serr != nil {
 		glog.Error(serr)
 		return NewError(500, serr)
-	} else if _, serr := core.UpdateWithPartialDoc("campaigns", "ads", ad.AdId.Hex(), nil, string(jsonBytes),false); serr != nil {
-		glog.Error(serr)
-		return NewError(500, serr)
+	} else {
+		fmt.Println("Updating ad w/campaign data:",string(jsonBytes))
+		if _, serr := core.UpdateWithPartialDoc("campaigns", "ads", ad.AdId.Hex(), nil, string(jsonBytes), false); serr != nil {
+			glog.Error(serr)
+			return NewError(500, serr)
+		}
 	}
 	return nil
 }
@@ -230,7 +234,7 @@ func getAdIdsByCampaign(cid string) ([]string, *DeError) {
 	var (
 		serr    error
 		sresult core.SearchResult
-		ids []string
+		ids     []string
 	)
 	q := `{"filter": {"bool": {"must": [{"term": {"campaign":"` + cid + `"}}]}},"fields": []}`
 	if sresult, serr = core.SearchRequest("campaigns", "ads", nil, q); serr != nil {
