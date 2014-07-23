@@ -110,7 +110,7 @@ func queryES(positions int, sq SearchQuery) ([]Ad, *DeError) {
 		//send this when empty results are obtained
 	} else {
 		//A degradation logic could be implemented here instead of sending error response
-		return nil, &DeError{Code: http.StatusOK, Msg: "No ads were found matching the target criteria"}
+		return nil, NewError(200, "No ads were found matching the target criteria")
 	}
 	glog.Info(`{"took_ms":`, sresult.Took, `,"timedout":`, sresult.TimedOut, `,"hitct":`, sresult.Hits.Total, "}")
 	return ads, nil
@@ -163,8 +163,8 @@ func createESQueryString(numPositions int, sq SearchQuery) string {
 	q += delim + `"must_not":[`
 	//is_paused and goal_reached are separate fields
 	//so they can be changed independently
-	q += `{ "query":  {"term": { "is_paused": "true"}}}`
-	q += `,{ "query":  {"term": { "goal_reached": "true"}}}`
+	q += `{ "query":  {"term": { "paused": "true"}}}`
+	q += `,{ "query":  {"term": { "status": "inactive"}}}`
 	if len(sq.Locations) > 0 && err == nil {
 		q += `,{ "query":  {"terms": { "excluded_locations":` + strings.ToLower(string(loc)) + `}}}`
 		delim = ","
@@ -201,11 +201,11 @@ func getAdById(id string) ([]byte, *DeError) {
 func deleteAdById(id string) *DeError {
 	glog.Info("ad to delete: " + id)
 	if qres, err := core.Delete("campaigns", "ads", id, nil); err != nil {
-		return NewError(http.StatusInternalServerError, err)
+		return NewError(500, err)
 	} else {
 		if !qres.Found {
 			errstr := "ad id " + id + " does not exist"
-			return NewError(http.StatusInternalServerError, errstr)
+			return NewError(500, errstr)
 		}
 	}
 	return nil
