@@ -3,9 +3,6 @@ pixelle-de
 
 Pixelle decisioning engine
 
-INSTALLATION
-
-
 Sync:
 The sync program syncs ad and campaigns from mongodb to local elasticsearch. In addition to all
 the fields in ads and campaign collection on mongodb, the sync program also stores the last updated
@@ -16,12 +13,16 @@ and campaign collection and finds all documents on mongodb that were created aft
 The documents found on mongodb are then indexed on elasticsearch.
 
 Installation: go install sync.go escom.go types.go
+
 To run the sync process, provide the mongo url and start:
+
 sync -url "mongodb://..." 
 
 
 Deserver: The DE server is the decisioning engine. For more info on DE, please see the wiki.
+
 Installation: go install deserver.go escom.go types.go
+
 To run the decision engine, simply start
 ./deserver
 
