@@ -1,6 +1,7 @@
 package main
 
 import (
+
 	"encoding/json"
 	"flag"
 	"github.com/mattbaird/elastigo/api"
@@ -9,16 +10,17 @@ import (
 	"labix.org/v2/mgo/bson"
 	"log"
 	"time"
+	"github.com/dailymotion/pixelle-de/common"
 )
 
 const (
-	MongoDBHosts = "localhost"
-	PxDb         = "pixelle"
+	PxDb = "pixelle"
 )
 
 // RunQuery is a function that is launched as a goroutine to perform
 // the MongoDB work.
 func RunQuery(mongoSession *mgo.Session, coll string, last time.Time) (iter *mgo.Iter) {
+
 	// Decrement the wait group count so the program knows this
 	// has been completed once the goroutine exits.
 
@@ -71,12 +73,12 @@ func getESLastUpdated(col string) time.Time {
 	return sTime
 }
 
-func getLastUpdated(mongoSession *mgo.Session, coll string, last time.Time) ([]Ad, error) {
+func getLastUpdated(mongoSession *mgo.Session, coll string, last time.Time) ([]common.Ad, error) {
 
 	var (
 		err  error
-		ad_s []Ad
-		ad   Ad
+		ad_s []common.Ad
+		ad   common.Ad
 	)
 	iter := RunQuery(mongoSession, coll, last)
 	for {
@@ -122,7 +124,7 @@ func main() {
 	// within the session will be observed in following queries (read-your-writes).
 	// http://godoc.org/labix.org/v2/mgo#Session.SetMode
 	mongoSession.SetMode(mgo.Monotonic, true)
-	var updatedAds, updatedCampaigns []Ad
+	var updatedAds, updatedCampaigns []common.Ad
 	// Perform 10 concurrent queries against the database.
 	var last time.Time
 	for {
@@ -145,7 +147,7 @@ func main() {
 		log.Println("2. Num campaigns to update", len(updatedCampaigns))
 		for _, v := range updatedCampaigns {
 			// here the v.AdId is really the campaign Id
-			if adIds, err := getAdIdsByCampaign(v.AdId.Hex()); err != nil {
+			if adIds, err := common.GetAdIdsByCampaign(v.AdId.Hex()); err != nil {
 				panic(err.Error())
 			} else {
 				for _, val := range adIds {
@@ -160,8 +162,8 @@ func main() {
 		time.Sleep(1 * time.Minute)
 	}
 }
-func indexAdFromCampaignData(c *Ad, ad_id string) *DeError {
-	var ad Ad
+func indexAdFromCampaignData(c *common.Ad, ad_id string) *common.DeError {
+	var ad common.Ad
 
 	ad.AdId = bson.ObjectIdHex(ad_id)
 	//c.paused represents campaign paused.
@@ -174,9 +176,9 @@ func indexAdFromCampaignData(c *Ad, ad_id string) *DeError {
 	ad.GoalViews = c.GoalViews
 	ad.GoalPeriod = c.GoalPeriod
 
-	return updateAd(&ad)
+	return common.UpdateAd(&ad)
 }
-func indexAdFromAdData(addb *Ad) *DeError {
-	return indexAd(addb)
+func indexAdFromAdData(addb *common.Ad) *common.DeError {
+	return common.IndexAd(addb)
 
 }

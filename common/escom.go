@@ -1,4 +1,4 @@
-package main
+package common
 
 import (
 	"encoding/json"
@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-func indexAd(ad *Ad) *DeError {
+func IndexAd(ad *Ad) *DeError {
 	var index int
 	for index, _ = range ad.Languages {
 		ad.Languages[index] = strings.ToLower(ad.Languages[index])
@@ -33,7 +33,7 @@ func indexAd(ad *Ad) *DeError {
 	}
 	return nil
 }
-func updateAd(ad *Ad) *DeError {
+func UpdateAd(ad *Ad) *DeError {
 
 	var index int
 	for index, _ = range ad.Languages {
@@ -59,7 +59,7 @@ func updateAd(ad *Ad) *DeError {
 	}
 	return nil
 }
-func processQuery(req *http.Request) ([]byte, *DeError) {
+func ProcessQuery(req *http.Request) ([]byte, *DeError) {
 	var (
 		byteArray []byte
 		err       error
@@ -190,7 +190,7 @@ func createESQueryString(numPositions int, sq SearchQuery) string {
 	return q
 }
 
-func getAdById(id string) ([]byte, *DeError) {
+func GetAdById(id string) ([]byte, *DeError) {
 	var (
 		qres          api.BaseResponse
 		serr          error
@@ -211,7 +211,7 @@ func getAdById(id string) ([]byte, *DeError) {
 	}
 	return responseBytes, nil
 }
-func deleteAdById(id string) *DeError {
+func DeleteAdById(id string) *DeError {
 	glog.Info("ad to delete: " + id)
 	if qres, err := core.Delete("campaigns", "ads", id, nil); err != nil {
 		return NewError(500, err)
@@ -224,7 +224,7 @@ func deleteAdById(id string) *DeError {
 	return nil
 }
 
-func postAdToES(req *http.Request) ([]byte, *DeError) {
+func PostAdToES(req *http.Request) ([]byte, *DeError) {
 	var (
 		ad   Ad
 		err  *DeError
@@ -235,7 +235,7 @@ func postAdToES(req *http.Request) ([]byte, *DeError) {
 		return nil, NewError(500, serr)
 	} else if ad.AdId == "" {
 		return nil, NewError(400, "no ad_id found")
-	} else if err = indexAd(&ad); err != nil {
+	} else if err = IndexAd(&ad); err != nil {
 		return nil, NewError(500, err)
 	} else {
 		//success
@@ -243,7 +243,7 @@ func postAdToES(req *http.Request) ([]byte, *DeError) {
 	}
 }
 
-func getAdIdsByCampaign(cid string) ([]string, *DeError) {
+func GetAdIdsByCampaign(cid string) ([]string, *DeError) {
 	var (
 		serr    error
 		sresult core.SearchResult
