@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/golang/glog"
 	"github.com/mattbaird/elastigo/api"
 	"github.com/mattbaird/elastigo/core"
@@ -9,7 +10,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"fmt"
 )
 
 func indexAd(ad *Ad) *DeError {
@@ -51,7 +51,7 @@ func updateAd(ad *Ad) *DeError {
 		glog.Error(serr)
 		return NewError(500, serr)
 	} else {
-		fmt.Println("Updating ad w/campaign data:",string(jsonBytes))
+		fmt.Println("Updating ad w/campaign data:", string(jsonBytes))
 		if _, serr := core.UpdateWithPartialDoc("campaigns", "ads", ad.AdId.Hex(), nil, string(jsonBytes), false); serr != nil {
 			glog.Error(serr)
 			return NewError(500, serr)
@@ -86,7 +86,7 @@ func processQuery(req *http.Request) ([]byte, *DeError) {
 		return nil, derr
 	}
 
-	sqr := &SearchQueryResponse{AdUnits:ads}
+	sqr := &SearchQueryResponse{AdUnits: ads}
 	if byteArray, err = json.MarshalIndent(sqr, "", "    "); err != nil {
 		return nil, NewError(500, err)
 	}
@@ -115,9 +115,9 @@ func queryES(positions int, sq SearchQuery) ([]Ad, *DeError) {
 		}
 		//send this when empty results are obtained
 	} else {
-		target,_ := json.Marshal(&sq)
+		target, _ := json.Marshal(&sq)
 		//A degradation logic could be implemented here instead of sending error response
-		return nil, NewError(404, "No ads were found matching the target criteria - " + string(target))
+		return nil, NewError(404, "No ads were found matching the target criteria - "+string(target))
 	}
 	glog.Info(`{"took_ms":`, sresult.Took, `,"timedout":`, sresult.TimedOut, `,"hitct":`, sresult.Hits.Total, "}")
 	return ads, nil

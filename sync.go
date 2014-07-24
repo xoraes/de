@@ -2,13 +2,13 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"github.com/mattbaird/elastigo/api"
 	"github.com/mattbaird/elastigo/core"
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
 	"log"
 	"time"
-	"flag"
 )
 
 const (
@@ -41,15 +41,15 @@ func getESLastUpdated(col string) time.Time {
 	var sTime time.Time
 	var responseBytes []byte
 	type TType struct {
-		Updated_Ad []time.Time `json:"_updated_ad,omitempty"`
+		Updated_Ad       []time.Time `json:"_updated_ad,omitempty"`
 		Updated_Campaign []time.Time `json:"_updated_campaign,omitempty"`
 	}
 	var lastUpdated TType
 
-	q := `{ "size":1, "fields":["`+col+`"], "query" : { "match_all":{} } , "sort" : [ { "`+col+`" : { "order":"desc" } } ] }`
+	q := `{ "size":1, "fields":["` + col + `"], "query" : { "match_all":{} } , "sort" : [ { "` + col + `" : { "order":"desc" } } ] }`
 
 	result, err = core.SearchRequest("campaigns", "ads", nil, q)
-	if &result != nil && &result.Hits != nil && len(result.Hits.Hits) > 0 && result.Hits.Hits[0].Fields != nil{
+	if &result != nil && &result.Hits != nil && len(result.Hits.Hits) > 0 && result.Hits.Hits[0].Fields != nil {
 		if responseBytes, err = result.Hits.Hits[0].Fields.MarshalJSON(); err != nil {
 			log.Println("Unable to Marshall from ES. Using default date: ", time.Time{})
 			return sTime
@@ -65,8 +65,8 @@ func getESLastUpdated(col string) time.Time {
 				}
 			}
 
-			}
 		}
+	}
 
 	return sTime
 }

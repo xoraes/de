@@ -23,7 +23,7 @@ type Ad struct {
 	Status            string        `bson:"status,omitempty" json:"status,omitempty"`
 	GoalPeriod        string        `bson:"goal_period,omitempty" json:"goal_period,omitempty"`
 	GoalViews         int           `bson:"goal_views,omitempty" json:"goal_views,omitempty"`
-	Duration           int    		`bson:"duration,omitempty" json:"duration,omitempty"`
+	Duration          int           `bson:"duration,omitempty" json:"duration,omitempty"`
 	Updated           *time.Time    `bson:"_updated,omitempty" json:"_updated_ad,omitempty"`
 	Created           *time.Time    `bson:"_created,omitempty" json:"_created,omitempty"`
 	CampaignUpdated   *time.Time    `json:"_updated_campaign,omitempty"`
@@ -59,4 +59,3 @@ func NewError(code int, v interface{}) *DeError {
 	}
 	return &DeError{Code: code, Msg: ""}
 }
-
