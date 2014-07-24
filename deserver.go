@@ -92,6 +92,10 @@ func main() {
 
 	http.Handle("/", rtr)
 
-	glog.Infoln("Listening on port 3000...")
-	http.ListenAndServe(":3000", nil)
+
+	if err := http.ListenAndServe(":7001", nil); err != nil {
+		glog.Error("Error starting server, port 7001 is likely in use")
+	} else {
+		glog.Infoln("Listening on port 7001...")
+	}
 }
