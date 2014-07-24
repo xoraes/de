@@ -35,19 +35,21 @@ func RunQuery(mongoSession *mgo.Session, coll string, last time.Time) (iter *mgo
 	return iter
 }
 
-func getESLastUpdatedAdTime() time.Time {
+func getESLastUpdated(col string) time.Time {
 	var err error
 	var result core.SearchResult
 	var sTime time.Time
 	var responseBytes []byte
 	type TType struct {
-		Updated []time.Time `json:"_updated,omitempty"`
+		Updated_Ad []time.Time `json:"_updated_ad,omitempty"`
+		Updated_Campaign []time.Time `json:"_updated_campaign,omitempty"`
 	}
 	var lastUpdated TType
 
-	q := `{ "size":1, "fields":["_updated"], "query" : { "match_all":{} } , "sort" : [ { "_updated" : { "order":"desc" } } ] }`
+	q := `{ "size":1, "fields":["`+col+`"], "query" : { "match_all":{} } , "sort" : [ { "`+col+`" : { "order":"desc" } } ] }`
+
 	result, err = core.SearchRequest("campaigns", "ads", nil, q)
-	if &result != nil && &result.Hits != nil && len(result.Hits.Hits) > 0 {
+	if &result != nil && &result.Hits != nil && len(result.Hits.Hits) > 0 && result.Hits.Hits[0].Fields != nil{
 		if responseBytes, err = result.Hits.Hits[0].Fields.MarshalJSON(); err != nil {
 			log.Println("Unable to Marshall from ES. Using default date: ", time.Time{})
 			return sTime
@@ -56,38 +58,20 @@ func getESLastUpdatedAdTime() time.Time {
 				log.Println("Unable to Unmarshall last updated from ES. Using default date - ", err)
 				return sTime
 			} else {
-				sTime = lastUpdated.Updated[0]
+				if len(lastUpdated.Updated_Ad) > 0 {
+					sTime = lastUpdated.Updated_Ad[0]
+				} else if len(lastUpdated.Updated_Campaign) > 0 {
+					sTime = lastUpdated.Updated_Campaign[0]
+				}
+			}
 
 			}
 		}
-	}
+
 	return sTime
 }
 
-func getLastUpdatedCampaigns(mongoSession *mgo.Session, coll string, last time.Time) ([]Ad, error) {
-
-	var (
-		err        error
-		campaign_s []Ad
-		campaign   Ad
-	)
-	iter := RunQuery(mongoSession, coll, last)
-
-	for {
-		if iter.Next(&campaign) {
-			campaign_s = append(campaign_s, campaign)
-		} else {
-			break
-		}
-	}
-	err = iter.Err()
-	if err != nil {
-		log.Println("Error getting response from mongo db")
-	}
-
-	return campaign_s, err
-}
-func getLastUpdatedAds(mongoSession *mgo.Session, coll string, last time.Time) ([]Ad, error) {
+func getLastUpdated(mongoSession *mgo.Session, coll string, last time.Time) ([]Ad, error) {
 
 	var (
 		err  error
@@ -138,16 +122,14 @@ func main() {
 	// within the session will be observed in following queries (read-your-writes).
 	// http://godoc.org/labix.org/v2/mgo#Session.SetMode
 	mongoSession.SetMode(mgo.Monotonic, true)
-
+	var updatedAds, updatedCampaigns []Ad
 	// Perform 10 concurrent queries against the database.
-
+	var last time.Time
 	for {
-		last := getESLastUpdatedAdTime()
-		log.Println("Last updated timestamp:", last.Format(time.RFC3339))
-		var updatedCampaigns []Ad
-		var updatedAds []Ad
+		last = getESLastUpdated("_updated_ad")
+		log.Println("Last ad updated timestamp:", last.Format(time.RFC3339))
 
-		if updatedAds, err = getLastUpdatedAds(mongoSession, "ads", last); err != nil {
+		if updatedAds, err = getLastUpdated(mongoSession, "ads", last); err != nil {
 			log.Println("Error while getting latest ads data from mongodb. Last updated timestamp on ES: ", last)
 		}
 		log.Println("1. Num ads to update", len(updatedAds))
@@ -155,7 +137,9 @@ func main() {
 			indexAdFromAdData(&value)
 		}
 		time.Sleep(10 * time.Second)
-		if updatedCampaigns, err = getLastUpdatedCampaigns(mongoSession, "campaigns", last); err != nil {
+		last = getESLastUpdated("_updated_campaign")
+		log.Println("Last campaign updated timestamp:", last.Format(time.RFC3339))
+		if updatedCampaigns, err = getLastUpdated(mongoSession, "campaigns", last); err != nil {
 			log.Println("Error while getting latest campaigns data from mongodb. Last updated timestamp on ES: ", last)
 		}
 		log.Println("2. Num campaigns to update", len(updatedCampaigns))
@@ -178,14 +162,15 @@ func main() {
 }
 func indexAdFromCampaignData(c *Ad, ad_id string) *DeError {
 	var ad Ad
+
 	ad.AdId = bson.ObjectIdHex(ad_id)
-	//here the c.AdId is really the campaign id
-	ad.CampaignId = c.AdId
-	ad.Updated = c.Updated
+	//c.paused represents campaign paused.
+	ad.CampaignPaused = c.Paused
+	//c.Updated represents campaign updated
+	ad.CampaignUpdated = c.Updated
 	ad.Locations = c.Locations
 	ad.Account = c.Account
 	ad.ExcludedLocations = c.ExcludedLocations
-	ad.Paused = c.Paused
 	ad.GoalViews = c.GoalViews
 	ad.GoalPeriod = c.GoalPeriod
 

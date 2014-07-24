@@ -23,6 +23,7 @@ func indexAd(ad *Ad) *DeError {
 	for index, _ = range ad.ExcludedLocations {
 		ad.ExcludedLocations[index] = strings.ToLower(ad.ExcludedLocations[index])
 	}
+	ad.Status = strings.ToLower(ad.Status)
 
 	if jsonBytes, serr := json.Marshal(ad); serr != nil {
 		return NewError(500, serr)
@@ -44,6 +45,8 @@ func updateAd(ad *Ad) *DeError {
 	for index, _ = range ad.ExcludedLocations {
 		ad.ExcludedLocations[index] = strings.ToLower(ad.ExcludedLocations[index])
 	}
+	ad.Status = strings.ToLower(ad.Status)
+
 	if jsonBytes, serr := json.Marshal(ad); serr != nil {
 		glog.Error(serr)
 		return NewError(500, serr)
@@ -81,7 +84,10 @@ func processQuery(req *http.Request) ([]byte, *DeError) {
 	//send query to es
 	if ads, derr = queryES(positions, sq); derr != nil {
 		return nil, derr
-	} else if byteArray, err = json.MarshalIndent(ads, "", "    "); err != nil {
+	}
+
+	sqr := &SearchQueryResponse{AdUnits:ads}
+	if byteArray, err = json.MarshalIndent(sqr, "", "    "); err != nil {
 		return nil, NewError(500, err)
 	}
 	return byteArray, nil
@@ -101,7 +107,7 @@ func queryES(positions int, sq SearchQuery) ([]Ad, *DeError) {
 
 		ads = make([]Ad, len(sresult.Hits.Hits))
 		for i, hit := range sresult.Hits.Hits {
-			if byteArray, err = hit.Source.MarshalJSON(); err != nil {
+			if byteArray, err = json.Marshal(hit.Source); err != nil {
 				return nil, NewError(500, err)
 			} else if err = json.Unmarshal(byteArray, &ads[i]); err != nil {
 				return nil, NewError(500, err)
@@ -109,8 +115,9 @@ func queryES(positions int, sq SearchQuery) ([]Ad, *DeError) {
 		}
 		//send this when empty results are obtained
 	} else {
+		target,_ := json.Marshal(&sq)
 		//A degradation logic could be implemented here instead of sending error response
-		return nil, NewError(200, "No ads were found matching the target criteria")
+		return nil, NewError(404, "No ads were found matching the target criteria - " + string(target))
 	}
 	glog.Info(`{"took_ms":`, sresult.Took, `,"timedout":`, sresult.TimedOut, `,"hitct":`, sresult.Hits.Total, "}")
 	return ads, nil
@@ -122,8 +129,12 @@ func createESQueryString(numPositions int, sq SearchQuery) string {
 		loc []byte
 		q   string
 	)
-
-	q = `{"size":`
+	q = `{"_source":
+			{
+			"include": ["_id","campaign","title","description","account","tactic","video_url","thumbnail_url","channel","channel_url","duration"],
+			"exclude": ["paused_ad","paused_campaign"]
+			},`
+	q += `"size":`
 	q += strconv.Itoa(numPositions) + ","
 	q += `"query": {
       "function_score": {
@@ -131,8 +142,8 @@ func createESQueryString(numPositions int, sq SearchQuery) string {
             "filtered": {
                 "filter":   {`
 	delim := ""
-	useMustFilter := (sq.Locations != nil && len(sq.Locations) > 0) || (sq.Languages != nil && len(sq.Languages) > 0) || sq.AdFormat > 0
-	//useMustFilter := true
+	//useMustFilter := (sq.Locations != nil && len(sq.Locations) > 0) || (sq.Languages != nil && len(sq.Languages) > 0) || sq.AdFormat > 0
+	useMustFilter := true
 
 	q += `"bool":{`
 	if useMustFilter {
@@ -158,13 +169,15 @@ func createESQueryString(numPositions int, sq SearchQuery) string {
 			q += delim + `{ "query":  {"term": { "ad_formats":` + strconv.Itoa(sq.AdFormat) + `}}}`
 			delim = ","
 		}
+		q += delim + `{ "query":  {"term": { "status": "approved"}}}`
+		delim = ","
 		q += `]`
 	}
+
 	q += delim + `"must_not":[`
-	//is_paused and goal_reached are separate fields
-	//so they can be changed independently
-	q += `{ "query":  {"term": { "paused": "true"}}}`
-	q += `,{ "query":  {"term": { "status": "inactive"}}}`
+	q += `{ "query":  {"term": { "paused_campaign": true}}}`
+	q += `,{ "query":  {"term": { "paused_ad": true}}}`
+
 	if len(sq.Locations) > 0 && err == nil {
 		q += `,{ "query":  {"terms": { "excluded_locations":` + strings.ToLower(string(loc)) + `}}}`
 		delim = ","
