@@ -10,7 +10,7 @@ import (
 	"labix.org/v2/mgo/bson"
 	"log"
 	"time"
-	"github.com/dailymotion/pixelle-de/common"
+	"github.com/dailymotion/pixelle-de"
 )
 
 const (
@@ -73,12 +73,12 @@ func getESLastUpdated(col string) time.Time {
 	return sTime
 }
 
-func getLastUpdated(mongoSession *mgo.Session, coll string, last time.Time) ([]common.Ad, error) {
+func getLastUpdated(mongoSession *mgo.Session, coll string, last time.Time) ([]de.Ad, error) {
 
 	var (
 		err  error
-		ad_s []common.Ad
-		ad   common.Ad
+		ad_s []de.Ad
+		ad   de.Ad
 	)
 	iter := RunQuery(mongoSession, coll, last)
 	for {
@@ -124,7 +124,7 @@ func main() {
 	// within the session will be observed in following queries (read-your-writes).
 	// http://godoc.org/labix.org/v2/mgo#Session.SetMode
 	mongoSession.SetMode(mgo.Monotonic, true)
-	var updatedAds, updatedCampaigns []common.Ad
+	var updatedAds, updatedCampaigns []de.Ad
 	// Perform 10 concurrent queries against the database.
 	var last time.Time
 	for {
@@ -147,7 +147,7 @@ func main() {
 		log.Println("2. Num campaigns to update", len(updatedCampaigns))
 		for _, v := range updatedCampaigns {
 			// here the v.AdId is really the campaign Id
-			if adIds, err := common.GetAdIdsByCampaign(v.AdId.Hex()); err != nil {
+			if adIds, err := de.GetAdIdsByCampaign(v.AdId.Hex()); err != nil {
 				panic(err.Error())
 			} else {
 				for _, val := range adIds {
@@ -162,8 +162,8 @@ func main() {
 		time.Sleep(1 * time.Minute)
 	}
 }
-func indexAdFromCampaignData(c *common.Ad, ad_id string) *common.DeError {
-	var ad common.Ad
+func indexAdFromCampaignData(c *de.Ad, ad_id string) *de.DeError {
+	var ad de.Ad
 
 	ad.AdId = bson.ObjectIdHex(ad_id)
 	//c.paused represents campaign paused.
@@ -176,9 +176,9 @@ func indexAdFromCampaignData(c *common.Ad, ad_id string) *common.DeError {
 	ad.GoalViews = c.GoalViews
 	ad.GoalPeriod = c.GoalPeriod
 
-	return common.UpdateAd(&ad)
+	return de.UpdateAd(&ad)
 }
-func indexAdFromAdData(addb *common.Ad) *common.DeError {
-	return common.IndexAd(addb)
+func indexAdFromAdData(addb *de.Ad) *de.DeError {
+	return de.IndexAd(addb)
 
 }

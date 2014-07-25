@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"github.com/dailymotion/pixelle-de/common"
+	"github.com/dailymotion/pixelle-de"
 	"github.com/golang/glog"
 	"github.com/gorilla/mux"
 	"github.com/mattbaird/elastigo/api"
@@ -10,43 +10,43 @@ import (
 	"encoding/json"
 )
 
-type AppHandler func(http.ResponseWriter, *http.Request) ([]byte, *common.DeError)
+type AppHandler func(http.ResponseWriter, *http.Request) ([]byte, *de.DeError)
 
 func (fn AppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if response, e := fn(w, r); e != nil { // e is *common.DeError, not os.Error.
+	if response, e := fn(w, r); e != nil { // e is *de.DeError, not os.Error.
 		setErrorResponse(w, e)
 	} else {
 		setResponse(w, http.StatusOK, response)
 	}
 }
 
-func PostAd(resp http.ResponseWriter, req *http.Request) ([]byte, *common.DeError) {
-	return common.PostAdToES(req)
+func PostAd(resp http.ResponseWriter, req *http.Request) ([]byte, *de.DeError) {
+	return de.PostAdToES(req)
 }
 
-func DeleteAd(resp http.ResponseWriter, req *http.Request) ([]byte, *common.DeError) {
+func DeleteAd(resp http.ResponseWriter, req *http.Request) ([]byte, *de.DeError) {
 	var (
 		id string
 	)
 	if id = mux.Vars(req)["id"]; id == "" {
-		return nil, common.NewError(400, "no id provided")
+		return nil, de.NewError(400, "no id provided")
 	} else {
-		return nil, common.DeleteAdById(id)
+		return nil, de.DeleteAdById(id)
 	}
 }
-func GetAd(resp http.ResponseWriter, req *http.Request) ([]byte, *common.DeError) {
+func GetAd(resp http.ResponseWriter, req *http.Request) ([]byte, *de.DeError) {
 	var (
 		id string
 	)
 	if id = mux.Vars(req)["id"]; id == "" {
-		return nil, common.NewError(400, "no id provided")
+		return nil, de.NewError(400, "no id provided")
 	} else {
-		return common.GetAdById(id)
+		return de.GetAdById(id)
 	}
 }
 
-func PostQuery(resp http.ResponseWriter, req *http.Request) ([]byte, *common.DeError) {
-	return common.ProcessQuery(req)
+func PostQuery(resp http.ResponseWriter, req *http.Request) ([]byte, *de.DeError) {
+	return de.ProcessQuery(req)
 }
 
 //since ResponseWriter is an interface and has a pointer inside, we pass it by value
@@ -57,7 +57,7 @@ func setResponse(resp http.ResponseWriter, status int, body []byte) {
 	resp.Write(body)
 	glog.Info(`{"status":`, status, `,"headers":`, `"`, resp.Header(), `"`, `,"body":`, `"`, string(body), `"}`)
 }
-func setErrorResponse(resp http.ResponseWriter, err *common.DeError) {
+func setErrorResponse(resp http.ResponseWriter, err *de.DeError) {
 	var responseBytes []byte
 	var serr error
 	if responseBytes, serr = json.MarshalIndent(err, "", "    "); serr != nil {

@@ -1,4 +1,4 @@
-package common
+package de
 
 import (
 	"labix.org/v2/mgo/bson"
