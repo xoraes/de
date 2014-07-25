@@ -224,7 +224,7 @@ func DeleteAdById(id string) *DeError {
 	return nil
 }
 
-func PostAdToES(req *http.Request) ([]byte, *DeError) {
+func PostAd(req *http.Request) ([]byte, *DeError) {
 	var (
 		ad   Ad
 		err  *DeError

@@ -1,16 +1,15 @@
 package main
 
 import (
-
 	"encoding/json"
 	"flag"
+	de "github.com/dailymotion/pixelle-de"
 	"github.com/mattbaird/elastigo/api"
 	"github.com/mattbaird/elastigo/core"
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
 	"log"
 	"time"
-	"github.com/dailymotion/pixelle-de"
 )
 
 const (

@@ -1,13 +1,13 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
-	"github.com/dailymotion/pixelle-de"
+	de "github.com/dailymotion/pixelle-de"
 	"github.com/golang/glog"
 	"github.com/gorilla/mux"
 	"github.com/mattbaird/elastigo/api"
 	"net/http"
-	"encoding/json"
 )
 
 type AppHandler func(http.ResponseWriter, *http.Request) ([]byte, *de.DeError)
@@ -21,7 +21,7 @@ func (fn AppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func PostAd(resp http.ResponseWriter, req *http.Request) ([]byte, *de.DeError) {
-	return de.PostAdToES(req)
+	return de.PostAd(req)
 }
 
 func DeleteAd(resp http.ResponseWriter, req *http.Request) ([]byte, *de.DeError) {
@@ -95,7 +95,6 @@ func main() {
 	//there is no such thing as deleting a query
 
 	http.Handle("/", rtr)
-
 
 	if err := http.ListenAndServe(":7001", nil); err != nil {
 		glog.Error("Error starting server, port 7001 is likely in use")
