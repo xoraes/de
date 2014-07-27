@@ -1,4 +1,4 @@
-package de
+package delib
 
 import (
 	"labix.org/v2/mgo/bson"

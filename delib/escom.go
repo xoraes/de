@@ -1,4 +1,4 @@
-package de
+package delib
 
 import (
 	"encoding/json"
@@ -53,7 +53,7 @@ func UpdateAd(ad *Ad) *DeError {
 		return NewError(500, serr)
 	} else {
 		fmt.Println("Updating ad w/campaign data:", string(jsonBytes))
-		if _, serr := core.UpdateWithPartialDoc("campaigns", "ads", ad.Id.Hex(), nil, string(jsonBytes), false); serr != nil {
+		if _, serr := core.UpdateWithPartialDoc("campaigns", "ads", ad.Id.Hex(), nil, string(jsonBytes), true); serr != nil {
 			glog.Error(serr)
 			return NewError(500, serr)
 		}

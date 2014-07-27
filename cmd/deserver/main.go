@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	de "github.com/dailymotion/pixelle-de"
+	de "github.com/dailymotion/pixelle-de/delib"
 	"github.com/golang/glog"
 	"github.com/gorilla/mux"
 	"github.com/mattbaird/elastigo/api"

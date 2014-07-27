@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	 de "github.com/dailymotion/pixelle-de"
+	 de "github.com/dailymotion/pixelle-de/delib"
 	"github.com/mattbaird/elastigo/api"
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
@@ -73,7 +73,7 @@ func main() {
 		}
 		log.Println("1. Num ads to update", len(updatedAds))
 		for _, value := range updatedAds {
-			de.IndexAd(&value)
+			de.UpdateAd(&value)
 		}
 
 		//sleep for a bit for ES to catch up
