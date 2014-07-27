@@ -33,7 +33,7 @@ func indexAdFromCampaignData(c *de.Ad, ad_id string) *de.DeError {
 // update themselves with new/update campaign information from campaign db.
 
 func main() {
-	var       (
+	var (
 		url    string
 		repeat int
 	)
