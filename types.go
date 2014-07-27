@@ -6,7 +6,7 @@ import (
 )
 
 type Ad struct {
-	AdId              bson.ObjectId `bson:"_id,omitempty" json:"_id,omitempty"`
+	Id                bson.ObjectId `bson:"_id,omitempty" json:"_id,omitempty"`
 	CampaignId        bson.ObjectId `bson:"campaign,omitempty" json:"campaign,omitempty"`
 	TacticId          bson.ObjectId `bson:"tactic,omitempty" json:"tactic,omitempty"`
 	ChannelId         bson.ObjectId `bson:"channel,omitempty" json:"channel,omitempty"`

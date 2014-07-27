@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func IndexAd(ad *Ad) *DeError {
@@ -27,7 +28,7 @@ func IndexAd(ad *Ad) *DeError {
 
 	if jsonBytes, serr := json.Marshal(ad); serr != nil {
 		return NewError(500, serr)
-	} else if _, serr := core.Index("campaigns", "ads", ad.AdId.Hex(), nil, jsonBytes); serr != nil {
+	} else if _, serr := core.Index("campaigns", "ads", ad.Id.Hex(), nil, jsonBytes); serr != nil {
 		glog.Error(serr)
 		return NewError(500, serr)
 	}
@@ -52,7 +53,7 @@ func UpdateAd(ad *Ad) *DeError {
 		return NewError(500, serr)
 	} else {
 		fmt.Println("Updating ad w/campaign data:", string(jsonBytes))
-		if _, serr := core.UpdateWithPartialDoc("campaigns", "ads", ad.AdId.Hex(), nil, string(jsonBytes), false); serr != nil {
+		if _, serr := core.UpdateWithPartialDoc("campaigns", "ads", ad.Id.Hex(), nil, string(jsonBytes), false); serr != nil {
 			glog.Error(serr)
 			return NewError(500, serr)
 		}
@@ -233,7 +234,7 @@ func PostAd(req *http.Request) ([]byte, *DeError) {
 	decoder := json.NewDecoder(req.Body)
 	if serr = decoder.Decode(&ad); serr != nil {
 		return nil, NewError(500, serr)
-	} else if ad.AdId == "" {
+	} else if ad.Id == "" {
 		return nil, NewError(400, "no ad_id found")
 	} else if err = IndexAd(&ad); err != nil {
 		return nil, NewError(500, err)
@@ -257,4 +258,39 @@ func GetAdIdsByCampaign(cid string) ([]string, *DeError) {
 		ids = append(ids, v.Id)
 	}
 	return ids, nil
+}
+func GetESLastUpdated(col string) time.Time {
+	var err error
+	var result core.SearchResult
+	var sTime time.Time
+	var responseBytes []byte
+	type TType struct {
+		Updated_Ad       []time.Time `json:"_updated_ad,omitempty"`
+		Updated_Campaign []time.Time `json:"_updated_campaign,omitempty"`
+	}
+	var lastUpdated TType
+
+	q := `{ "size":1, "fields":["` + col + `"], "query" : { "match_all":{} } , "sort" : [ { "` + col + `" : { "order":"desc" } } ] }`
+
+	result, err = core.SearchRequest("campaigns", "ads", nil, q)
+	if &result != nil && &result.Hits != nil && len(result.Hits.Hits) > 0 && result.Hits.Hits[0].Fields != nil {
+		if responseBytes, err = result.Hits.Hits[0].Fields.MarshalJSON(); err != nil {
+			glog.Info("Unable to Marshall from ES. Using default date: ", time.Time{})
+		return sTime
+	} else {
+		if err = json.Unmarshal(responseBytes, &lastUpdated); err != nil {
+			glog.Info("Unable to Unmarshall last updated from ES. Using default date - ", err)
+			return sTime
+		} else {
+			if len(lastUpdated.Updated_Ad) > 0 {
+				sTime = lastUpdated.Updated_Ad[0]
+			} else if len(lastUpdated.Updated_Campaign) > 0 {
+				sTime = lastUpdated.Updated_Campaign[0]
+			}
+		}
+
+	}
+}
+
+return sTime
 }
