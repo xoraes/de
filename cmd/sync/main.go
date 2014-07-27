@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	 de "github.com/dailymotion/pixelle-de/delib"
+	de "github.com/dailymotion/pixelle-de/delib"
 	"github.com/mattbaird/elastigo/api"
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
@@ -29,13 +29,12 @@ func indexAdFromCampaignData(c *de.Ad, ad_id string) *de.DeError {
 	return de.UpdateAd(&ad)
 }
 
-
 // DE servers run a process every X seconds (default 60 secs) to query data from campaign db and
 // update themselves with new/update campaign information from campaign db.
 
 func main() {
-	var (
-		url string
+	var       (
+		url    string
 		repeat int
 	)
 
@@ -68,7 +67,7 @@ func main() {
 		last = de.GetESLastUpdated("_updated_ad")
 		log.Println("Last ad updated timestamp:", last.Format(time.RFC3339))
 
-		if updatedAds, err = de.GetLastUpdated(mongoSession,"ads", last); err != nil {
+		if updatedAds, err = de.GetLastUpdated(mongoSession, "ads", last); err != nil {
 			log.Println("Error while getting latest ads data from mongodb. Last updated timestamp on ES: ", last)
 		}
 		log.Println("1. Num ads to update", len(updatedAds))
@@ -82,7 +81,7 @@ func main() {
 		//Update campaign data from mongo to ES
 		last = de.GetESLastUpdated("_updated_campaign")
 		log.Println("Last campaign updated timestamp:", last.Format(time.RFC3339))
-		if updatedCampaigns, err = de.GetLastUpdated(mongoSession,"campaigns", last); err != nil {
+		if updatedCampaigns, err = de.GetLastUpdated(mongoSession, "campaigns", last); err != nil {
 			log.Println("Error while getting latest campaigns data from mongodb. Last updated timestamp on ES: ", last)
 		}
 		log.Println("2. Num campaigns to update", len(updatedCampaigns))
@@ -104,4 +103,3 @@ func main() {
 		time.Sleep(time.Duration(60) * time.Second)
 	}
 }
-

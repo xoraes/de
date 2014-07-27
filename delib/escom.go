@@ -276,21 +276,21 @@ func GetESLastUpdated(col string) time.Time {
 	if &result != nil && &result.Hits != nil && len(result.Hits.Hits) > 0 && result.Hits.Hits[0].Fields != nil {
 		if responseBytes, err = result.Hits.Hits[0].Fields.MarshalJSON(); err != nil {
 			glog.Info("Unable to Marshall from ES. Using default date: ", time.Time{})
-		return sTime
-	} else {
-		if err = json.Unmarshal(responseBytes, &lastUpdated); err != nil {
-			glog.Info("Unable to Unmarshall last updated from ES. Using default date - ", err)
 			return sTime
 		} else {
-			if len(lastUpdated.Updated_Ad) > 0 {
-				sTime = lastUpdated.Updated_Ad[0]
-			} else if len(lastUpdated.Updated_Campaign) > 0 {
-				sTime = lastUpdated.Updated_Campaign[0]
+			if err = json.Unmarshal(responseBytes, &lastUpdated); err != nil {
+				glog.Info("Unable to Unmarshall last updated from ES. Using default date - ", err)
+				return sTime
+			} else {
+				if len(lastUpdated.Updated_Ad) > 0 {
+					sTime = lastUpdated.Updated_Ad[0]
+				} else if len(lastUpdated.Updated_Campaign) > 0 {
+					sTime = lastUpdated.Updated_Campaign[0]
+				}
 			}
+
 		}
-
 	}
-}
 
-return sTime
+	return sTime
 }

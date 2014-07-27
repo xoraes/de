@@ -2,9 +2,9 @@ package delib
 
 import (
 	"labix.org/v2/mgo"
-	"time"
 	"labix.org/v2/mgo/bson"
 	"log"
+	"time"
 )
 
 func GetLastUpdated(mongoSession *mgo.Session, coll string, last time.Time) ([]Ad, error) {
@@ -42,4 +42,3 @@ func GetLastUpdated(mongoSession *mgo.Session, coll string, last time.Time) ([]A
 	}
 	return ad_s, err
 }
-
