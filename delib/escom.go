@@ -52,7 +52,7 @@ func UpdateAd(ad *Ad) *DeError {
 		glog.Error(serr)
 		return NewError(500, serr)
 	} else {
-		fmt.Println("Updating ad w/campaign data:", string(jsonBytes))
+		fmt.Println("Updating ad on ES:", string(jsonBytes))
 		if _, serr := core.UpdateWithPartialDoc("campaigns", "ads", ad.Id.Hex(), nil, string(jsonBytes), true); serr != nil {
 			glog.Error(serr)
 			return NewError(500, serr)

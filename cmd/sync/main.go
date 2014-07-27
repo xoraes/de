@@ -87,13 +87,10 @@ func main() {
 		}
 		log.Println("2. Num campaigns to update", len(updatedCampaigns))
 		for _, v := range updatedCampaigns {
-			log.Println(v.Id.Hex())
 			// here the v.AdId is really the campaign Id
 			if adIds, err := de.GetAdIdsByCampaign(v.Id.Hex()); err != nil {
-
 				panic(err.Error())
 			} else {
-				log.Println("ad ids" , adIds)
 				for _, val := range adIds {
 					if err = indexAdFromCampaignData(&v, val); err != nil {
 						panic(err.Error())
