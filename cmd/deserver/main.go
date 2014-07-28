@@ -6,7 +6,6 @@ import (
 	de "github.com/dailymotion/pixelle-de/delib"
 	"github.com/golang/glog"
 	"github.com/gorilla/mux"
-	"github.com/mattbaird/elastigo/api"
 	"net/http"
 )
 
@@ -78,8 +77,6 @@ func main() {
 	flag.StringVar(&eshost, "eshost", "localhost", "Elasticsearch host ip or hostname")
 	flag.StringVar(&esport, "esport", "9200", "Elasticsearch port")
 	flag.Parse()
-	api.Domain = eshost
-	api.Port = esport
 
 	rtr := mux.NewRouter()
 	rtr.Handle("/healthcheck", AppHandler(PostQuery)).Methods("GET")

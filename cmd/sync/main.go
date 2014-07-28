@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	de "github.com/dailymotion/pixelle-de/delib"
-	"github.com/mattbaird/elastigo/api"
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
 	"log"
@@ -42,9 +41,6 @@ func main() {
 	flag.IntVar(&repeat, "repeat", 60, "time interval in seconds for sync to query mongodb")
 
 	flag.Parse()
-
-	api.Domain = "0.0.0.0"
-	api.Port = "9200"
 
 	// Create a session which maintains a pool of socket connections
 	// to our MongoDB.

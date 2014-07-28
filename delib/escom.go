@@ -4,14 +4,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/golang/glog"
-	"github.com/mattbaird/elastigo/api"
-	"github.com/mattbaird/elastigo/core"
+	elastigo "github.com/mattbaird/elastigo/lib"
 	"io"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 )
+
+var c *elastigo.Conn
+
+func init() {
+	c = elastigo.NewConn()
+}
 
 func IndexAd(ad *Ad) *DeError {
 	var index int
@@ -28,7 +33,7 @@ func IndexAd(ad *Ad) *DeError {
 
 	if jsonBytes, serr := json.Marshal(ad); serr != nil {
 		return NewError(500, serr)
-	} else if _, serr := core.Index("campaigns", "ads", ad.Id.Hex(), nil, jsonBytes); serr != nil {
+	} else if _, serr := c.Index("campaigns", "ads", ad.Id.Hex(), nil, jsonBytes); serr != nil {
 		glog.Error(serr)
 		return NewError(500, serr)
 	}
@@ -53,7 +58,7 @@ func UpdateAd(ad *Ad) *DeError {
 		return NewError(500, serr)
 	} else {
 		fmt.Println("Updating ad on ES:", string(jsonBytes))
-		if _, serr := core.UpdateWithPartialDoc("campaigns", "ads", ad.Id.Hex(), nil, string(jsonBytes), true); serr != nil {
+		if _, serr := c.UpdateWithPartialDoc("campaigns", "ads", ad.Id.Hex(), nil, string(jsonBytes), true); serr != nil {
 			glog.Error(serr)
 			return NewError(500, serr)
 		}
@@ -98,10 +103,10 @@ func queryES(positions int, sq SearchQuery) ([]Ad, *DeError) {
 		byteArray []byte
 		err       error
 		ads       []Ad
-		sresult   core.SearchResult
+		sresult   elastigo.SearchResult
 	)
 	//run the actual query using elastigo
-	if sresult, err = core.SearchRequest("campaigns", "ads", nil, createESQueryString(positions, sq)); err != nil {
+	if sresult, err = c.Search("campaigns", "ads", nil, createESQueryString(positions, sq)); err != nil {
 		return nil, NewError(500, err)
 		//if any results are obtained
 	} else if &sresult != nil && sresult.Hits.Total > 0 {
@@ -193,13 +198,13 @@ func createESQueryString(numPositions int, sq SearchQuery) string {
 
 func GetAdById(id string) ([]byte, *DeError) {
 	var (
-		qres          api.BaseResponse
+		qres          elastigo.BaseResponse
 		serr          error
 		br            []byte
 		ad            *Ad
 		responseBytes []byte
 	)
-	if qres, serr = core.Get("campaigns", "ads", id, nil); serr != nil {
+	if qres, serr = c.Get("campaigns", "ads", id, nil); serr != nil {
 		return nil, NewError(500, "Error talking to ES")
 	} else if !qres.Found {
 		return nil, NewError(400, "Could not find id in ES: "+id)
@@ -214,7 +219,7 @@ func GetAdById(id string) ([]byte, *DeError) {
 }
 func DeleteAdById(id string) *DeError {
 	glog.Info("ad to delete: " + id)
-	if qres, err := core.Delete("campaigns", "ads", id, nil); err != nil {
+	if qres, err := c.Delete("campaigns", "ads", id, nil); err != nil {
 		return NewError(500, err)
 	} else {
 		if !qres.Found {
@@ -247,11 +252,11 @@ func PostAd(req *http.Request) ([]byte, *DeError) {
 func GetAdIdsByCampaign(cid string) ([]string, *DeError) {
 	var (
 		serr    error
-		sresult core.SearchResult
+		sresult elastigo.SearchResult
 		ids     []string
 	)
 	q := `{"filter": {"bool": {"must": [{"term": {"campaign":"` + cid + `"}}]}},"fields": []}`
-	if sresult, serr = core.SearchRequest("campaigns", "ads", nil, q); serr != nil {
+	if sresult, serr = c.Search("campaigns", "ads", nil, q); serr != nil {
 		return nil, NewError(500, serr)
 	}
 	for _, v := range sresult.Hits.Hits {
@@ -261,7 +266,7 @@ func GetAdIdsByCampaign(cid string) ([]string, *DeError) {
 }
 func GetESLastUpdated(col string) time.Time {
 	var err error
-	var result core.SearchResult
+	var result elastigo.SearchResult
 	var sTime time.Time
 	var responseBytes []byte
 	type TType struct {
@@ -272,7 +277,7 @@ func GetESLastUpdated(col string) time.Time {
 
 	q := `{ "size":1, "fields":["` + col + `"], "query" : { "match_all":{} } , "sort" : [ { "` + col + `" : { "order":"desc" } } ] }`
 
-	result, err = core.SearchRequest("campaigns", "ads", nil, q)
+	result, err = c.Search("campaigns", "ads", nil, q)
 	if &result != nil && &result.Hits != nil && len(result.Hits.Hits) > 0 && result.Hits.Hits[0].Fields != nil {
 		if responseBytes, err = result.Hits.Hits[0].Fields.MarshalJSON(); err != nil {
 			glog.Info("Unable to Marshall from ES. Using default date: ", time.Time{})
