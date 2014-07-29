@@ -9,7 +9,7 @@ type Ad struct {
 	Id                bson.ObjectId `bson:"_id,omitempty" json:"_id,omitempty"`
 	CampaignId        bson.ObjectId `bson:"campaign,omitempty" json:"campaign,omitempty"`
 	TacticId          bson.ObjectId `bson:"tactic,omitempty" json:"tactic,omitempty"`
-	ChannelId         bson.ObjectId `bson:"channel,omitempty" json:"channel,omitempty"`
+	ChannelId         string        `bson:"channel,omitempty" json:"channel,omitempty"`
 	Account           bson.ObjectId `bson:"account,omitempty" json:"account,omitempty"`
 	Languages         []string      `bson:"languages,omitempty" json:"languages,omitempty"`
 	Locations         []string      `bson:"locations,omitempty" json:"locations,omitempty"`
