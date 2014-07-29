@@ -123,7 +123,7 @@ func queryES(positions int, sq SearchQuery) ([]Ad, *DeError) {
 	} else {
 		target, _ := json.Marshal(&sq)
 		//A degradation logic could be implemented here instead of sending error response
-		return nil, NewError(404, "No ads were found matching the target criteria - "+string(target))
+		return nil, NewError(200, "No ads were found matching the target criteria - "+string(target))
 	}
 	glog.Info(`{"took_ms":`, sresult.Took, `,"timedout":`, sresult.TimedOut, `,"hitct":`, sresult.Hits.Total, "}")
 	return ads, nil
