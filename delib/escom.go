@@ -137,7 +137,7 @@ func createESQueryString(numPositions int, sq SearchQuery) string {
 	)
 	q = `{"_source":
 			{
-			"include": ["_id","campaign","title","description","account","tactic","video_url","thumbnail_url","channel","channel_url","duration"],
+			"include": ["id","campaign","title","description","account","tactic","video_url","thumbnail_url","channel","channel_url","duration"],
 			"exclude": ["paused_ad","paused_campaign"]
 			},`
 	q += `"size":`
@@ -240,7 +240,7 @@ func PostAd(req *http.Request) ([]byte, *DeError) {
 	if serr = decoder.Decode(&ad); serr != nil {
 		return nil, NewError(500, serr)
 	} else if ad.Id == "" {
-		return nil, NewError(400, "no ad_id found")
+		return nil, NewError(400, "no ad id found")
 	} else if err = IndexAd(&ad); err != nil {
 		return nil, NewError(500, err)
 	} else {

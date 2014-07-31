@@ -9,7 +9,7 @@ curl -XPUT "http://$1:9200/campaigns/" -d '{
                 "enabled" : true
             },
             "properties" : {
-                "_id" : { "type" : "string", "index" : "not_analyzed" },
+                "id" : { "type" : "string", "index" : "not_analyzed" },
                 "locations" : { "type" : "string", "index" : "not_analyzed" },
                 "languages" : { "type" : "string", "index" : "not_analyzed" },
                 "excluded_locations" : { "type" : "string", "index" : "not_analyzed" },                
