@@ -41,7 +41,7 @@ type SearchQuery struct {
 	Languages []string `json:"languages,omitempty"`
 	Locations []string `json:"locations,omitempty"`
 	AdFormat  int      `json:"format,omitempty"`
-	Category  string   `json:"category,omitempty"`
+	Category  []string `json:"category,omitempty"`
 	Device    int      `json:"device,omitempty"`
 }
 
