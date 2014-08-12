@@ -138,7 +138,7 @@ func createESQueryString(numPositions int, sq SearchQuery) string {
 	)
 	q = `{"_source":
 			{
-			"include": ["ad","campaign","title","description","account","tactic","video_url","thumbnail_url","channel","channel_url","duration"]
+			"include": ["ad","campaign","title","description","account","tactic","video_url","thumbnail_url","channel","channel_url","duration","cpc"]
 			},`
 	q += `"size":`
 	q += strconv.Itoa(numPositions) + ","
