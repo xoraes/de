@@ -18,59 +18,59 @@ func init() {
 	c = elastigo.NewConn()
 }
 
-func IndexAd(ad *Ad) *DeError {
+func IndexAd(unit *Unit) *DeError {
 	var index int
-	for index, _ = range ad.Languages {
-		ad.Languages[index] = strings.ToLower(ad.Languages[index])
+	for index, _ = range unit.Languages {
+		unit.Languages[index] = strings.ToLower(unit.Languages[index])
 	}
-	for index, _ = range ad.Locations {
-		ad.Locations[index] = strings.ToLower(ad.Locations[index])
+	for index, _ = range unit.Locations {
+		unit.Locations[index] = strings.ToLower(unit.Locations[index])
 	}
-	for index, _ = range ad.ExcludedLocations {
-		ad.ExcludedLocations[index] = strings.ToLower(ad.ExcludedLocations[index])
+	for index, _ = range unit.ExcludedLocations {
+		unit.ExcludedLocations[index] = strings.ToLower(unit.ExcludedLocations[index])
 	}
-	ad.Status = strings.ToLower(ad.Status)
+	unit.Status = strings.ToLower(unit.Status)
 
-	if jsonBytes, serr := json.Marshal(ad); serr != nil {
+	if jsonBytes, serr := json.Marshal(unit); serr != nil {
 		return NewError(500, serr)
-	} else if _, serr := c.Index("campaigns", "ads", ad.Id.Hex(), nil, jsonBytes); serr != nil {
+	} else if _, serr := c.Index("campaigns", "ads", unit.Id, nil, jsonBytes); serr != nil {
 		glog.Error(serr)
 		return NewError(500, serr)
 	}
 	return nil
 }
-func UpdateAd(ad *Ad) *DeError {
+func UpdateAd(unit *Unit) *DeError {
 
 	var index int
-	for index, _ = range ad.Languages {
-		ad.Languages[index] = strings.ToLower(ad.Languages[index])
+	for index, _ = range unit.Languages {
+		unit.Languages[index] = strings.ToLower(unit.Languages[index])
 	}
-	for index, _ = range ad.Locations {
-		ad.Locations[index] = strings.ToLower(ad.Locations[index])
+	for index, _ = range unit.Locations {
+		unit.Locations[index] = strings.ToLower(unit.Locations[index])
 	}
-	for index, _ = range ad.ExcludedLocations {
-		ad.ExcludedLocations[index] = strings.ToLower(ad.ExcludedLocations[index])
+	for index, _ = range unit.ExcludedLocations {
+		unit.ExcludedLocations[index] = strings.ToLower(unit.ExcludedLocations[index])
 	}
-	ad.Status = strings.ToLower(ad.Status)
+	unit.Status = strings.ToLower(unit.Status)
 
-	if jsonBytes, serr := json.Marshal(ad); serr != nil {
+	if jsonBytes, serr := json.Marshal(unit); serr != nil {
 		glog.Error(serr)
 		return NewError(500, serr)
 	} else {
 		fmt.Println("Updating ad on ES:", string(jsonBytes))
-		if _, serr := c.UpdateWithPartialDoc("campaigns", "ads", ad.Id.Hex(), nil, string(jsonBytes), true); serr != nil {
+		if _, serr := c.UpdateWithPartialDoc("campaigns", "ads", unit.Id, nil, string(jsonBytes), true); serr != nil {
 			glog.Error(serr)
 			return NewError(500, serr)
 		}
 	}
 	return nil
 }
-func ProcessQuery(req *http.Request) ([]byte, *DeError) {
+func ProcessESQuery(req *http.Request) ([]byte, *DeError) {
 	var (
 		byteArray []byte
 		err       error
 		derr      *DeError
-		ads       []Ad
+		ads       []Unit
 		sq        SearchQuery
 		positions int
 	)
@@ -92,17 +92,17 @@ func ProcessQuery(req *http.Request) ([]byte, *DeError) {
 		return nil, derr
 	}
 
-	sqr := &SearchQueryResponse{AdUnits: ads}
+	sqr := &AdUnits{Items: ads}
 	if byteArray, err = json.MarshalIndent(sqr, "", "    "); err != nil {
 		return nil, NewError(500, err)
 	}
 	return byteArray, nil
 }
-func queryES(positions int, sq SearchQuery) ([]Ad, *DeError) {
+func queryES(positions int, sq SearchQuery) ([]Unit, *DeError) {
 	var (
 		byteArray []byte
 		err       error
-		ads       []Ad
+		ads       []Unit
 		sresult   elastigo.SearchResult
 	)
 	//run the actual query using elastigo
@@ -111,7 +111,7 @@ func queryES(positions int, sq SearchQuery) ([]Ad, *DeError) {
 		//if any results are obtained
 	} else if &sresult != nil && sresult.Hits.Total > 0 {
 
-		ads = make([]Ad, len(sresult.Hits.Hits))
+		ads = make([]Unit, len(sresult.Hits.Hits))
 		for i, hit := range sresult.Hits.Hits {
 			if byteArray, err = json.Marshal(hit.Source); err != nil {
 				return nil, NewError(500, err)
@@ -137,8 +137,7 @@ func createESQueryString(numPositions int, sq SearchQuery) string {
 	)
 	q = `{"_source":
 			{
-			"include": ["id","campaign","title","description","account","tactic","video_url","thumbnail_url","channel","channel_url","duration"],
-			"exclude": ["paused_ad","paused_campaign"]
+			"include": ["ad","campaign","title","description","account","tactic","video_url","thumbnail_url","channel","channel_url","duration"]
 			},`
 	q += `"size":`
 	q += strconv.Itoa(numPositions) + ","
@@ -175,20 +174,21 @@ func createESQueryString(numPositions int, sq SearchQuery) string {
 			q += delim + `{ "query":  {"term": { "ad_formats":` + strconv.Itoa(sq.AdFormat) + `}}}`
 			delim = ","
 		}
-		q += delim + `{ "query":  {"term": { "status": "approved"}}}`
+		q += delim + `{ "query":  {"term": { "status": "active"}}}`
 		delim = ","
 		q += `]`
 	}
+	if len(sq.Locations) > 0 {
+		q += delim + `"must_not":[`
+		delim = ""
 
-	q += delim + `"must_not":[`
-	q += `{ "query":  {"term": { "paused_campaign": true}}}`
-	q += `,{ "query":  {"term": { "paused_ad": true}}}`
-
-	if len(sq.Locations) > 0 && err == nil {
-		q += `,{ "query":  {"terms": { "excluded_locations":` + strings.ToLower(string(loc)) + `}}}`
-		delim = ","
+		if len(sq.Locations) > 0 && err == nil {
+			q += delim + `{ "query":  {"terms": { "excluded_locations":` + strings.ToLower(string(loc)) + `}}}`
+			delim = ","
+		}
+		q += `]`
 	}
-	q += `]}}}},"random_score": {}}}}`
+	q += `}}}},"random_score": {}}}}`
 
 	glog.Info("==== Generated ES query ====>")
 	glog.Info(q)
@@ -196,12 +196,12 @@ func createESQueryString(numPositions int, sq SearchQuery) string {
 	return q
 }
 
-func GetAdById(id string) ([]byte, *DeError) {
+func GetAdUnitById(id string) ([]byte, *DeError) {
 	var (
 		qres          elastigo.BaseResponse
 		serr          error
 		br            []byte
-		ad            *Ad
+		unit          *Unit
 		responseBytes []byte
 	)
 	if qres, serr = c.Get("campaigns", "ads", id, nil); serr != nil {
@@ -210,15 +210,15 @@ func GetAdById(id string) ([]byte, *DeError) {
 		return nil, NewError(400, "Could not find id in ES: "+id)
 	} else if br, serr = json.Marshal(qres.Source); serr != nil {
 		return nil, NewError(500, serr)
-	} else if serr = json.Unmarshal(br, ad); serr != nil {
+	} else if serr = json.Unmarshal(br, unit); serr != nil {
 		return nil, NewError(500, serr)
-	} else if responseBytes, serr = json.Marshal(ad); serr != nil {
+	} else if responseBytes, serr = json.Marshal(unit); serr != nil {
 		return nil, NewError(500, serr)
 	}
 	return responseBytes, nil
 }
-func DeleteAdById(id string) *DeError {
-	glog.Info("ad to delete: " + id)
+func DeleteAdUnitById(id string) *DeError {
+	glog.Info("ad unit to delete: " + id)
 	if qres, err := c.Delete("campaigns", "ads", id, nil); err != nil {
 		return NewError(500, err)
 	} else {
@@ -230,9 +230,9 @@ func DeleteAdById(id string) *DeError {
 	return nil
 }
 
-func PostAd(req *http.Request) ([]byte, *DeError) {
+func PostAdUnit(req *http.Request) ([]byte, *DeError) {
 	var (
-		ad   Ad
+		ad   Unit
 		err  *DeError
 		serr error
 	)
@@ -247,6 +247,22 @@ func PostAd(req *http.Request) ([]byte, *DeError) {
 		//success
 		return nil, nil
 	}
+}
+func GetIdsByAdId(aid string) ([]string, *DeError) {
+	var (
+		serr    error
+		sresult elastigo.SearchResult
+		ids     []string
+	)
+	q := `{"filter": {"bool": {"must": [{"term": {"ad":"` + aid + `"}}]}},"fields": []}`
+	if sresult, serr = c.Search("campaigns", "ads", nil, q); serr != nil {
+		return nil, NewError(500, serr)
+	}
+	for _, v := range sresult.Hits.Hits {
+		ids = append(ids, v.Id)
+	}
+	return ids, nil
+
 }
 
 func GetAdIdsByCampaign(cid string) ([]string, *DeError) {
@@ -270,8 +286,7 @@ func GetESLastUpdated(col string) time.Time {
 	var sTime time.Time
 	var responseBytes []byte
 	type TType struct {
-		Updated_Ad       []time.Time `json:"_updated_ad,omitempty"`
-		Updated_Campaign []time.Time `json:"_updated_campaign,omitempty"`
+		Updated []time.Time `json:"_updated,omitempty"`
 	}
 	var lastUpdated TType
 
@@ -287,10 +302,9 @@ func GetESLastUpdated(col string) time.Time {
 				glog.Info("Unable to Unmarshall last updated from ES. Using default date - ", err)
 				return sTime
 			} else {
-				if len(lastUpdated.Updated_Ad) > 0 {
-					sTime = lastUpdated.Updated_Ad[0]
-				} else if len(lastUpdated.Updated_Campaign) > 0 {
-					sTime = lastUpdated.Updated_Campaign[0]
+				//todo optimize this
+				if len(lastUpdated.Updated) > 0 {
+					sTime = lastUpdated.Updated[0]
 				}
 			}
 

@@ -1,45 +1,48 @@
 package delib
 
-import (
-	"labix.org/v2/mgo/bson"
-	"time"
-)
+import "time"
 
-type Ad struct {
-	Id                bson.ObjectId `bson:"_id,omitempty" json:"id,omitempty"`
-	CampaignId        bson.ObjectId `bson:"campaign,omitempty" json:"campaign,omitempty"`
-	TacticId          bson.ObjectId `bson:"tactic,omitempty" json:"tactic,omitempty"`
-	ChannelId         string        `bson:"channel,omitempty" json:"channel,omitempty"`
-	Account           bson.ObjectId `bson:"account,omitempty" json:"account,omitempty"`
-	Languages         []string      `bson:"languages,omitempty" json:"languages,omitempty"`
-	Locations         []string      `bson:"locations,omitempty" json:"locations,omitempty"`
-	ExcludedLocations []string      `bson:"excluded_locations,omitempty" json:"excluded_locations,omitempty"`
-	AdFormats         []int         `bson:"ad_formats,omitempty" json:"ad_formats,omitempty"`
-	VideoUrl          string        `bson:"video_url,omitempty" json:"video_url,omitempty"`
-	ThumbnailUrl      string        `bson:"thumbnail_url,omitempty" json:"thumbnail_url,omitempty"`
-	Description       string        `bson:"description,omitempty" json:"description,omitempty"`
-	Title             string        `bson:"title,omitempty" json:"title,omitempty"`
-	ChannelUrl        string        `bson:"channel_url,omitempty" json:"channel_url,omitempty"`
-	Status            string        `bson:"status,omitempty" json:"status,omitempty"`
-	GoalPeriod        string        `bson:"goal_period,omitempty" json:"goal_period,omitempty"`
-	GoalViews         int           `bson:"goal_views,omitempty" json:"goal_views,omitempty"`
-	Duration          int           `bson:"duration,omitempty" json:"duration,omitempty"`
-	Updated           *time.Time    `bson:"_updated,omitempty" json:"_updated_ad,omitempty"`
-	Created           *time.Time    `bson:"_created,omitempty" json:"_created,omitempty"`
-	CampaignUpdated   *time.Time    `json:"_updated_campaign,omitempty"`
-	CampaignPaused    bool          `json:"paused_campaign,omitempty"`
-	Paused            bool          `bson:"paused" json:"paused_ad,omitempty"`
+type AdUnits struct {
+	Items []Unit `json:"_items"`
+}
+type Unit struct {
+	Id                 string     `json:"_id,omitempty"`
+	Updated            *time.Time `json:"_updated,omitempty"`
+	Created            *time.Time `json:"_created,omitempty"`
+	Ad                 string     `json:"ad,omitempty"`
+	CampaignId         string     `json:"campaign,omitempty"`
+	TacticId           string     `json:"tactic,omitempty"`
+	ChannelId          string     `json:"channel,omitempty"`
+	Account            string     `json:"account,omitempty"`
+	Languages          []string   `json:"languages,omitempty"`
+	Locations          []string   `json:"locations,omitempty"`
+	ExcludedLocations  []string   `json:"excluded_locations,omitempty"`
+	AdFormats          []int      `json:"formats,omitempty"`
+	VideoUrl           string     `json:"video_url,omitempty"`
+	ThumbnailUrl       string     `json:"thumbnail_url,omitempty"`
+	Description        string     `json:"description,omitempty"`
+	Title              string     `json:"title,omitempty"`
+	ChannelUrl         string     `json:"channel_url,omitempty"`
+	Status             string     `json:"status,omitempty"`
+	GoalPeriod         string     `json:"goal_period,omitempty"`
+	GoalViews          int        `json:"goal_views,omitempty"`
+	Duration           int        `json:"duration,omitempty"`
+	Paused             bool       `json:"paused,omitempty"`
+	Clicks             int        `json:"clicks,omitempty"`
+	Views              int        `json:"views,omitempty"`
+	Catagories         []int      `json:"catagories,omitempty"`
+	ExcludedCatagories []int      `json:"excluded_catagories,omitempty"`
+	Devices            []int      `json:"devices,omitempty"`
 }
 
 type SearchQuery struct {
-	Languages []string `json:"languages,omitempty"`
-	Locations []string `json:"locations,omitempty"`
-	AdFormat  int      `json:"ad_format,omitempty"`
+	Languages  []string `json:"languages,omitempty"`
+	Locations  []string `json:"locations,omitempty"`
+	AdFormat   int      `json:"ad_format,omitempty"`
+	Catagories int      `json:"catagories,omitempty"`
+	Device     int      `json:"device,omitempty"`
 }
 
-type SearchQueryResponse struct {
-	AdUnits []Ad `json:"_units,omitempty"`
-}
 type DeError struct {
 	Msg  string `json:"message,omitempty"`
 	Code int    `json:"status,omitempty"`

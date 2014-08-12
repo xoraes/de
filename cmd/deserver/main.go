@@ -19,33 +19,33 @@ func (fn AppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func PostAd(resp http.ResponseWriter, req *http.Request) ([]byte, *de.DeError) {
-	return de.PostAd(req)
+func PostAdUnit(resp http.ResponseWriter, req *http.Request) ([]byte, *de.DeError) {
+	return de.PostAdUnit(req)
 }
 
-func DeleteAd(resp http.ResponseWriter, req *http.Request) ([]byte, *de.DeError) {
+func DeleteAdUnit(resp http.ResponseWriter, req *http.Request) ([]byte, *de.DeError) {
 	var (
 		id string
 	)
 	if id = mux.Vars(req)["id"]; id == "" {
 		return nil, de.NewError(400, "no id provided")
 	} else {
-		return nil, de.DeleteAdById(id)
+		return nil, de.DeleteAdUnitById(id)
 	}
 }
-func GetAd(resp http.ResponseWriter, req *http.Request) ([]byte, *de.DeError) {
+func GetAdUnit(resp http.ResponseWriter, req *http.Request) ([]byte, *de.DeError) {
 	var (
 		id string
 	)
 	if id = mux.Vars(req)["id"]; id == "" {
 		return nil, de.NewError(400, "no id provided")
 	} else {
-		return de.GetAdById(id)
+		return de.GetAdUnitById(id)
 	}
 }
 
-func PostQuery(resp http.ResponseWriter, req *http.Request) ([]byte, *de.DeError) {
-	return de.ProcessQuery(req)
+func PostESQuery(resp http.ResponseWriter, req *http.Request) ([]byte, *de.DeError) {
+	return de.ProcessESQuery(req)
 }
 
 //since ResponseWriter is an interface and has a pointer inside, we pass it by value
@@ -79,17 +79,16 @@ func main() {
 	flag.Parse()
 
 	rtr := mux.NewRouter()
-	rtr.Handle("/healthcheck", AppHandler(PostQuery)).Methods("GET")
+	rtr.Handle("/healthcheck", AppHandler(PostESQuery)).Methods("GET")
 
-	rtr.Handle("/de/ads/{id}", AppHandler(GetAd)).Methods("GET")
-	rtr.Handle("/de/ads", AppHandler(PostAd)).Methods("PUT")
-	rtr.Handle("/de/ads", AppHandler(PostAd)).Methods("POST")
-	rtr.Handle("/de/ads/{id}", AppHandler(DeleteAd)).Methods("DELETE")
+	rtr.Handle("/ads/{id}", AppHandler(GetAdUnit)).Methods("GET")
+	rtr.Handle("/ads", AppHandler(PostAdUnit)).Methods("PUT")
+	rtr.Handle("/ads", AppHandler(PostAdUnit)).Methods("POST")
+	rtr.Handle("/ads/{id}", AppHandler(DeleteAdUnit)).Methods("DELETE")
 
-	rtr.Handle("/de/query", AppHandler(PostQuery)).Methods("GET")
-	rtr.Handle("/de/query", AppHandler(PostQuery)).Methods("POST")
-	rtr.Handle("/de/query", AppHandler(PostQuery)).Methods("PUT")
-	//there is no such thing as deleting a query
+	rtr.Handle("/query", AppHandler(PostESQuery)).Methods("GET")
+	rtr.Handle("/query", AppHandler(PostESQuery)).Methods("POST")
+	//there is no such thing as deleting or updating a query
 
 	http.Handle("/", rtr)
 
