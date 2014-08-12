@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"flag"
+	"github.com/golang/glog"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -15,7 +16,7 @@ import (
 var (
 	username = flag.String("user", "", "api super username")
 	password = flag.String("pass", "", "api super password")
-	env      = flag.String("env", "prod", "test or prod")
+	apiurl   = flag.String("api-url", "prod", "test or prod")
 	host     string
 	tr       = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
 	client   = &http.Client{Transport: tr}
@@ -29,20 +30,13 @@ func GetUpdatedAdUnits(t time.Time) (*AdUnits, error) {
 		body    []byte
 		adunits AdUnits
 	)
-	switch *env {
-	case "test":
-		host = "https://api.pxlad.in/adunits"
-	default:
-		host = "https://api.pxlad.io/adunits"
-	}
-
 	switch t.IsZero() {
 	case true:
-		u, _ := url.Parse(host + "?where=status==active")
+		u, _ := url.Parse(*apiurl + "?where=status==active")
 		u.RawQuery = u.Query().Encode()
 		urlStr = u.String()
 	default:
-		u, _ := url.Parse(host + "?where=_updated>" + "\"" + t.Format(time.RFC3339) + "\"")
+		u, _ := url.Parse(*apiurl + "?where=_updated>" + "\"" + t.Format(time.RFC3339) + "\"")
 		u.RawQuery = u.Query().Encode()
 		urlStr = u.String()
 	}
@@ -57,7 +51,7 @@ func GetUpdatedAdUnits(t time.Time) (*AdUnits, error) {
 	if body, err = ioutil.ReadAll(resp.Body); err != nil {
 		return nil, err
 	}
-
+	glog.Info("API sent:", string(body))
 	defer resp.Body.Close()
 
 	if err = json.Unmarshal(body, &adunits); err != nil {

@@ -33,14 +33,16 @@ type Unit struct {
 	Catagories         []int      `json:"catagories,omitempty"`
 	ExcludedCatagories []int      `json:"excluded_catagories,omitempty"`
 	Devices            []int      `json:"devices,omitempty"`
+	Categories         []string   `json:"categories,omitempty"`
+	Cpc                float32    `json:"cpc,omitempty"`
 }
 
 type SearchQuery struct {
-	Languages  []string `json:"languages,omitempty"`
-	Locations  []string `json:"locations,omitempty"`
-	AdFormat   int      `json:"ad_format,omitempty"`
-	Catagories int      `json:"catagories,omitempty"`
-	Device     int      `json:"device,omitempty"`
+	Languages []string `json:"languages,omitempty"`
+	Locations []string `json:"locations,omitempty"`
+	AdFormat  int      `json:"format,omitempty"`
+	Category  string   `json:"category,omitempty"`
+	Device    int      `json:"device,omitempty"`
 }
 
 type DeError struct {

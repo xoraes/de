@@ -10,8 +10,14 @@ Sync: The sync program syncs ad and campaigns from mongodb to local elasticsearc
 Installation: 
 go get github.com/dailymotion/pixelle-de/...
 
-To run the sync process, provide the mongo url and start:
-sync -url "mongodb://..." -repeat 60. See sync -help for more info.
+To run the sync process, provide the api url :
+Test env:
+pxl-desync --api-url=https://api.pxlad.in/adunits -repeat 10 --user=de@pxlad.in --pass=<pass>
+
+Prod env:
+pxl-desync --api-url=https://api.pxlad.io/adunits -repeat 60 --user=de@pxlad.io --pass=<pass>
+
+See sync -help for more info.
 
 
 Deserver: The DE server is the decisioning engine. For more info on DE, please see the wiki.

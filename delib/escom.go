@@ -87,12 +87,13 @@ func ProcessESQuery(req *http.Request) ([]byte, *DeError) {
 	} else if positions, err = strconv.Atoi(adcount); err != nil {
 		positions = 1
 	}
-	//send query to es
-	if ads, derr = queryES(positions, sq); derr != nil {
+	//send query to es and request n=4 times the number of requested positions
+	n := 4
+	if ads, derr = queryES(n*positions, sq); derr != nil {
 		return nil, derr
 	}
-
-	sqr := &AdUnits{Items: ads}
+	uniqueAds := removeDuplicateCampaigns(positions, ads)
+	sqr := &AdUnits{Items: uniqueAds}
 	if byteArray, err = json.MarshalIndent(sqr, "", "    "); err != nil {
 		return nil, NewError(500, err)
 	}
@@ -312,4 +313,23 @@ func GetESLastUpdated(col string) time.Time {
 	}
 
 	return sTime
+}
+func removeDuplicateCampaigns(positions int, ads []Unit) []Unit {
+	var (
+		m     = make(map[string]int)
+		uAds  = make([]Unit, positions)
+		count = 1
+	)
+
+	for _, v := range ads {
+		if count > positions {
+			break
+		}
+		if m[v.CampaignId] == 0 {
+			m[v.CampaignId] = 1
+			uAds[count-1] = v
+			count++
+		}
+	}
+	return uAds
 }
