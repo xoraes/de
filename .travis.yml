@@ -1,0 +1,11 @@
+language: go
+
+go:
+  - 1.3
+  - tip
+
+script: go get ./...
+notifications:
+  hipchat:
+    rooms:
+      secure: EgRw2czQF8dKLVfKBIIz8yCnpLBdOddxUg4aZhJJhb6GrU0BRqP8l0P0sLtQbo72c7BLtbveqpBMldJrBocs5BoIu3kLvR2diblX6eT1uO5gqFCCwNdtlI8RPX3j/4TKbGHBD6Dw+RfO0kaeIuLW092rLAfXJPAjmtojW+28H2Y=
