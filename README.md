@@ -12,9 +12,11 @@ go get github.com/dailymotion/pixelle-de/...
 
 To run the sync process, provide the api url :
 Test env:
+
 pxl-desync --api-url=https://api.pxlad.in/adunits -repeat 10 --user=de@pxlad.in --pass=<pass>
 
 Prod env:
+
 pxl-desync --api-url=https://api.pxlad.io/adunits -repeat 60 --user=de@pxlad.io --pass=<pass>
 
 See sync -help for more info.
