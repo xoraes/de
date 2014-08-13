@@ -38,11 +38,11 @@ type Unit struct {
 }
 
 type SearchQuery struct {
-	Languages []string `json:"languages,omitempty"`
-	Locations []string `json:"locations,omitempty"`
-	AdFormat  int      `json:"format,omitempty"`
-	Category  []string `json:"category,omitempty"`
-	Device    int      `json:"device,omitempty"`
+	Languages  []string `json:"languages,omitempty"`
+	Locations  []string `json:"locations,omitempty"`
+	AdFormat   int      `json:"format,omitempty"`
+	Categories []string `json:"categories,omitempty"`
+	Device     int      `json:"device,omitempty"`
 }
 
 type DeError struct {

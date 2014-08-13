@@ -132,9 +132,11 @@ func queryES(positions int, sq SearchQuery) ([]Unit, *DeError) {
 
 func createESQueryString(numPositions int, sq SearchQuery) string {
 	var (
-		err error
-		loc []byte
-		q   string
+		err  error
+		loc  []byte
+		cats []byte
+		lang []byte
+		q    string
 	)
 	q = `{"_source":
 			{
@@ -162,29 +164,46 @@ func createESQueryString(numPositions int, sq SearchQuery) string {
 			}
 		}
 		if sq.Languages != nil && len(sq.Languages) > 0 {
-			var lang []byte
+
 			lang, err = json.Marshal(sq.Languages)
 			if err == nil {
 				q += delim + `{ "query":  {"terms": { "languages":` + strings.ToLower(string(lang)) + `}}}`
 				delim = ","
 			}
 		}
+		if sq.Categories != nil && len(sq.Categories) > 0 {
+
+			cats, err = json.Marshal(sq.Categories)
+			if err == nil {
+				q += delim + `{ "query":  {"terms": { "categories":` + strings.ToLower(string(cats)) + `}}}`
+				delim = ","
+			}
+		}
 
 		if sq.AdFormat > 0 { //ad format values should be greater than 0
 
-			q += delim + `{ "query":  {"term": { "ad_formats":` + strconv.Itoa(sq.AdFormat) + `}}}`
+			q += delim + `{ "query":  {"term": { "formats":` + strconv.Itoa(sq.AdFormat) + `}}}`
 			delim = ","
 		}
+		if sq.Device > 0 { //device values should be greater than 0
+			q += delim + `{ "query":  {"term": { "devices":` + strconv.Itoa(sq.Device) + `}}}`
+			delim = ","
+		}
+
 		q += delim + `{ "query":  {"term": { "status": "active"}}}`
 		delim = ","
 		q += `]`
 	}
-	if len(sq.Locations) > 0 {
+	if len(sq.Locations) > 0 || len(sq.Categories) > 0 {
 		q += delim + `"must_not":[`
 		delim = ""
 
 		if len(sq.Locations) > 0 && err == nil {
 			q += delim + `{ "query":  {"terms": { "excluded_locations":` + strings.ToLower(string(loc)) + `}}}`
+			delim = ","
+		}
+		if len(sq.Categories) > 0 && err == nil {
+			q += delim + `{ "query":  {"terms": { "excluded_categories":` + strings.ToLower(string(cats)) + `}}}`
 			delim = ","
 		}
 		q += `]`
