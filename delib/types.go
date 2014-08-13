@@ -17,7 +17,7 @@ type Unit struct {
 	Languages          []string   `json:"languages,omitempty"`
 	Locations          []string   `json:"locations,omitempty"`
 	ExcludedLocations  []string   `json:"excluded_locations,omitempty"`
-	AdFormats          []int      `json:"formats,omitempty"`
+	AdFormats          []string   `json:"formats,omitempty"`
 	VideoUrl           string     `json:"video_url,omitempty"`
 	ThumbnailUrl       string     `json:"thumbnail_url,omitempty"`
 	Description        string     `json:"description,omitempty"`
@@ -27,12 +27,11 @@ type Unit struct {
 	GoalPeriod         string     `json:"goal_period,omitempty"`
 	GoalViews          int        `json:"goal_views,omitempty"`
 	Duration           int        `json:"duration,omitempty"`
-	Paused             bool       `json:"paused,omitempty"`
 	Clicks             int        `json:"clicks,omitempty"`
 	Views              int        `json:"views,omitempty"`
-	Catagories         []int      `json:"catagories,omitempty"`
-	ExcludedCatagories []int      `json:"excluded_catagories,omitempty"`
-	Devices            []int      `json:"devices,omitempty"`
+	Catagories         []string   `json:"catagories,omitempty"`
+	ExcludedCatagories []string   `json:"excluded_catagories,omitempty"`
+	Devices            []string   `json:"devices,omitempty"`
 	Categories         []string   `json:"categories,omitempty"`
 	Cpc                float32    `json:"cpc,omitempty"`
 }
@@ -40,9 +39,9 @@ type Unit struct {
 type SearchQuery struct {
 	Languages  []string `json:"languages,omitempty"`
 	Locations  []string `json:"locations,omitempty"`
-	AdFormat   int      `json:"format,omitempty"`
 	Categories []string `json:"categories,omitempty"`
-	Device     int      `json:"device,omitempty"`
+	Device     string   `json:"device,omitempty"`
+	AdFormat   string   `json:"format,omitempty"`
 }
 
 type DeError struct {

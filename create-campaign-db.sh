@@ -17,7 +17,7 @@ curl -XPUT "http://localhost:9200/campaigns/" -d '{
                 "languages" : { "type" : "string", "index" : "not_analyzed" },
                 "excluded_locations" : { "type" : "string", "index" : "not_analyzed" },
                 "excluded_categories" : { "type" : "string", "index" : "not_analyzed" },
-                "devices" : { "type" : "integer", "index" : "not_analyzed" },
+                "devices" : { "type" : "string", "index" : "not_analyzed" },
                 "categories" : { "type" : "string", "index" : "not_analyzed" },
                 "status" : { "type" : "string", "index" : "not_analyzed"},
                 "formats" : { "type" : "string", "index" : "not_analyzed" },

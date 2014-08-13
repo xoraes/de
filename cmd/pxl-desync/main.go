@@ -30,7 +30,7 @@ func main() {
 		}
 		if adUnits != nil && adUnits.Items != nil && len(adUnits.Items) > 0 {
 			for _, u := range adUnits.Items {
-				if u.Paused == false && u.Status == "active" {
+				if u.Status == "active" {
 					de.UpdateAd(&u)
 				}
 				if u.Status == "deleted" {

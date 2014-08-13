@@ -51,6 +51,18 @@ func UpdateAd(unit *Unit) *DeError {
 	for index, _ = range unit.ExcludedLocations {
 		unit.ExcludedLocations[index] = strings.ToLower(unit.ExcludedLocations[index])
 	}
+	for index, _ = range unit.ExcludedCatagories {
+		unit.ExcludedCatagories[index] = strings.ToLower(unit.ExcludedCatagories[index])
+	}
+	for index, _ = range unit.AdFormats {
+		unit.AdFormats[index] = strings.ToLower(unit.AdFormats[index])
+	}
+	for index, _ = range unit.Categories {
+		unit.Categories[index] = strings.ToLower(unit.Categories[index])
+	}
+	for index, _ = range unit.Devices {
+		unit.Devices[index] = strings.ToLower(unit.Devices[index])
+	}
 	unit.Status = strings.ToLower(unit.Status)
 
 	if jsonBytes, serr := json.Marshal(unit); serr != nil {
@@ -180,13 +192,13 @@ func createESQueryString(numPositions int, sq SearchQuery) string {
 			}
 		}
 
-		if sq.AdFormat > 0 { //ad format values should be greater than 0
+		if sq.AdFormat != "" {
 
-			q += delim + `{ "query":  {"term": { "formats":` + strconv.Itoa(sq.AdFormat) + `}}}`
+			q += delim + `{ "query":  {"term": { "formats":` + strings.ToLower(sq.AdFormat) + `}}}`
 			delim = ","
 		}
-		if sq.Device > 0 { //device values should be greater than 0
-			q += delim + `{ "query":  {"term": { "devices":` + strconv.Itoa(sq.Device) + `}}}`
+		if sq.Device != "" {
+			q += delim + `{ "query":  {"term": { "devices":` + strings.ToLower(sq.Device) + `}}}`
 			delim = ","
 		}
 
