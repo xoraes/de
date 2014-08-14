@@ -25,63 +25,51 @@ func init() {
 
 }
 
-func IndexAd(unit *Unit) *DeError {
-	var index int
-	for index, _ = range unit.Languages {
-		unit.Languages[index] = strings.ToLower(unit.Languages[index])
+// set target to "all" only if the target is null
+func setNullValueOnEmpty(t []string) []string {
+	if len(t) == 0 {
+		t = []string{"all"}
 	}
-	for index, _ = range unit.Locations {
-		unit.Locations[index] = strings.ToLower(unit.Locations[index])
-	}
-	for index, _ = range unit.ExcludedLocations {
-		unit.ExcludedLocations[index] = strings.ToLower(unit.ExcludedLocations[index])
-	}
-	for index, _ = range unit.ExcludedCatagories {
-		unit.ExcludedCatagories[index] = strings.ToLower(unit.ExcludedCatagories[index])
-	}
-	for index, _ = range unit.AdFormats {
-		unit.AdFormats[index] = strings.ToLower(unit.AdFormats[index])
-	}
-	for index, _ = range unit.Categories {
-		unit.Categories[index] = strings.ToLower(unit.Categories[index])
-	}
-	for index, _ = range unit.Devices {
-		unit.Devices[index] = strings.ToLower(unit.Devices[index])
-	}
-	unit.Status = strings.ToLower(unit.Status)
-
-	if jsonBytes, serr := json.Marshal(unit); serr != nil {
-		return NewError(500, serr)
-	} else if _, serr := c.Index(*indexName, *typeName, unit.Id, nil, jsonBytes); serr != nil {
-		glog.Error(serr)
-		return NewError(500, serr)
-	}
-	return nil
+	return t
 }
+
 func UpdateAd(unit *Unit) *DeError {
 
 	var index int
+	//append "all" to the array if the array is empty
+	unit.Locations = setNullValueOnEmpty(unit.Locations)
+	unit.Languages = setNullValueOnEmpty(unit.Languages)
+	unit.AdFormats = setNullValueOnEmpty(unit.AdFormats)
+	unit.Categories = setNullValueOnEmpty(unit.Categories)
+	unit.Devices = setNullValueOnEmpty(unit.Devices)
+
 	for index, _ = range unit.Languages {
 		unit.Languages[index] = strings.ToLower(unit.Languages[index])
 	}
+
 	for index, _ = range unit.Locations {
 		unit.Locations[index] = strings.ToLower(unit.Locations[index])
 	}
+
 	for index, _ = range unit.ExcludedLocations {
 		unit.ExcludedLocations[index] = strings.ToLower(unit.ExcludedLocations[index])
 	}
+
 	for index, _ = range unit.ExcludedCatagories {
 		unit.ExcludedCatagories[index] = strings.ToLower(unit.ExcludedCatagories[index])
 	}
 	for index, _ = range unit.AdFormats {
 		unit.AdFormats[index] = strings.ToLower(unit.AdFormats[index])
 	}
+
 	for index, _ = range unit.Categories {
 		unit.Categories[index] = strings.ToLower(unit.Categories[index])
 	}
+
 	for index, _ = range unit.Devices {
 		unit.Devices[index] = strings.ToLower(unit.Devices[index])
 	}
+
 	unit.Status = strings.ToLower(unit.Status)
 
 	if jsonBytes, serr := json.Marshal(unit); serr != nil {
@@ -120,6 +108,7 @@ func ProcessESQuery(req *http.Request) ([]byte, *DeError) {
 	}
 	//send query to es and request n=4 times the number of requested positions
 	n := 4
+
 	if ads, derr = queryES(n*positions, sq); derr != nil {
 		return nil, derr
 	}
@@ -184,6 +173,19 @@ func createESQueryString(numPositions int, sq SearchQuery) string {
 	//useMustFilter := (sq.Locations != nil && len(sq.Locations) > 0) || (sq.Languages != nil && len(sq.Languages) > 0) || sq.AdFormat > 0
 	useMustFilter := true
 
+	sq.Languages = append(sq.Languages, "all")
+	sq.Locations = append(sq.Locations, "all")
+	sq.Categories = append(sq.Categories, "all")
+	if sq.AdFormat == "" {
+		sq.AdFormat = `["all"]`
+	} else {
+		sq.AdFormat = `["all","` + strings.ToLower(sq.AdFormat) + `"]`
+	}
+	if sq.Device == "" {
+		sq.Device = `["all"]`
+	} else {
+		sq.Device = `["all","` + strings.ToLower(sq.Device) + `"]`
+	}
 	q += `"bool":{`
 	if useMustFilter {
 		q += `"must":[`
@@ -195,7 +197,6 @@ func createESQueryString(numPositions int, sq SearchQuery) string {
 			}
 		}
 		if sq.Languages != nil && len(sq.Languages) > 0 {
-
 			lang, err = json.Marshal(sq.Languages)
 			if err == nil {
 				q += delim + `{ "query":  {"terms": { "languages":` + strings.ToLower(string(lang)) + `}}}`
@@ -203,7 +204,6 @@ func createESQueryString(numPositions int, sq SearchQuery) string {
 			}
 		}
 		if sq.Categories != nil && len(sq.Categories) > 0 {
-
 			cats, err = json.Marshal(sq.Categories)
 			if err == nil {
 				q += delim + `{ "query":  {"terms": { "categories":` + strings.ToLower(string(cats)) + `}}}`
@@ -213,11 +213,11 @@ func createESQueryString(numPositions int, sq SearchQuery) string {
 
 		if sq.AdFormat != "" {
 
-			q += delim + `{ "query":  {"term": { "formats":"` + strings.ToLower(sq.AdFormat) + `"}}}`
+			q += delim + `{ "query":  {"terms": { "formats":` + sq.AdFormat + `}}}`
 			delim = ","
 		}
 		if sq.Device != "" {
-			q += delim + `{ "query":  {"term": { "devices":"` + strings.ToLower(sq.Device) + `"}}}`
+			q += delim + `{ "query":  {"terms": { "devices":` + sq.Device + `}}}`
 			delim = ","
 		}
 
@@ -281,24 +281,6 @@ func DeleteAdUnitById(id string) *DeError {
 	return nil
 }
 
-func PostAdUnit(req *http.Request) ([]byte, *DeError) {
-	var (
-		ad   Unit
-		err  *DeError
-		serr error
-	)
-	decoder := json.NewDecoder(req.Body)
-	if serr = decoder.Decode(&ad); serr != nil {
-		return nil, NewError(500, serr)
-	} else if ad.Id == "" {
-		return nil, NewError(400, "no ad id found")
-	} else if err = IndexAd(&ad); err != nil {
-		return nil, NewError(500, err)
-	} else {
-		//success
-		return nil, nil
-	}
-}
 func GetIdsByAdId(aid string) ([]string, *DeError) {
 	var (
 		serr    error
@@ -367,17 +349,16 @@ func GetESLastUpdated(col string) time.Time {
 func removeDuplicateCampaigns(positions int, ads []Unit) []Unit {
 	var (
 		m     = make(map[string]int)
-		uAds  = make([]Unit, positions)
+		uAds  []Unit
 		count = 1
 	)
-
 	for _, v := range ads {
 		if count > positions {
 			break
 		}
 		if m[v.CampaignId] == 0 {
 			m[v.CampaignId] = 1
-			uAds[count-1] = v
+			uAds = append(uAds, v)
 			count++
 		}
 	}
@@ -413,29 +394,29 @@ func CreateIndex() {
             "_all" : {"enabled" : false},
             "properties" : {
                 "_id" : { "type" : "string", "index" : "not_analyzed" },
-                "_updated" : { "type" : "date", "format":"date_time_no_millis","index" : "not_analyzed"},
-                "_created" : { "type" : "date", "format":"date_time_no_millis","index" : "not_analyzed"},
+                "_updated" : { "type" : "date", "format":"date_time_no_millis","index" : "not_analyzed" },
+                "_created" : { "type" : "date", "format":"date_time_no_millis","index" : "not_analyzed" },
                 "locations" : { "type" : "string", "index" : "not_analyzed" },
                 "languages" : { "type" : "string", "index" : "not_analyzed" },
                 "excluded_locations" : { "type" : "string", "index" : "not_analyzed" },
                 "excluded_categories" : { "type" : "string", "index" : "not_analyzed" },
                 "devices" : { "type" : "string", "index" : "not_analyzed" },
                 "categories" : { "type" : "string", "index" : "not_analyzed" },
-                "status" : { "type" : "string", "index" : "not_analyzed"},
+                "status" : { "type" : "string", "index" : "not_analyzed" },
                 "formats" : { "type" : "string", "index" : "not_analyzed" },
-		        "campaign" : { "type" : "string", "index" : "not_analyzed"},
-                "tactic" : { "type" : "string", "index" : "no"},
-                "title" : { "type" : "string", "index" : "no"},
-                "cpc" : { "type" : "float", "index" : "no"},
-                "description" : { "type" : "string", "index" : "no"},
-                "video_url" : { "type" : "string", "index" : "no"},
-                "thumbnail_url" : { "type" : "string", "index" : "no"},
-		        "video_url" : { "type" : "string", "index" : "no"},
-                "channel" : { "type" : "string", "index" : "no"},
-                "channel_url" : { "type" : "string", "index" : "no"},
-                "goal_period" : { "type" : "string", "index" : "no"},
-                "goal_views" : { "type" : "integer", "index" : "no"},
-                "account" : { "type" : "string", "index" : "no"}
+		        "campaign" : { "type" : "string", "index" : "not_analyzed" },
+                "tactic" : { "type" : "string", "index" : "no" },
+                "title" : { "type" : "string", "index" : "no" },
+                "cpc" : { "type" : "float", "index" : "no" },
+                "description" : { "type" : "string", "index" : "no" },
+                "video_url" : { "type" : "string", "index" : "no" },
+                "thumbnail_url" : { "type" : "string", "index" : "no" },
+		        "video_url" : { "type" : "string", "index" : "no" },
+                "channel" : { "type" : "string", "index" : "no" },
+                "channel_url" : { "type" : "string", "index" : "no" },
+                "goal_period" : { "type" : "string", "index" : "no" },
+                "goal_views" : { "type" : "integer", "index" : "no" },
+                "account" : { "type" : "string", "index" : "no" }
             }
         }
     }

@@ -19,31 +19,6 @@ func (fn AppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func PostAdUnit(resp http.ResponseWriter, req *http.Request) ([]byte, *de.DeError) {
-	return de.PostAdUnit(req)
-}
-
-func DeleteAdUnit(resp http.ResponseWriter, req *http.Request) ([]byte, *de.DeError) {
-	var (
-		id string
-	)
-	if id = mux.Vars(req)["id"]; id == "" {
-		return nil, de.NewError(400, "no id provided")
-	} else {
-		return nil, de.DeleteAdUnitById(id)
-	}
-}
-func GetAdUnit(resp http.ResponseWriter, req *http.Request) ([]byte, *de.DeError) {
-	var (
-		id string
-	)
-	if id = mux.Vars(req)["id"]; id == "" {
-		return nil, de.NewError(400, "no id provided")
-	} else {
-		return de.GetAdUnitById(id)
-	}
-}
-
 func PostESQuery(resp http.ResponseWriter, req *http.Request) ([]byte, *de.DeError) {
 	return de.ProcessESQuery(req)
 }
@@ -68,27 +43,11 @@ func setErrorResponse(resp http.ResponseWriter, err *de.DeError) {
 	glog.Error(`{"status":`, err.ErrorCode(), `,"headers":`, `"`, resp.Header(), `"`, `,"body":`, `"`, string(responseBytes), `"}`)
 }
 func main() {
-
-	var (
-		eshost string
-		esport string
-	)
-
-	flag.StringVar(&eshost, "eshost", "localhost", "Elasticsearch host ip or hostname")
-	flag.StringVar(&esport, "esport", "9200", "Elasticsearch port")
 	flag.Parse()
-
 	rtr := mux.NewRouter()
 	rtr.Handle("/healthcheck", AppHandler(PostESQuery)).Methods("GET")
-
-	rtr.Handle("/ads/{id}", AppHandler(GetAdUnit)).Methods("GET")
-	rtr.Handle("/ads", AppHandler(PostAdUnit)).Methods("PUT")
-	rtr.Handle("/ads", AppHandler(PostAdUnit)).Methods("POST")
-	rtr.Handle("/ads/{id}", AppHandler(DeleteAdUnit)).Methods("DELETE")
-
 	rtr.Handle("/query", AppHandler(PostESQuery)).Methods("GET")
 	rtr.Handle("/query", AppHandler(PostESQuery)).Methods("POST")
-	//there is no such thing as deleting or updating a query
 
 	http.Handle("/", rtr)
 

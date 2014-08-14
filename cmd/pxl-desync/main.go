@@ -40,7 +40,6 @@ func main() {
 					de.DeleteAdUnitById(u.Id)
 					log.Println("deleted ad unit: " + u.Id)
 				}
-
 			}
 			log.Println("Sync Completed")
 		} else {

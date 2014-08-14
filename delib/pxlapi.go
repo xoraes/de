@@ -16,7 +16,7 @@ import (
 var (
 	username = flag.String("user", "", "api super username")
 	password = flag.String("pass", "", "api super password")
-	apiurl   = flag.String("api-url", "prod", "test or prod")
+	apiurl   = flag.String("api-url", "", "for ex. https://api.pxlad.io/adunits")
 	tr       = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
 	client   = &http.Client{Transport: tr}
 )
