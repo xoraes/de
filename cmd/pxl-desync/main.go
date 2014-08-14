@@ -18,8 +18,11 @@ func main() {
 		last    time.Time
 	)
 	flag.IntVar(&repeat, "repeat", 60, "time interval in seconds for sync to query mongodb")
-
 	flag.Parse()
+
+	//create the ES index
+	de.CreateIndex()
+
 	for {
 		//Update Ad collection data from api to ES
 		last = de.GetESLastUpdated("_updated")

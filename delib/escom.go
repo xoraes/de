@@ -22,7 +22,7 @@ var (
 
 func init() {
 	c = elastigo.NewConn()
-	purgeAndRecreateIndex()
+
 }
 
 func IndexAd(unit *Unit) *DeError {
@@ -384,12 +384,22 @@ func removeDuplicateCampaigns(positions int, ads []Unit) []Unit {
 	return uAds
 }
 
-func purgeAndRecreateIndex() {
+func CreateIndex() {
 	req, _ := http.NewRequest("HEAD", "http://localhost:9200/"+*indexName, nil)
 	client := http.DefaultClient
-	if resp, err := client.Do(req); err != nil {
-		glog.Fatal("Could not check if index exits. Check if ES is running")
-	} else if resp.StatusCode == 404 {
+	var (
+		resp *http.Response
+		err  error
+	)
+	for {
+		if resp, err = client.Do(req); err != nil {
+			glog.Error("Could not check if index exists. Ensure that ES is running locally on port 9200. Retrying in 5 secs...")
+			time.Sleep(5 * time.Second)
+		} else {
+			break
+		}
+	}
+	if resp.StatusCode != 200 {
 		var body = []byte(`{
     "settings" : {
             "number_of_shards" : 1,
@@ -432,8 +442,13 @@ func purgeAndRecreateIndex() {
 }`)
 		buf := bytes.NewBuffer(body)
 		req, _ := http.NewRequest("POST", "http://localhost:9200/"+*indexName, buf)
-		if _, err := client.Do(req); err != nil {
-			glog.Fatal("Could not create index. Check if ES is running")
+		for {
+			if _, err := client.Do(req); err != nil {
+				glog.Error("Could not create index. Please ensure ES is running locally on port 9200. Retrying in 5 secs...")
+				time.Sleep(5 * time.Second)
+			} else {
+				break
+			}
 		}
 		fmt.Println("created index:" + *indexName + ",type:" + *typeName)
 	}
