@@ -2,6 +2,7 @@ package delib
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"github.com/golang/glog"
 	elastigo "github.com/mattbaird/elastigo/lib"
@@ -12,10 +13,15 @@ import (
 	"time"
 )
 
-var c *elastigo.Conn
+var (
+	c         *elastigo.Conn
+	indexName = flag.String("index", "pixelle", "ES index name")
+	typeName  = flag.String("type", "adunits", "ES type name")
+)
 
 func init() {
 	c = elastigo.NewConn()
+	purgeAndRecreateIndex()
 }
 
 func IndexAd(unit *Unit) *DeError {
@@ -29,11 +35,23 @@ func IndexAd(unit *Unit) *DeError {
 	for index, _ = range unit.ExcludedLocations {
 		unit.ExcludedLocations[index] = strings.ToLower(unit.ExcludedLocations[index])
 	}
+	for index, _ = range unit.ExcludedCatagories {
+		unit.ExcludedCatagories[index] = strings.ToLower(unit.ExcludedCatagories[index])
+	}
+	for index, _ = range unit.AdFormats {
+		unit.AdFormats[index] = strings.ToLower(unit.AdFormats[index])
+	}
+	for index, _ = range unit.Categories {
+		unit.Categories[index] = strings.ToLower(unit.Categories[index])
+	}
+	for index, _ = range unit.Devices {
+		unit.Devices[index] = strings.ToLower(unit.Devices[index])
+	}
 	unit.Status = strings.ToLower(unit.Status)
 
 	if jsonBytes, serr := json.Marshal(unit); serr != nil {
 		return NewError(500, serr)
-	} else if _, serr := c.Index("campaigns", "ads", unit.Id, nil, jsonBytes); serr != nil {
+	} else if _, serr := c.Index(*indexName, *typeName, unit.Id, nil, jsonBytes); serr != nil {
 		glog.Error(serr)
 		return NewError(500, serr)
 	}
@@ -70,7 +88,7 @@ func UpdateAd(unit *Unit) *DeError {
 		return NewError(500, serr)
 	} else {
 		fmt.Println("Updating ad on ES:", string(jsonBytes))
-		if _, serr := c.UpdateWithPartialDoc("campaigns", "ads", unit.Id, nil, string(jsonBytes), true); serr != nil {
+		if _, serr := c.UpdateWithPartialDoc(*indexName, *typeName, unit.Id, nil, string(jsonBytes), true); serr != nil {
 			glog.Error(serr)
 			return NewError(500, serr)
 		}
@@ -119,7 +137,7 @@ func queryES(positions int, sq SearchQuery) ([]Unit, *DeError) {
 		sresult   elastigo.SearchResult
 	)
 	//run the actual query using elastigo
-	if sresult, err = c.Search("campaigns", "ads", nil, createESQueryString(positions, sq)); err != nil {
+	if sresult, err = c.Search(*indexName, *typeName, nil, createESQueryString(positions, sq)); err != nil {
 		return nil, NewError(500, err)
 		//if any results are obtained
 	} else if &sresult != nil && sresult.Hits.Total > 0 {
@@ -236,7 +254,7 @@ func GetAdUnitById(id string) ([]byte, *DeError) {
 		unit          *Unit
 		responseBytes []byte
 	)
-	if qres, serr = c.Get("campaigns", "ads", id, nil); serr != nil {
+	if qres, serr = c.Get(*indexName, *typeName, id, nil); serr != nil {
 		return nil, NewError(500, "Error talking to ES")
 	} else if !qres.Found {
 		return nil, NewError(400, "Could not find id in ES: "+id)
@@ -251,7 +269,7 @@ func GetAdUnitById(id string) ([]byte, *DeError) {
 }
 func DeleteAdUnitById(id string) *DeError {
 	glog.Info("ad unit to delete: " + id)
-	if qres, err := c.Delete("campaigns", "ads", id, nil); err != nil {
+	if qres, err := c.Delete(*indexName, *typeName, id, nil); err != nil {
 		return NewError(500, err)
 	} else {
 		if !qres.Found {
@@ -287,7 +305,7 @@ func GetIdsByAdId(aid string) ([]string, *DeError) {
 		ids     []string
 	)
 	q := `{"filter": {"bool": {"must": [{"term": {"ad":"` + aid + `"}}]}},"fields": []}`
-	if sresult, serr = c.Search("campaigns", "ads", nil, q); serr != nil {
+	if sresult, serr = c.Search(*indexName, *typeName, nil, q); serr != nil {
 		return nil, NewError(500, serr)
 	}
 	for _, v := range sresult.Hits.Hits {
@@ -304,7 +322,7 @@ func GetAdIdsByCampaign(cid string) ([]string, *DeError) {
 		ids     []string
 	)
 	q := `{"filter": {"bool": {"must": [{"term": {"campaign":"` + cid + `"}}]}},"fields": []}`
-	if sresult, serr = c.Search("campaigns", "ads", nil, q); serr != nil {
+	if sresult, serr = c.Search(*indexName, *typeName, nil, q); serr != nil {
 		return nil, NewError(500, serr)
 	}
 	for _, v := range sresult.Hits.Hits {
@@ -324,7 +342,7 @@ func GetESLastUpdated(col string) time.Time {
 
 	q := `{ "size":1, "fields":["` + col + `"], "query" : { "match_all":{} } , "sort" : [ { "` + col + `" : { "order":"desc" } } ] }`
 
-	result, err = c.Search("campaigns", "ads", nil, q)
+	result, err = c.Search(*indexName, *typeName, nil, q)
 	if &result != nil && &result.Hits != nil && len(result.Hits.Hits) > 0 && result.Hits.Hits[0].Fields != nil {
 		if responseBytes, err = result.Hits.Hits[0].Fields.MarshalJSON(); err != nil {
 			glog.Info("Unable to Marshall from ES. Using default date: ", time.Time{})
@@ -363,4 +381,60 @@ func removeDuplicateCampaigns(positions int, ads []Unit) []Unit {
 		}
 	}
 	return uAds
+}
+
+func purgeAndRecreateIndex() {
+	req, _ := http.NewRequest("DELETE", "http://localhost:9200/"+*indexName, nil)
+	client := http.DefaultClient
+	if _, err := client.Do(req); err != nil {
+		glog.Fatal("Could not purge ES index. Check if ES is running")
+	}
+	fmt.Println("Purging index:" + *indexName)
+
+	var body = []byte(`{
+    "settings" : {
+            "number_of_shards" : 1,
+            "number_of_replicas" : 0
+    },
+    "mappings" : {
+        "ads" : {
+            "_source" : {
+                "enabled" : true
+            },
+            "_all" : {"enabled" : false},
+            "properties" : {
+                "_id" : { "type" : "string", "index" : "not_analyzed" },
+                "_updated" : { "type" : "date", "format":"date_time_no_millis","index" : "not_analyzed"},
+                "_created" : { "type" : "date", "format":"date_time_no_millis","index" : "not_analyzed"},
+                "locations" : { "type" : "string", "index" : "not_analyzed" },
+                "languages" : { "type" : "string", "index" : "not_analyzed" },
+                "excluded_locations" : { "type" : "string", "index" : "not_analyzed" },
+                "excluded_categories" : { "type" : "string", "index" : "not_analyzed" },
+                "devices" : { "type" : "string", "index" : "not_analyzed" },
+                "categories" : { "type" : "string", "index" : "not_analyzed" },
+                "status" : { "type" : "string", "index" : "not_analyzed"},
+                "formats" : { "type" : "string", "index" : "not_analyzed" },
+		        "campaign" : { "type" : "string", "index" : "not_analyzed"},
+                "tactic" : { "type" : "string", "index" : "no"},
+                "title" : { "type" : "string", "index" : "no"},
+                "cpc" : { "type" : "float", "index" : "no"},
+                "description" : { "type" : "string", "index" : "no"},
+                "video_url" : { "type" : "string", "index" : "no"},
+                "thumbnail_url" : { "type" : "string", "index" : "no"},
+		        "video_url" : { "type" : "string", "index" : "no"},
+                "channel" : { "type" : "string", "index" : "no"},
+                "channel_url" : { "type" : "string", "index" : "no"},
+                "goal_period" : { "type" : "string", "index" : "no"},
+                "goal_views" : { "type" : "integer", "index" : "no"},
+                "account" : { "type" : "string", "index" : "no"}
+            }
+        }
+    }
+}`)
+
+	if _, serr := c.Index(*indexName, *typeName, "", nil, body); serr != nil {
+		glog.Fatal("Could not create index. Check if ES is running. ", serr)
+
+	}
+	fmt.Println("created index")
 }
