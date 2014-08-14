@@ -1,6 +1,7 @@
 package delib
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -87,7 +88,7 @@ func UpdateAd(unit *Unit) *DeError {
 		glog.Error(serr)
 		return NewError(500, serr)
 	} else {
-		fmt.Println("Updating ad on ES:", string(jsonBytes))
+		fmt.Println("Importing adunit into ES:", string(jsonBytes))
 		if _, serr := c.UpdateWithPartialDoc(*indexName, *typeName, unit.Id, nil, string(jsonBytes), true); serr != nil {
 			glog.Error(serr)
 			return NewError(500, serr)
@@ -384,20 +385,18 @@ func removeDuplicateCampaigns(positions int, ads []Unit) []Unit {
 }
 
 func purgeAndRecreateIndex() {
-	req, _ := http.NewRequest("DELETE", "http://localhost:9200/"+*indexName, nil)
+	req, _ := http.NewRequest("HEAD", "http://localhost:9200/"+*indexName, nil)
 	client := http.DefaultClient
-	if _, err := client.Do(req); err != nil {
-		glog.Fatal("Could not purge ES index. Check if ES is running")
-	}
-	fmt.Println("Purging index:" + *indexName)
-
-	var body = []byte(`{
+	if resp, err := client.Do(req); err != nil {
+		glog.Fatal("Could not check if index exits. Check if ES is running")
+	} else if resp.StatusCode == 404 {
+		var body = []byte(`{
     "settings" : {
             "number_of_shards" : 1,
             "number_of_replicas" : 0
     },
     "mappings" : {
-        "ads" : {
+        "` + *typeName + `" : {
             "_source" : {
                 "enabled" : true
             },
@@ -431,10 +430,11 @@ func purgeAndRecreateIndex() {
         }
     }
 }`)
-
-	if _, serr := c.Index(*indexName, *typeName, "", nil, body); serr != nil {
-		glog.Fatal("Could not create index. Check if ES is running. ", serr)
-
+		buf := bytes.NewBuffer(body)
+		req, _ := http.NewRequest("POST", "http://localhost:9200/"+*indexName, buf)
+		if _, err := client.Do(req); err != nil {
+			glog.Fatal("Could not create index. Check if ES is running")
+		}
+		fmt.Println("created index:" + *indexName + ",type:" + *typeName)
 	}
-	fmt.Println("created index")
 }
