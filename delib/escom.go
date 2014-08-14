@@ -194,11 +194,11 @@ func createESQueryString(numPositions int, sq SearchQuery) string {
 
 		if sq.AdFormat != "" {
 
-			q += delim + `{ "query":  {"term": { "formats":` + strings.ToLower(sq.AdFormat) + `}}}`
+			q += delim + `{ "query":  {"term": { "formats":"` + strings.ToLower(sq.AdFormat) + `"}}}`
 			delim = ","
 		}
 		if sq.Device != "" {
-			q += delim + `{ "query":  {"term": { "devices":` + strings.ToLower(sq.Device) + `}}}`
+			q += delim + `{ "query":  {"term": { "devices":"` + strings.ToLower(sq.Device) + `"}}}`
 			delim = ","
 		}
 
