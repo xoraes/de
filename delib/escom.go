@@ -55,8 +55,8 @@ func UpdateAd(unit *Unit) *DeError {
 		unit.ExcludedLocations[index] = strings.ToLower(unit.ExcludedLocations[index])
 	}
 
-	for index, _ = range unit.ExcludedCatagories {
-		unit.ExcludedCatagories[index] = strings.ToLower(unit.ExcludedCatagories[index])
+	for index, _ = range unit.ExcludedCategories {
+		unit.ExcludedCategories[index] = strings.ToLower(unit.ExcludedCategories[index])
 	}
 	for index, _ = range unit.AdFormats {
 		unit.AdFormats[index] = strings.ToLower(unit.AdFormats[index])
@@ -109,17 +109,16 @@ func ProcessESQuery(req *http.Request) ([]byte, *DeError) {
 	//send query to es and request n=4 times the number of requested positions
 	n := 4
 
-	if ads, derr = queryES(n*positions, sq); derr != nil {
+	if ads, derr = QueryUniqAdFromES(n, positions, sq); derr != nil {
 		return nil, derr
 	}
-	uniqueAds := removeDuplicateCampaigns(positions, ads)
-	sqr := &AdUnits{Items: uniqueAds}
+	sqr := &AdUnits{Items: ads}
 	if byteArray, err = json.MarshalIndent(sqr, "", "    "); err != nil {
 		return nil, NewError(500, err)
 	}
 	return byteArray, nil
 }
-func queryES(positions int, sq SearchQuery) ([]Unit, *DeError) {
+func QueryUniqAdFromES(multiple, positions int, sq SearchQuery) ([]Unit, *DeError) {
 	var (
 		byteArray []byte
 		err       error
@@ -127,7 +126,7 @@ func queryES(positions int, sq SearchQuery) ([]Unit, *DeError) {
 		sresult   elastigo.SearchResult
 	)
 	//run the actual query using elastigo
-	if sresult, err = c.Search(*indexName, *typeName, nil, createESQueryString(positions, sq)); err != nil {
+	if sresult, err = c.Search(*indexName, *typeName, nil, createESQueryString(multiple*positions, sq)); err != nil {
 		return nil, NewError(500, err)
 		//if any results are obtained
 	} else if &sresult != nil && sresult.Hits.Total > 0 {
@@ -147,7 +146,10 @@ func queryES(positions int, sq SearchQuery) ([]Unit, *DeError) {
 		return nil, NewError(200, "No ads were found matching the target criteria - "+string(target))
 	}
 	glog.Info(`{"took_ms":`, sresult.Took, `,"timedout":`, sresult.TimedOut, `,"hitct":`, sresult.Hits.Total, "}")
-	return ads, nil
+
+	uniqueAds := removeDuplicateCampaigns(positions, ads)
+	glog.Info("Removing dup campaigns: ", len(ads)-len(uniqueAds))
+	return uniqueAds, nil
 }
 
 func createESQueryString(numPositions int, sq SearchQuery) string {
@@ -249,24 +251,19 @@ func createESQueryString(numPositions int, sq SearchQuery) string {
 
 func GetAdUnitById(id string) ([]byte, *DeError) {
 	var (
-		qres          elastigo.BaseResponse
-		serr          error
-		br            []byte
-		unit          *Unit
-		responseBytes []byte
+		qres elastigo.BaseResponse
+		serr error
+		br   []byte
 	)
 	if qres, serr = c.Get(*indexName, *typeName, id, nil); serr != nil {
 		return nil, NewError(500, "Error talking to ES")
 	} else if !qres.Found {
 		return nil, NewError(400, "Could not find id in ES: "+id)
-	} else if br, serr = json.Marshal(qres.Source); serr != nil {
-		return nil, NewError(500, serr)
-	} else if serr = json.Unmarshal(br, unit); serr != nil {
-		return nil, NewError(500, serr)
-	} else if responseBytes, serr = json.Marshal(unit); serr != nil {
+	}
+	if br, serr = json.Marshal(qres.Source); serr != nil {
 		return nil, NewError(500, serr)
 	}
-	return responseBytes, nil
+	return br, nil
 }
 func DeleteAdUnitById(id string) *DeError {
 	glog.Info("ad unit to delete: " + id)
@@ -394,6 +391,7 @@ func CreateIndex() {
             "_all" : {"enabled" : false},
             "properties" : {
                 "_id" : { "type" : "string", "index" : "not_analyzed" },
+                "ad" : { "type" : "string", "index" : "not_analyzed" },
                 "_updated" : { "type" : "date", "format":"date_time_no_millis","index" : "not_analyzed" },
                 "_created" : { "type" : "date", "format":"date_time_no_millis","index" : "not_analyzed" },
                 "locations" : { "type" : "string", "index" : "not_analyzed" },
@@ -415,7 +413,8 @@ func CreateIndex() {
                 "channel" : { "type" : "string", "index" : "no" },
                 "channel_url" : { "type" : "string", "index" : "no" },
                 "goal_period" : { "type" : "string", "index" : "no" },
-                "goal_views" : { "type" : "integer", "index" : "no" },
+                "goal_views" : { "type" : "long", "index" : "no" },
+                "duration" : { "type" : "integer", "index" : "no" },
                 "account" : { "type" : "string", "index" : "no" }
             }
         }

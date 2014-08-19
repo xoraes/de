@@ -12,7 +12,7 @@ type Unit struct {
 	Ad                 string     `json:"ad,omitempty"`
 	CampaignId         string     `json:"campaign,omitempty"`
 	TacticId           string     `json:"tactic,omitempty"`
-	ChannelId          string     `json:"channel,omitempty"`
+	Channel            string     `json:"channel,omitempty"`
 	Account            string     `json:"account,omitempty"`
 	Languages          []string   `json:"languages,omitempty"`
 	Locations          []string   `json:"locations,omitempty"`
@@ -25,12 +25,11 @@ type Unit struct {
 	ChannelUrl         string     `json:"channel_url,omitempty"`
 	Status             string     `json:"status,omitempty"`
 	GoalPeriod         string     `json:"goal_period,omitempty"`
-	GoalViews          int        `json:"goal_views,omitempty"`
-	Duration           int        `json:"duration,omitempty"`
-	Clicks             int        `json:"clicks,omitempty"`
-	Views              int        `json:"views,omitempty"`
-	Catagories         []string   `json:"catagories,omitempty"`
-	ExcludedCatagories []string   `json:"excluded_catagories,omitempty"`
+	GoalViews          uint32     `json:"goal_views,omitempty"`
+	Duration           uint32     `json:"duration,omitempty"`
+	Clicks             uint32     `json:"clicks,omitempty"`
+	Views              uint32     `json:"views,omitempty"`
+	ExcludedCategories []string   `json:"excluded_categories,omitempty"`
 	Devices            []string   `json:"devices,omitempty"`
 	Categories         []string   `json:"categories,omitempty"`
 	Cpc                float32    `json:"cpc,omitempty"`
@@ -40,8 +39,8 @@ type SearchQuery struct {
 	Languages  []string `json:"languages,omitempty"`
 	Locations  []string `json:"locations,omitempty"`
 	Categories []string `json:"categories,omitempty"`
-	Device     string   `json:"device,omitempty"`
-	AdFormat   string   `json:"format,omitempty"`
+	Device     string   `json:"devices,omitempty"`
+	AdFormat   string   `json:"formats,omitempty"`
 }
 
 type DeError struct {
