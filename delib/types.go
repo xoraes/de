@@ -39,8 +39,8 @@ type SearchQuery struct {
 	Languages  []string `json:"languages,omitempty"`
 	Locations  []string `json:"locations,omitempty"`
 	Categories []string `json:"categories,omitempty"`
-	Device     string   `json:"devices,omitempty"`
-	AdFormat   string   `json:"formats,omitempty"`
+	Device     string   `json:"device,omitempty"`
+	AdFormat   string   `json:"format,omitempty"`
 }
 
 type DeError struct {

@@ -50,12 +50,22 @@ func TestInsertAndQuery(t *testing.T) {
 	d := NewData()
 	defer clean("1", t)
 	in := loadData(d, t)
-	sq := SearchQuery{
-		Device:     "dev1",
-		Locations:  []string{"fr"},
-		Languages:  []string{"en"},
-		AdFormat:   "format1",
-		Categories: []string{"cat1"},
+	var sq SearchQuery
+	//building search via map will test actual json input is as expected
+	search := map[string]interface{}{
+		"device":     "dev1",
+		"locations":  []string{"fr"},
+		"languages":  []string{"en"},
+		"format":     "format1",
+		"categories": []string{"cat1"},
+	}
+	sqb, e1 := json.Marshal(search)
+	if e1 != nil {
+		t.Fail()
+	}
+	e2 := json.Unmarshal(sqb, &sq)
+	if e2 != nil {
+		t.Fail()
 	}
 	//wait for data to be loaded
 	time.Sleep(2 * time.Second)
