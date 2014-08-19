@@ -8,10 +8,8 @@ install:
   - sudo service elasticsearch start
 
 script:
-  - go get -t
-  - go build ./...
   - go test -v
-  - go install
+
 
 deploy:
   provider: s3
