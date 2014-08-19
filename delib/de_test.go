@@ -1,9 +1,9 @@
-package main
+package delib
 
 import (
 	"encoding/json"
 	"fmt"
-	de "github.com/dailymotion/pixelle-de/delib"
+
 	"log"
 	"testing"
 	"time"
@@ -50,7 +50,7 @@ func TestInsertAndQuery(t *testing.T) {
 	d := NewData()
 	defer clean("1", t)
 	in := loadData(d, t)
-	sq := de.SearchQuery{
+	sq := SearchQuery{
 		Device:     "dev1",
 		Locations:  []string{"fr"},
 		Languages:  []string{"en"},
@@ -59,7 +59,7 @@ func TestInsertAndQuery(t *testing.T) {
 	}
 	//wait for data to be loaded
 	time.Sleep(2 * time.Second)
-	adunitOut, err := de.QueryUniqAdFromES(20, 20, sq)
+	adunitOut, err := QueryUniqAdFromES(20, 20, sq)
 	if err != nil {
 		t.Fail()
 	}
@@ -76,11 +76,11 @@ func TestAllMatch(t *testing.T) {
 
 	defer clean("1", t)
 	loadData(d, t)
-	sq := de.SearchQuery{}
+	sq := SearchQuery{}
 
 	//wait for data to be loaded
 	time.Sleep(2 * time.Second)
-	adunitOut, err := de.QueryUniqAdFromES(2, 2, sq)
+	adunitOut, err := QueryUniqAdFromES(2, 2, sq)
 	if err != nil {
 		t.Fail()
 	}
@@ -96,7 +96,7 @@ func TestDuplicateCampaigns(t *testing.T) {
 	defer clean("2", t)
 	in1 := loadData(d1, t)
 	loadData(d2, t)
-	sq := de.SearchQuery{
+	sq := SearchQuery{
 		Device:     "dev1",
 		Locations:  []string{"fr"},
 		Languages:  []string{"en"},
@@ -105,7 +105,7 @@ func TestDuplicateCampaigns(t *testing.T) {
 	}
 	//wait for data to be loaded
 	time.Sleep(2 * time.Second)
-	unitsOut, err := de.QueryUniqAdFromES(2, 2, sq)
+	unitsOut, err := QueryUniqAdFromES(2, 2, sq)
 	if err != nil {
 		t.Fail()
 	}
@@ -113,7 +113,7 @@ func TestDuplicateCampaigns(t *testing.T) {
 	deepEqual(in1, &unitsOut[0], t)
 }
 
-func deepEqual(a *de.Unit, b *de.Unit, t *testing.T) {
+func deepEqual(a *Unit, b *Unit, t *testing.T) {
 	//Assert(a.GoalViews == b.GoalViews, t, "testing", nil)
 	//Assert(a.Id == b.Id, t, "testing", nil)
 	//Assert(a.Ad == b.Ad, t, "testing", nil)
@@ -152,23 +152,23 @@ func Assert(is bool, t *testing.T, format string, args ...interface{}) {
 	}
 }
 
-func printAdUnit(ad *de.Unit) {
+func printAdUnit(ad *Unit) {
 	b, err := json.MarshalIndent(ad, "", "    ")
 	if err == nil {
 		fmt.Println(string(b))
 	}
 }
 
-func loadData(v interface{}, t *testing.T) *de.Unit {
+func loadData(v interface{}, t *testing.T) *Unit {
 	var (
-		in de.Unit
+		in Unit
 	)
 	br1, _ := json.Marshal(v)
 	err1 := json.Unmarshal(br1, &in)
 	if err1 != nil {
 		t.Fail()
 	}
-	err2 := de.UpdateAd(&in)
+	err2 := UpdateAd(&in)
 	if err2 != nil {
 		t.Fail()
 	}
@@ -177,12 +177,12 @@ func loadData(v interface{}, t *testing.T) *de.Unit {
 }
 func init() {
 	fmt.Println("Creating Index")
-	de.CreateIndex()
+	CreateIndex()
 	time.Sleep(3 * time.Second)
 }
 
 func clean(id string, t *testing.T) {
-	err := de.DeleteAdUnitById(id)
+	err := DeleteAdUnitById(id)
 	if err != nil {
 		t.Fail()
 	}
