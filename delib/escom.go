@@ -362,6 +362,22 @@ func removeDuplicateCampaigns(positions int, ads []Unit) []Unit {
 	return uAds
 }
 
+func DeleteIndex() {
+	req, _ := http.NewRequest("DELETE", "http://localhost:9200/"+*indexName, nil)
+	client := http.DefaultClient
+	var (
+		err  error
+	)
+	for {
+		if _, err = client.Do(req); err != nil {
+			glog.Error("Could not delete index. Ensure that ES is running locally on port 9200. Retrying in 5 secs...")
+			time.Sleep(5 * time.Second)
+		} else {
+			break
+		}
+	}
+
+}
 func CreateIndex() {
 	req, _ := http.NewRequest("HEAD", "http://localhost:9200/"+*indexName, nil)
 	client := http.DefaultClient

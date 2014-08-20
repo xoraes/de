@@ -20,6 +20,8 @@ func main() {
 	flag.IntVar(&repeat, "repeat", 60, "time interval in seconds for sync to query mongodb")
 	flag.Parse()
 
+	//remove the index
+	de.DeleteIndex()
 	//create the ES index
 	de.CreateIndex()
 
