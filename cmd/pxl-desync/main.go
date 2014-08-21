@@ -35,11 +35,9 @@ func main() {
 		}
 		if adUnits != nil && adUnits.Items != nil && len(adUnits.Items) > 0 {
 			for _, u := range adUnits.Items {
-				if u.Status == "active" {
-					de.UpdateAd(&u)
-				}
-				if u.Status == "deleted" {
-					de.DeleteAdUnitById(u.Id)
+				if u.Status != "deleted" { // status is active or inactive i.e no deleted then insert the adunit
+					de.InsertAdUnit(&u)
+				} else if found, derr := de.DeleteAdUnitById(u.Id); found && derr == nil {
 					log.Println("deleted ad unit: " + u.Id)
 				}
 			}

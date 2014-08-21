@@ -33,9 +33,9 @@ func setNullValueOnEmpty(t []string) []string {
 	return t
 }
 
-func UpdateAd(unit *Unit) *DeError {
-
+func InsertAdUnit(unit *Unit) *DeError {
 	var index int
+
 	//append "all" to the array if the array is empty
 	unit.Locations = setNullValueOnEmpty(unit.Locations)
 	unit.Languages = setNullValueOnEmpty(unit.Languages)
@@ -72,6 +72,10 @@ func UpdateAd(unit *Unit) *DeError {
 
 	unit.Status = strings.ToLower(unit.Status)
 
+	return UpdateAdUnit(unit)
+
+}
+func UpdateAdUnit(unit *Unit) *DeError {
 	if jsonBytes, serr := json.Marshal(unit); serr != nil {
 		glog.Error(serr)
 		return NewError(500, serr)
@@ -265,17 +269,17 @@ func GetAdUnitById(id string) ([]byte, *DeError) {
 	}
 	return br, nil
 }
-func DeleteAdUnitById(id string) *DeError {
-	glog.Info("ad unit to delete: " + id)
+func DeleteAdUnitById(id string) (bool, *DeError) {
 	if qres, err := c.Delete(*indexName, *typeName, id, nil); err != nil {
-		return NewError(500, err)
+		return false, NewError(500, err)
 	} else {
 		if !qres.Found {
 			errstr := "ad id " + id + " does not exist"
-			return NewError(500, errstr)
+			return false, NewError(500, errstr)
 		}
 	}
-	return nil
+	glog.Info("ad unit deleted: " + id)
+	return true, nil
 }
 
 func GetIdsByAdId(aid string) ([]string, *DeError) {
@@ -366,7 +370,7 @@ func DeleteIndex() {
 	req, _ := http.NewRequest("DELETE", "http://localhost:9200/"+*indexName, nil)
 	client := http.DefaultClient
 	var (
-		err  error
+		err error
 	)
 	for {
 		if _, err = client.Do(req); err != nil {
