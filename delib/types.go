@@ -25,10 +25,10 @@ type Unit struct {
 	ChannelUrl         string     `json:"channel_url,omitempty"`
 	Status             string     `json:"status,omitempty"`
 	GoalPeriod         string     `json:"goal_period,omitempty"`
-	GoalViews          uint32     `json:"goal_views,omitempty"`
+	GoalViews          uint64     `json:"goal_views,omitempty"`
 	Duration           uint32     `json:"duration,omitempty"`
-	Clicks             uint32     `json:"clicks,omitempty"`
-	Views              uint32     `json:"views,omitempty"`
+	Clicks             uint64     `json:"clicks,omitempty"`
+	Views              uint64     `json:"views,omitempty"`
 	ExcludedCategories []string   `json:"excluded_categories,omitempty"`
 	Devices            []string   `json:"devices,omitempty"`
 	Categories         []string   `json:"categories,omitempty"`

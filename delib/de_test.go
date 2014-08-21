@@ -178,7 +178,7 @@ func loadData(v interface{}, t *testing.T) *Unit {
 	if err1 != nil {
 		t.Fail()
 	}
-	err2 := UpdateAd(&in)
+	err2 := InsertAdUnit(&in)
 	if err2 != nil {
 		t.Fail()
 	}
@@ -192,8 +192,7 @@ func init() {
 }
 
 func clean(id string, t *testing.T) {
-	err := DeleteAdUnitById(id)
-	if err != nil {
+	if found, err := DeleteAdUnitById(id); err != nil || !found {
 		t.Fail()
 	}
 }
