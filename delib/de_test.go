@@ -9,15 +9,15 @@ import (
 	"time"
 )
 
-func NewData() map[string]interface{} {
+func NewData(id string, campaignId string) map[string]interface{} {
 	var dst = make(map[string]interface{})
 	var (
 		timenow = time.Now().Format(time.RFC3339)
 		data    = map[string]interface{}{
-			"_id":                 "1",
-			"ad":                  "1",
+			"_id":                 id,
+			"ad":                  id,
 			"duration":            123,
-			"campaign":            "1",
+			"campaign":            campaignId,
 			"_updated":            timenow,
 			"_created":            timenow,
 			"categories":          []string{"cat1", "cat2"},
@@ -46,8 +46,45 @@ func NewData() map[string]interface{} {
 	}
 	return dst
 }
+
+func TestReturnOnlyActive(t *testing.T) {
+	d1 := NewData("1", "1")
+	d1["status"] = "inactive"
+	d2 := NewData("2", "2")
+	defer clean("1", t)
+	defer clean("2", t)
+	loadData(d1, t)
+	in2 := loadData(d2, t)
+
+	var sq SearchQuery
+	//building search via map will test actual json input is as expected
+	search := map[string]interface{}{
+		"device":     "dev1",
+		"locations":  []string{"fr"},
+		"languages":  []string{"en"},
+		"format":     "format1",
+		"categories": []string{"cat1"},
+	}
+	sqb, e1 := json.Marshal(search)
+	if e1 != nil {
+		t.Fail()
+	}
+	e2 := json.Unmarshal(sqb, &sq)
+	if e2 != nil {
+		t.Fail()
+	}
+	//wait for data to be loaded
+	time.Sleep(2 * time.Second)
+	adunitOut, err := QueryUniqAdFromES(20, 20, sq)
+	if err != nil {
+		t.Fail()
+	}
+	Assert(len(adunitOut) == 1, t, "testing", nil)
+	deepEqual(in2, &adunitOut[0], t)
+}
+
 func TestInsertAndQuery(t *testing.T) {
-	d := NewData()
+	d := NewData("1", "1")
 	defer clean("1", t)
 	in := loadData(d, t)
 	var sq SearchQuery
@@ -77,7 +114,7 @@ func TestInsertAndQuery(t *testing.T) {
 	deepEqual(in, &adunitOut[0], t)
 }
 func TestAllMatch(t *testing.T) {
-	d := NewData()
+	d := NewData("1", "1")
 	d["categories"] = nil
 	d["locations"] = nil
 	d["languages"] = nil
@@ -98,10 +135,8 @@ func TestAllMatch(t *testing.T) {
 }
 
 func TestDuplicateCampaigns(t *testing.T) {
-	d1 := NewData()
-	d2 := NewData()
-	d2["_id"] = "2"
-	d2["ad"] = "2"
+	d1 := NewData("1", "1")
+	d2 := NewData("2", "1")
 	defer clean("1", t)
 	defer clean("2", t)
 	in1 := loadData(d1, t)
