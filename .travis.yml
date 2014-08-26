@@ -11,11 +11,10 @@ script:
   - go get ./...
   - go test -v ./...
 
+notifications:
+  webhooks: http://ops.pxlad.io/webhooks/travis
 
-deploy:
-  provider: s3
-  access_key_id: AKIAIMEUE7V64YWR6OAQ
-  secret_access_key:
-    secure: QTEHzGhp2mr3/QL4hGNYQl2Yrvf4eDouyMtEYSy+9jsyRB0XsxV1YxA2bWhDrhqOXg8firA42dJq86tg2ZqJm7UMf5eEP58C9EhW/oqhww76EAoYFbX+Wj0wlQDX3SSoaPHGY+0dY1IlgCak63Z5Yut9n9KN/MQLBVtz50KBW+k=
-  bucket: pixelle-salt/s3/pxldesrv/0.1
-  local-dir: $HOME/gopath/bin
+branches:
+  only:
+    - master
+    - prod
