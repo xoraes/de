@@ -5,6 +5,7 @@ go:
 before_install:
 - echo "machine github.com\n  login $CI_USER_TOKEN" >> ~/.netrc
 
+
 install:
   - wget https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-1.2.1.deb
   - sudo dpkg -i elasticsearch-1.2.1.deb
