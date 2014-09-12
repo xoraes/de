@@ -2,23 +2,46 @@ package main
 
 import (
 	"flag"
+	"github.com/dailymotion/pixelle-analytics-consumer/pacdal"
 	de "github.com/dailymotion/pixelle-de/delib"
+	"github.com/gocql/gocql"
 	"log"
 	"time"
 )
+
+var (
+	caddrs   []string
+	keyspace string
+	repeat   int
+	cluster  *gocql.ClusterConfig
+	cass     *pacdal.Cassdao
+)
+
+func init() {
+
+	var err error
+	flag.IntVar(&repeat, "repeat", 30, "time interval in seconds for sync to query api")
+	flag.Var(&caddrs, "casshost", "Cassandra host address(may be given multiple times)")
+	flag.StringVar(&keyspace, "cassks", "pxlcounters", "Cassandra keyspace")
+	flag.Parse()
+
+	//create a cassdb session
+	cluster = gocql.NewCluster(caddrs...)
+	if cass, err = pacdal.NewAnalyticsDbSession(cluster, keyspace); err != nil {
+		log.Fatal("Error creating cassandra session -- ", err)
+	}
+
+}
 
 // DE servers run a process every X seconds (default 60 secs) to query data from campaign db and
 // update themselves with new/update campaign information from campaign db.
 
 func main() {
 	var (
-		repeat  int
 		err     error
 		adUnits *de.AdUnits
 		last    time.Time
 	)
-	flag.IntVar(&repeat, "repeat", 60, "time interval in seconds for sync to query mongodb")
-	flag.Parse()
 
 	//remove the index
 	de.DeleteIndex()
@@ -44,6 +67,42 @@ func main() {
 			log.Println("Sync Completed")
 		} else {
 			log.Println("Nothing to Sync")
+		}
+
+		//update the click count in es for each adunit. If click count > goal, then set GoalReached to true
+		if m, casserr := cass.GetClickCountMap(); casserr != nil {
+			log.Println("Error connecting to counter db -- ", casserr)
+		} else {
+			for k, cnt := range m {
+				units, eserr := de.GetAdUnitsByCampaign(k)
+				if eserr != nil {
+					log.Println("Error connecting to ES", eserr)
+				} else {
+					for _, unit := range units {
+						if unit.Status == "active" {
+							if unit.GoalViews >= 0 && cnt >= unit.GoalViews {
+								de.UpdateAdUnit(&de.Unit{Id: unit.Id, GoalReached: true, Clicks: cnt})
+							} else {
+								de.UpdateAdUnit(&de.Unit{Id: unit.Id, Clicks: cnt})
+							}
+						}
+					}
+				}
+			}
+		}
+		//run through all adunits and reset goal reached values based on its current click/view and goal_views
+		//this is done so that we can clean up any anomaly and be assured that GoalReached is true
+		//if clicks/views have reached goal click/views
+		if units, eserr := de.GetAllAdUnits(); eserr != nil {
+			log.Println(eserr)
+		} else {
+			for _, v := range units {
+				if v.GoalViews >= 0 && v.GoalViews <= v.Clicks {
+					de.UpdateAdUnit(&de.Unit{Id: v.Id, GoalReached: true})
+				} else {
+					de.UpdateAdUnit(&de.Unit{Id: v.Id, GoalReached: false})
+				}
+			}
 		}
 		time.Sleep(time.Duration(repeat) * time.Second)
 	}

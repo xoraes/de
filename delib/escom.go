@@ -99,7 +99,7 @@ func ProcessESQuery(req *http.Request) ([]byte, *DeError) {
 	)
 	//decode raw byte to struct for SearchQuery
 	decoder := json.NewDecoder(req.Body)
-	//if a req body is null, we ignore the decoder err and proceed. Note this
+	//if a req body is null, we ignore the decoder err and proceed (hence the &&). Note this
 	//means we will return ad(s) when the request body is empty
 	if err = decoder.Decode(&sq); err != nil && err != io.EOF {
 		return nil, NewError(500, err)
@@ -110,10 +110,7 @@ func ProcessESQuery(req *http.Request) ([]byte, *DeError) {
 	} else if positions, err = strconv.Atoi(adcount); err != nil {
 		positions = 1
 	}
-	//send query to es and request n=4 times the number of requested positions
-	n := 4
-
-	if ads, derr = QueryUniqAdFromES(n, positions, sq); derr != nil {
+	if ads, derr = QueryUniqAdFromES(positions, sq); derr != nil {
 		return nil, derr
 	}
 	sqr := &AdUnits{Items: ads}
@@ -122,7 +119,31 @@ func ProcessESQuery(req *http.Request) ([]byte, *DeError) {
 	}
 	return byteArray, nil
 }
-func QueryUniqAdFromES(multiple, positions int, sq SearchQuery) ([]Unit, *DeError) {
+func QueryUniqAdFromES(positions int, sq SearchQuery) ([]Unit, *DeError) {
+	sq.Languages = append(sq.Languages, "all")
+	sq.Locations = append(sq.Locations, "all")
+	sq.Categories = append(sq.Categories, "all")
+	if sq.AdFormat == "" {
+		sq.AdFormat = `["all"]`
+	} else {
+		sq.AdFormat = `["all","` + strings.ToLower(sq.AdFormat) + `"]`
+	}
+	if sq.Device == "" {
+		sq.Device = `["all"]`
+	} else {
+		sq.Device = `["all","` + strings.ToLower(sq.Device) + `"]`
+	}
+
+	//send query to es and request n=4 times the number of requested positions
+	n := 4
+	if units, err := QueryES(n*positions, sq); err != nil {
+		return nil, err
+	} else {
+		return removeDuplicateCampaigns(positions, units), nil
+	}
+}
+
+func QueryES(positions int, sq SearchQuery) ([]Unit, *DeError) {
 	var (
 		byteArray []byte
 		err       error
@@ -130,7 +151,7 @@ func QueryUniqAdFromES(multiple, positions int, sq SearchQuery) ([]Unit, *DeErro
 		sresult   elastigo.SearchResult
 	)
 	//run the actual query using elastigo
-	if sresult, err = c.Search(*indexName, *typeName, nil, createESQueryString(multiple*positions, sq)); err != nil {
+	if sresult, err = c.Search(*indexName, *typeName, nil, createESQueryString(positions, sq)); err != nil {
 		return nil, NewError(500, err)
 		//if any results are obtained
 	} else if &sresult != nil && sresult.Hits.Total > 0 {
@@ -150,10 +171,7 @@ func QueryUniqAdFromES(multiple, positions int, sq SearchQuery) ([]Unit, *DeErro
 		return nil, NewError(200, "No ads were found matching the target criteria - "+string(target))
 	}
 	glog.Info(`{"took_ms":`, sresult.Took, `,"timedout":`, sresult.TimedOut, `,"hitct":`, sresult.Hits.Total, "}")
-
-	uniqueAds := removeDuplicateCampaigns(positions, ads)
-	glog.Info("Removing dup campaigns: ", len(ads)-len(uniqueAds))
-	return uniqueAds, nil
+	return ads, nil
 }
 
 func createESQueryString(numPositions int, sq SearchQuery) string {
@@ -164,10 +182,13 @@ func createESQueryString(numPositions int, sq SearchQuery) string {
 		lang []byte
 		q    string
 	)
-	q = `{"_source":
+	q = "{"
+	if sq.DisableIncludes == false {
+		q += `"_source":
 			{
 			"include": ["ad","campaign","title","description","account","tactic","video_url","thumbnail_url","channel","channel_url","duration","cpc"]
 			},`
+	}
 	q += `"size":`
 	q += strconv.Itoa(numPositions) + ","
 	q += `"query": {
@@ -178,20 +199,6 @@ func createESQueryString(numPositions int, sq SearchQuery) string {
 	delim := ""
 	//useMustFilter := (sq.Locations != nil && len(sq.Locations) > 0) || (sq.Languages != nil && len(sq.Languages) > 0) || sq.AdFormat > 0
 	useMustFilter := true
-
-	sq.Languages = append(sq.Languages, "all")
-	sq.Locations = append(sq.Locations, "all")
-	sq.Categories = append(sq.Categories, "all")
-	if sq.AdFormat == "" {
-		sq.AdFormat = `["all"]`
-	} else {
-		sq.AdFormat = `["all","` + strings.ToLower(sq.AdFormat) + `"]`
-	}
-	if sq.Device == "" {
-		sq.Device = `["all"]`
-	} else {
-		sq.Device = `["all","` + strings.ToLower(sq.Device) + `"]`
-	}
 	q += `"bool":{`
 	if useMustFilter {
 		q += `"must":[`
@@ -226,9 +233,11 @@ func createESQueryString(numPositions int, sq SearchQuery) string {
 			q += delim + `{ "query":  {"terms": { "devices":` + sq.Device + `}}}`
 			delim = ","
 		}
+		if sq.DisableActiveCheck == false {
+			q += delim + `{ "query":  {"term": { "status": "active"}}}`
+			delim = ","
+		}
 
-		q += delim + `{ "query":  {"term": { "status": "active"}}}`
-		delim = ","
 		q += `]`
 	}
 	if len(sq.Locations) > 0 || len(sq.Categories) > 0 {
@@ -243,6 +252,10 @@ func createESQueryString(numPositions int, sq SearchQuery) string {
 			q += delim + `{ "query":  {"terms": { "excluded_categories":` + strings.ToLower(string(cats)) + `}}}`
 			delim = ","
 		}
+		if sq.DisableGoalReachedCheck == false {
+			q += delim + `{ "query":  {"term": { "goal_reached": true}}}`
+			delim = ","
+		}
 		q += `]`
 	}
 	q += `}}}},"random_score": {}}}}`
@@ -251,6 +264,10 @@ func createESQueryString(numPositions int, sq SearchQuery) string {
 	glog.Info(q)
 	glog.Info("=============================")
 	return q
+}
+func GetAllAdUnits() ([]Unit, *DeError) {
+	BIGNUMBER := 10000000
+	return QueryES(BIGNUMBER, SearchQuery{DisableActiveCheck: true, DisableIncludes: true, DisableGoalReachedCheck: true})
 }
 
 func GetAdUnitById(id string) ([]byte, *DeError) {
@@ -299,20 +316,25 @@ func GetIdsByAdId(aid string) ([]string, *DeError) {
 
 }
 
-func GetAdIdsByCampaign(cid string) ([]string, *DeError) {
+func GetAdUnitsByCampaign(cid string) ([]Unit, *DeError) {
 	var (
 		serr    error
 		sresult elastigo.SearchResult
-		ids     []string
+		ads     []Unit
 	)
-	q := `{"filter": {"bool": {"must": [{"term": {"campaign":"` + cid + `"}}]}},"fields": []}`
+	q := `{"filter": {"bool": {"must": [{"term": {"campaign":"` + cid + `"}}]}}}`
 	if sresult, serr = c.Search(*indexName, *typeName, nil, q); serr != nil {
 		return nil, NewError(500, serr)
 	}
-	for _, v := range sresult.Hits.Hits {
-		ids = append(ids, v.Id)
+	ads = make([]Unit, len(sresult.Hits.Hits))
+	for i, hit := range sresult.Hits.Hits {
+		if byteArray, merr := json.Marshal(hit.Source); merr != nil {
+			return nil, NewError(500, merr)
+		} else if umerr := json.Unmarshal(byteArray, &ads[i]); umerr != nil {
+			return nil, NewError(500, umerr)
+		}
 	}
-	return ids, nil
+	return ads, nil
 }
 func GetESLastUpdated(col string) time.Time {
 	var err error
@@ -418,6 +440,7 @@ func CreateIndex() {
                 "languages" : { "type" : "string", "index" : "not_analyzed" },
                 "excluded_locations" : { "type" : "string", "index" : "not_analyzed" },
                 "excluded_categories" : { "type" : "string", "index" : "not_analyzed" },
+                "goal_reached" : { "type" : "boolean", "index" : "not_analyzed" },
                 "devices" : { "type" : "string", "index" : "not_analyzed" },
                 "categories" : { "type" : "string", "index" : "not_analyzed" },
                 "status" : { "type" : "string", "index" : "not_analyzed" },
