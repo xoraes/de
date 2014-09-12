@@ -6,9 +6,10 @@ import (
 	de "github.com/dailymotion/pixelle-de/delib"
 	"github.com/gocql/gocql"
 	"log"
-	"time"
 	"strings"
+	"time"
 )
+
 type StringArray []string
 
 func (a *StringArray) Set(s string) error {
