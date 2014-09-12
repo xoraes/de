@@ -75,7 +75,7 @@ func TestReturnOnlyActive(t *testing.T) {
 	}
 	//wait for data to be loaded
 	time.Sleep(2 * time.Second)
-	adunitOut, err := QueryUniqAdFromES(20, 20, sq)
+	adunitOut, err := QueryUniqAdFromES(20, sq)
 	if err != nil {
 		t.Fail()
 	}
@@ -106,7 +106,7 @@ func TestInsertAndQuery(t *testing.T) {
 	}
 	//wait for data to be loaded
 	time.Sleep(2 * time.Second)
-	adunitOut, err := QueryUniqAdFromES(20, 20, sq)
+	adunitOut, err := QueryUniqAdFromES(20, sq)
 	if err != nil {
 		t.Fail()
 	}
@@ -127,7 +127,7 @@ func TestAllMatch(t *testing.T) {
 
 	//wait for data to be loaded
 	time.Sleep(2 * time.Second)
-	adunitOut, err := QueryUniqAdFromES(2, 2, sq)
+	adunitOut, err := QueryUniqAdFromES(1, sq)
 	if err != nil {
 		t.Fail()
 	}
@@ -150,7 +150,7 @@ func TestDuplicateCampaigns(t *testing.T) {
 	}
 	//wait for data to be loaded
 	time.Sleep(2 * time.Second)
-	unitsOut, err := QueryUniqAdFromES(2, 2, sq)
+	unitsOut, err := QueryUniqAdFromES(2, sq)
 	if err != nil {
 		t.Fail()
 	}

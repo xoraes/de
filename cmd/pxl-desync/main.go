@@ -7,10 +7,20 @@ import (
 	"github.com/gocql/gocql"
 	"log"
 	"time"
+	"strings"
 )
+type StringArray []string
+
+func (a *StringArray) Set(s string) error {
+	*a = append(*a, s)
+	return nil
+}
+func (a *StringArray) String() string {
+	return strings.Join(*a, ",")
+}
 
 var (
-	caddrs   []string
+	caddrs   = StringArray{}
 	keyspace string
 	repeat   int
 	cluster  *gocql.ClusterConfig

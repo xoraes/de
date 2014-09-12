@@ -136,14 +136,14 @@ func QueryUniqAdFromES(positions int, sq SearchQuery) ([]Unit, *DeError) {
 
 	//send query to es and request n=4 times the number of requested positions
 	n := 4
-	if units, err := QueryES(n*positions, sq); err != nil {
+	if units, err := queryES(n*positions, sq); err != nil {
 		return nil, err
 	} else {
 		return removeDuplicateCampaigns(positions, units), nil
 	}
 }
 
-func QueryES(positions int, sq SearchQuery) ([]Unit, *DeError) {
+func queryES(positions int, sq SearchQuery) ([]Unit, *DeError) {
 	var (
 		byteArray []byte
 		err       error
@@ -267,7 +267,7 @@ func createESQueryString(numPositions int, sq SearchQuery) string {
 }
 func GetAllAdUnits() ([]Unit, *DeError) {
 	BIGNUMBER := 10000000
-	return QueryES(BIGNUMBER, SearchQuery{DisableActiveCheck: true, DisableIncludes: true, DisableGoalReachedCheck: true})
+	return queryES(BIGNUMBER, SearchQuery{DisableActiveCheck: true, DisableIncludes: true, DisableGoalReachedCheck: true})
 }
 
 func GetAdUnitById(id string) ([]byte, *DeError) {
