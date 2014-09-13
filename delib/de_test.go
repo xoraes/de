@@ -133,6 +133,25 @@ func TestAllMatch(t *testing.T) {
 	}
 	Assert(len(adunitOut) == 1, t, "testing", nil)
 }
+func TestClickCapping(t *testing.T) {
+	d := NewData("1", "1")
+	d["categories"] = nil
+	d["locations"] = nil
+	d["languages"] = nil
+	d["formats"] = nil
+	d["devices"] = nil
+	d["goal_reached"] = true
+
+	defer clean("1", t)
+	loadData(d, t)
+	sq := SearchQuery{}
+
+	//wait for data to be fully loaded
+	time.Sleep(2 * time.Second)
+	adunitOut, err := QueryUniqAdFromES(1, sq)
+	fmt.Println("================", adunitOut)
+	Assert(err.ErrorCode() == 200, t, "testing", nil)
+}
 
 func TestDuplicateCampaigns(t *testing.T) {
 	d1 := NewData("1", "1")
