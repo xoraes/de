@@ -4,7 +4,6 @@ import (
 	"flag"
 	"github.com/dailymotion/pixelle-analytics-consumer/pacdal"
 	de "github.com/dailymotion/pixelle-de/delib"
-	"github.com/gocql/gocql"
 	"log"
 	"strings"
 	"time"
@@ -21,27 +20,14 @@ func (a *StringArray) String() string {
 }
 
 var (
-	caddrs   = StringArray{}
 	keyspace string
 	repeat   int
-	cluster  *gocql.ClusterConfig
 	cass     *pacdal.Cassdao
 )
 
 func init() {
-
-	var err error
 	flag.IntVar(&repeat, "repeat", 30, "time interval in seconds for sync to query api")
-	flag.Var(&caddrs, "casshost", "Cassandra host address(may be given multiple times)")
 	flag.StringVar(&keyspace, "cassks", "pxlcounters", "Cassandra keyspace")
-	flag.Parse()
-
-	//create a cassdb session
-	cluster = gocql.NewCluster(caddrs...)
-	if cass, err = pacdal.NewAnalyticsDbSession(cluster, keyspace); err != nil {
-		log.Fatal("Error creating cassandra session -- ", err)
-	}
-
 }
 
 // DE servers run a process every X seconds (default 60 secs) to query data from campaign db and
@@ -53,7 +39,12 @@ func main() {
 		adUnits *de.AdUnits
 		last    time.Time
 	)
+	//flag.Parse should always be in main not init()
+	flag.Parse()
 
+	if cass, err = pacdal.NewAnalyticsDbSession(keyspace); err != nil {
+		log.Fatal("Error creating cassandra session -- ", err)
+	}
 	//remove the index
 	de.DeleteIndex()
 	//create the ES index

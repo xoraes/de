@@ -1,6 +1,8 @@
 package delib
 
-import "time"
+import (
+	"time"
+)
 
 type AdUnits struct {
 	Items []Unit `json:"_items"`
@@ -66,3 +68,4 @@ func NewError(code int, v interface{}) *DeError {
 	}
 	return &DeError{Code: code, Msg: ""}
 }
+
