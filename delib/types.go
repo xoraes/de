@@ -68,4 +68,3 @@ func NewError(code int, v interface{}) *DeError {
 	}
 	return &DeError{Code: code, Msg: ""}
 }
-
