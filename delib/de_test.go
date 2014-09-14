@@ -32,7 +32,7 @@ func NewData(id string, campaignId string) map[string]interface{} {
 			"tactic":              "1",
 			"status":              "active",
 			"account":             "1",
-			"goal_views":          1999999,
+			"goal_views":          9,
 			"goal_period":         "total",
 			"cpc":                 1.12,
 			"locations":           []string{"us", "fr"},
@@ -51,10 +51,7 @@ func TestReturnOnlyActive(t *testing.T) {
 	d1 := NewData("1", "1")
 	d1["status"] = "inactive"
 	d2 := NewData("2", "2")
-	defer clean("1", t)
-	defer clean("2", t)
-	loadData(d1, t)
-	in2 := loadData(d2, t)
+	loadData(t, d1, d2)
 
 	var sq SearchQuery
 	//building search via map will test actual json input is as expected
@@ -74,19 +71,17 @@ func TestReturnOnlyActive(t *testing.T) {
 		t.Fail()
 	}
 	//wait for data to be loaded
-	time.Sleep(2 * time.Second)
+	wait()
 	adunitOut, err := QueryUniqAdFromES(20, sq)
 	if err != nil {
 		t.Fail()
 	}
 	Assert(len(adunitOut) == 1, t, "testing", nil)
-	deepEqual(in2, &adunitOut[0], t)
 }
 
 func TestInsertAndQuery(t *testing.T) {
 	d := NewData("1", "1")
-	defer clean("1", t)
-	in := loadData(d, t)
+	loadData(t, d)
 	var sq SearchQuery
 	//building search via map will test actual json input is as expected
 	search := map[string]interface{}{
@@ -105,13 +100,12 @@ func TestInsertAndQuery(t *testing.T) {
 		t.Fail()
 	}
 	//wait for data to be loaded
-	time.Sleep(2 * time.Second)
+	wait()
 	adunitOut, err := QueryUniqAdFromES(20, sq)
 	if err != nil {
 		t.Fail()
 	}
 	Assert(len(adunitOut) == 1, t, "testing", nil)
-	deepEqual(in, &adunitOut[0], t)
 }
 func TestAllMatch(t *testing.T) {
 	d := NewData("1", "1")
@@ -120,46 +114,110 @@ func TestAllMatch(t *testing.T) {
 	d["languages"] = nil
 	d["formats"] = nil
 	d["devices"] = nil
-
-	defer clean("1", t)
-	loadData(d, t)
+	loadData(t, d)
 	sq := SearchQuery{}
 
 	//wait for data to be loaded
-	time.Sleep(2 * time.Second)
+	wait()
 	adunitOut, err := QueryUniqAdFromES(1, sq)
 	if err != nil {
 		t.Fail()
 	}
 	Assert(len(adunitOut) == 1, t, "testing", nil)
 }
-func TestClickCapping(t *testing.T) {
-	d := NewData("1", "1")
-	d["categories"] = nil
-	d["locations"] = nil
-	d["languages"] = nil
-	d["formats"] = nil
-	d["devices"] = nil
-	d["goal_reached"] = true
-
-	defer clean("1", t)
-	loadData(d, t)
-	sq := SearchQuery{}
-
-	//wait for data to be fully loaded
-	time.Sleep(2 * time.Second)
-	adunitOut, err := QueryUniqAdFromES(1, sq)
-	fmt.Println("================", adunitOut)
-	Assert(err.ErrorCode() == 200, t, "testing", nil)
+func TestGoalReached(t *testing.T) {
+	d1 := NewData("1", "1")
+	d2 := NewData("2", "2")
+	d1["goal_reached"] = true
+	loadData(t, d1, d2)
+	var sq SearchQuery
+	//building search via map will test actual json input is as expected
+	search := map[string]interface{}{
+		"device":     "dev1",
+		"locations":  []string{"fr"},
+		"languages":  []string{"en"},
+		"format":     "format1",
+		"categories": []string{"cat1"},
+	}
+	sqb, e1 := json.Marshal(search)
+	if e1 != nil {
+		t.Fail()
+	}
+	e2 := json.Unmarshal(sqb, &sq)
+	if e2 != nil {
+		t.Fail()
+	}
+	//wait for data to be loaded
+	wait()
+	adunitOut, err := QueryUniqAdFromES(20, sq)
+	if err != nil {
+		t.Fail()
+	}
+	Assert(len(adunitOut) == 1, t, "return only one ad unit", len(adunitOut))
 }
 
+func TestGetLastUpdated(t *testing.T) {
+	clean()
+	ti := GetESLastUpdated()
+	var time2 = time.Time{}
+	Assert(ti.Equal(time2), t, "time should be zero here", ti)
+	d := NewData("1", "1")
+	loadData(t, d)
+	wait()
+	ti = GetESLastUpdated()
+	Assert(!ti.IsZero() && ti.Before(time.Now()) == true, t, "time should be zero here", ti)
+}
+func TestGetAllAdUnits(t *testing.T) {
+	d1 := NewData("1", "1")
+	d2 := NewData("2", "1")
+	d3 := NewData("3", "1")
+	d4 := NewData("4", "1")
+	d1["status"] = "inactive"
+	d1["goal_reached"] = true
+	d2["status"] = "inactive"
+	d2["goal_reached"] = true
+	d3["status"] = "inactive"
+	d3["goal_reached"] = true
+	d4["status"] = "inactive"
+	d4["goal_reached"] = true
+	loadData(t, d1, d2, d3, d4)
+	//wait for data to be fully loaded
+	wait()
+	units, _ := GetAllAdUnits()
+	Assert(len(units) == 4, t, "testing", len(units))
+}
+
+func TestStatusInactive(t *testing.T) {
+	var sq SearchQuery
+	d1 := NewData("1", "1")
+	d2 := NewData("2", "2")
+	d1["status"] = "inactive"
+	loadData(t, d1, d2)
+	search := map[string]interface{}{
+		"device":     "dev1",
+		"locations":  []string{"fr"},
+		"languages":  []string{"en"},
+		"format":     "format1",
+		"categories": []string{"cat1"},
+	}
+	sqb, e1 := json.Marshal(search)
+	e2 := json.Unmarshal(sqb, &sq)
+	if e2 != nil {
+		t.Fail()
+	}
+	if e1 != nil {
+		t.Fail()
+	}
+	//wait for data to be fully loaded
+	wait()
+	units, _ := QueryUniqAdFromES(2, sq)
+	Assert(len(units) == 1, t, "testing", len(units))
+}
 func TestDuplicateCampaigns(t *testing.T) {
 	d1 := NewData("1", "1")
 	d2 := NewData("2", "1")
-	defer clean("1", t)
-	defer clean("2", t)
-	in1 := loadData(d1, t)
-	loadData(d2, t)
+	loadData(t, d1, d2)
+
 	sq := SearchQuery{
 		Device:     "dev1",
 		Locations:  []string{"fr"},
@@ -168,13 +226,12 @@ func TestDuplicateCampaigns(t *testing.T) {
 		Categories: []string{"cat1"},
 	}
 	//wait for data to be loaded
-	time.Sleep(2 * time.Second)
+	wait()
 	unitsOut, err := QueryUniqAdFromES(2, sq)
 	if err != nil {
 		t.Fail()
 	}
 	Assert(len(unitsOut) == 1, t, "testing", nil)
-	deepEqual(in1, &unitsOut[0], t)
 }
 
 func deepEqual(a *Unit, b *Unit, t *testing.T) {
@@ -191,6 +248,8 @@ func deepEqual(a *Unit, b *Unit, t *testing.T) {
 	Assert(a.ThumbnailUrl == a.ThumbnailUrl, t, "testing", nil)
 	Assert(a.VideoUrl == b.VideoUrl, t, "testing", nil)
 	Assert(a.Account == b.Account, t, "testing", nil)
+	Assert(a.GoalReached == b.GoalReached, t, "testing", nil)
+
 	//Assert(a.GoalPeriod == b.GoalPeriod, t, "testing", nil)
 	//Assert(a.Status == b.Status, t, "testing", nil)
 	Assert(a.Title == b.Title, t, "testing", nil)
@@ -223,30 +282,50 @@ func printAdUnit(ad *Unit) {
 	}
 }
 
-func loadData(v interface{}, t *testing.T) *Unit {
-	var (
-		in Unit
-	)
-	br1, _ := json.Marshal(v)
-	err1 := json.Unmarshal(br1, &in)
-	if err1 != nil {
-		t.Fail()
+func loadData(t *testing.T, v ...interface{}) *Unit {
+	clean()
+	for _, val := range v {
+		var (
+			in  Unit
+			in2 Unit
+		)
+		br1, _ := json.Marshal(val)
+		err1 := json.Unmarshal(br1, &in)
+		if err1 != nil {
+			log.Println(err1)
+			t.Fail()
+		}
+		err2 := InsertAdUnit(&in)
+		if err2 != nil {
+			log.Println(err2)
+			t.Fail()
+		}
+		br2, err3 := GetAdUnitById(in.Id)
+		if err3 != nil {
+			log.Println(err3)
+			t.Fail()
+		}
+		err4 := json.Unmarshal(br2, &in2)
+		if err4 != nil {
+			log.Println(err4)
+			t.Fail()
+		}
+		deepEqual(&in, &in2, t)
 	}
-	err2 := InsertAdUnit(&in)
-	if err2 != nil {
-		t.Fail()
-	}
-	return &in
+
+	return nil
 
 }
 func init() {
 	fmt.Println("Creating Index")
-	CreateIndex()
-	time.Sleep(3 * time.Second)
+	clean()
+	wait()
 }
 
-func clean(id string, t *testing.T) {
-	if found, err := DeleteAdUnitById(id); err != nil || !found {
-		t.Fail()
-	}
+func clean() {
+	DeleteIndex()
+	CreateIndex()
+}
+func wait() {
+	time.Sleep(2 * time.Second)
 }

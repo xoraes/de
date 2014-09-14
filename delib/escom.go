@@ -80,7 +80,7 @@ func UpdateAdUnit(unit *Unit) *DeError {
 		glog.Error(serr)
 		return NewError(500, serr)
 	} else {
-		fmt.Println("Importing adunit into ES:", string(jsonBytes))
+		glog.Info("Updating adunit:", string(jsonBytes))
 		if _, serr := c.UpdateWithPartialDoc(*indexName, *typeName, unit.Id, nil, string(jsonBytes), true); serr != nil {
 			glog.Error(serr)
 			return NewError(500, serr)
@@ -281,6 +281,7 @@ func GetAdUnitById(id string) ([]byte, *DeError) {
 	} else if !qres.Found {
 		return nil, NewError(400, "Could not find id in ES: "+id)
 	}
+	//don't try to use gob here
 	if br, serr = json.Marshal(qres.Source); serr != nil {
 		return nil, NewError(500, serr)
 	}
@@ -336,7 +337,7 @@ func GetAdUnitsByCampaign(cid string) ([]Unit, *DeError) {
 	}
 	return ads, nil
 }
-func GetESLastUpdated(col string) time.Time {
+func GetESLastUpdated() time.Time {
 	var err error
 	var result elastigo.SearchResult
 	var sTime time.Time
@@ -345,20 +346,17 @@ func GetESLastUpdated(col string) time.Time {
 		Updated []time.Time `json:"_updated,omitempty"`
 	}
 	var lastUpdated TType
-
-	q := `{ "size":1, "fields":["` + col + `"], "query" : { "match_all":{} } , "sort" : [ { "` + col + `" : { "order":"desc" } } ] }`
-
+	q := `{ "size":1, "fields":["_updated"], "query" : { "match_all":{} } , "sort" : [ { "_updated" : { "order":"desc" } } ] }`
 	result, err = c.Search(*indexName, *typeName, nil, q)
 	if &result != nil && &result.Hits != nil && len(result.Hits.Hits) > 0 && result.Hits.Hits[0].Fields != nil {
 		if responseBytes, err = result.Hits.Hits[0].Fields.MarshalJSON(); err != nil {
-			glog.Info("Unable to Marshall from ES. Using default date: ", time.Time{})
+			glog.Info("Unable to Marshall from ES. Using default date: ", time.Time{}, err)
 			return sTime
 		} else {
 			if err = json.Unmarshal(responseBytes, &lastUpdated); err != nil {
 				glog.Info("Unable to Unmarshall last updated from ES. Using default date - ", err)
 				return sTime
 			} else {
-				//todo optimize this
 				if len(lastUpdated.Updated) > 0 {
 					sTime = lastUpdated.Updated[0]
 				}
@@ -456,7 +454,9 @@ func CreateIndex() {
                 "channel" : { "type" : "string", "index" : "no" },
                 "channel_url" : { "type" : "string", "index" : "no" },
                 "goal_period" : { "type" : "string", "index" : "no" },
-                "goal_views" : { "type" : "long", "index" : "no" },
+                "goal_views" : { "type" : "float", "index" : "no" },
+                "clicks" : { "type" : "float", "index" : "no" },
+                "views" : { "type" : "float", "index" : "no" },
                 "duration" : { "type" : "integer", "index" : "no" },
                 "account" : { "type" : "string", "index" : "no" }
             }

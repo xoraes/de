@@ -4,6 +4,7 @@ import (
 	"flag"
 	"github.com/dailymotion/pixelle-analytics-consumer/pacdal"
 	de "github.com/dailymotion/pixelle-de/delib"
+	"github.com/golang/glog"
 	"log"
 	"strings"
 	"time"
@@ -52,7 +53,7 @@ func main() {
 
 	for {
 		//Update Ad collection data from api to ES
-		last = de.GetESLastUpdated("_updated")
+		last = de.GetESLastUpdated()
 		log.Println("Last ad unit updated timestamp:", last)
 
 		if adUnits, err = de.GetUpdatedAdUnits(last); err != nil {
@@ -70,11 +71,11 @@ func main() {
 		} else {
 			log.Println("Nothing to Sync")
 		}
-
 		//update the click count in es for each adunit. If click count > goal, then set GoalReached to true
 		if m, casserr := cass.GetClickCountMap(); casserr != nil {
 			log.Println("Error connecting to counter db -- ", casserr)
 		} else {
+			glog.Info("Records received from cassandra:", len(m))
 			for k, cnt := range m {
 				units, eserr := de.GetAdUnitsByCampaign(k)
 				if eserr != nil {
@@ -82,7 +83,7 @@ func main() {
 				} else {
 					for _, unit := range units {
 						if unit.Status == "active" {
-							if unit.GoalViews >= 0 && cnt >= unit.GoalViews {
+							if unit.GoalViews > 0 && cnt >= unit.GoalViews {
 								de.UpdateAdUnit(&de.Unit{Id: unit.Id, GoalReached: true, Clicks: cnt})
 							} else {
 								de.UpdateAdUnit(&de.Unit{Id: unit.Id, Clicks: cnt})
@@ -99,8 +100,9 @@ func main() {
 			log.Println(eserr)
 		} else {
 			for _, v := range units {
-				if v.GoalViews >= 0 && v.GoalViews <= v.Clicks {
+				if v.GoalViews > 0 && v.GoalViews <= v.Clicks {
 					de.UpdateAdUnit(&de.Unit{Id: v.Id, GoalReached: true})
+					//incase goalreached was set to true and the goal was increased by api
 				} else {
 					de.UpdateAdUnit(&de.Unit{Id: v.Id, GoalReached: false})
 				}
