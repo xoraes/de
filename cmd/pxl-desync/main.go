@@ -2,8 +2,8 @@ package main
 
 import (
 	"flag"
-	"github.com/dailymotion/pixelle-analytics-consumer/pacdal"
 	de "github.com/dailymotion/pixelle-de/delib"
+	pacdal "github.com/dailymotion/pixelle-insight/dal"
 	"github.com/golang/glog"
 	"log"
 	"strings"
