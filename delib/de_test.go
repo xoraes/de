@@ -34,7 +34,7 @@ func NewData(id string, campaignId string) map[string]interface{} {
 			"account":             "1",
 			"goal_views":          9,
 			"goal_period":         "total",
-			"cpc":                 1.12,
+			"cpc":                 12,
 			"locations":           []string{"us", "fr"},
 			"languages":           []string{"en", "fr"},
 			"excluded_categories": []string{"ec1", "ec2"},

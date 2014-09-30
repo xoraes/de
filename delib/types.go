@@ -34,7 +34,7 @@ type Unit struct {
 	ExcludedCategories []string   `json:"excluded_categories,omitempty"`
 	Devices            []string   `json:"devices,omitempty"`
 	Categories         []string   `json:"categories,omitempty"`
-	Cpc                float32    `json:"cpc,omitempty"`
+	Cpc                uint64     `json:"cpc,omitempty"`
 	GoalReached        bool       `json:"goal_reached,omitempty"`
 }
 
