@@ -187,6 +187,24 @@ func TestGetAllAdUnits(t *testing.T) {
 	Assert(len(units) == 4, t, "testing", len(units))
 }
 
+func TestGetAdUnitsByCampaign_InvalidId(t *testing.T) {
+	units, err := GetAdUnitsByCampaign("INVALID")
+	if err != nil {
+		t.Error(err)
+	}
+	Assert(len(units) == 0, t, "ad units should be", len(units))
+}
+func TestGetAdUnitsByCampaign(t *testing.T) {
+	d1 := NewData("1", "1")
+	d2 := NewData("2", "1")
+	loadData(t, d1, d2)
+	wait()
+	units, err := GetAdUnitsByCampaign("1")
+	if err != nil {
+		t.Error(err)
+	}
+	Assert(len(units) == 2, t, "expected 2, returned ad units return were ", len(units))
+}
 func TestStatusInactive(t *testing.T) {
 	var sq SearchQuery
 	d1 := NewData("1", "1")
