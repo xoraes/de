@@ -3,7 +3,6 @@ package delib
 import (
 	"encoding/json"
 	"fmt"
-
 	"log"
 	"testing"
 	"time"
@@ -35,6 +34,7 @@ func NewData(id string, campaignId string) map[string]interface{} {
 			"goal_views":          9,
 			"goal_period":         "total",
 			"cpc":                 12,
+			"schedules":           []uint{16777215, 16777215, 16777215, 16777215, 16777215, 16777215, 16777215},
 			"locations":           []string{"us", "fr"},
 			"languages":           []string{"en", "fr"},
 			"excluded_categories": []string{"ec1", "ec2"},

@@ -1,6 +1,7 @@
 package delib
 
 import (
+	"encoding/json"
 	"time"
 )
 
@@ -36,6 +37,10 @@ type Unit struct {
 	Categories         []string   `json:"categories,omitempty"`
 	Cpc                uint64     `json:"cpc,omitempty"`
 	GoalReached        bool       `json:"goal_reached,omitempty"`
+	Schedules          []uint     `json:"schedules,omitempty"`
+	Timetable          []string   `json:"timetable,omitempty"`
+	StartDate          *jTime     `json:"start_date,omitempty"`
+	EndDate            *jTime     `json:"end_date,omitempty"`
 }
 
 type SearchQuery struct {
@@ -44,6 +49,8 @@ type SearchQuery struct {
 	Categories              []string `json:"categories,omitempty"`
 	Device                  string   `json:"device,omitempty"`
 	AdFormat                string   `json:"format,omitempty"`
+	Time                    string   `json:"time,omitempty"`
+	Schedule                []string
 	DisableIncludes         bool
 	DisableActiveCheck      bool
 	DisableGoalReachedCheck bool
@@ -67,4 +74,29 @@ func NewError(code int, v interface{}) *DeError {
 		return &DeError{Code: code, Msg: str}
 	}
 	return &DeError{Code: code, Msg: ""}
+}
+
+type jTime struct {
+	t time.Time
+}
+
+// MarshalJSON implements the json.Marshaler interface.
+// The time is a quoted string in RFC 3339 format, with sub-second precision added if present.
+func (jt *jTime) MarshalJSON() ([]byte, error) {
+	if _, err := jt.t.MarshalJSON(); err != nil {
+		return nil, err
+	}
+	return []byte(jt.t.Format(`"` + time.RFC3339 + `"`)), nil
+}
+func (jt *jTime) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	t, err := time.Parse(time.RFC3339, s)
+	if err != nil {
+		return err
+	}
+	jt = &jTime{t: t}
+	return nil
 }

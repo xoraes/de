@@ -43,6 +43,19 @@ func InsertAdUnit(unit *Unit) *DeError {
 	unit.Categories = setNullValueOnEmpty(unit.Categories)
 	unit.Devices = setNullValueOnEmpty(unit.Devices)
 
+	//since schedule is an array of ints and we store array of string in es, we have to use timetable and also
+	// nullify schedules once we are done with it
+	unit.Timetable = convertScheduleToES(unit.Schedules)
+	unit.Schedules = nil
+
+	if unit.StartDate == nil {
+		unit.StartDate = &jTime{time.Now()}
+	}
+	//add 100 years to current date if end date is not set
+	if unit.EndDate == nil {
+		unit.EndDate = &jTime{time.Now().AddDate(100, 0, 0)}
+	}
+
 	for index, _ = range unit.Languages {
 		unit.Languages[index] = strings.ToLower(unit.Languages[index])
 	}
@@ -133,6 +146,16 @@ func QueryUniqAdFromES(positions int, sq SearchQuery) ([]Unit, *DeError) {
 	} else {
 		sq.Device = `["all","` + strings.ToLower(sq.Device) + `"]`
 	}
+	if sq.Time == "" {
+		glog.Info("Using server time because ad server did not send user time")
+		sq.Time = time.Now().Format(time.RFC3339)
+	}
+	var t time.Time
+	t, err := time.Parse(time.RFC3339, sq.Time)
+	if err != nil {
+		glog.Info(err, sq.Time)
+	}
+	sq.Schedule = []string{fmt.Sprintf("%v:%v:%v", t.Weekday().String(), t.Hour(), "true"), "all"}
 
 	//send query to es and request n=4 times the number of requested positions
 	n := 4
@@ -202,10 +225,27 @@ func createESQueryString(numPositions int, sq SearchQuery) string {
 	q += `"bool":{`
 	if useMustFilter {
 		q += `"must":[`
+		if sq.Time == "" {
+			glog.Info("Using server time because ad server did not send user time")
+			sq.Time = time.Now().Format(time.RFC3339)
+		}
+		var t time.Time
+		t, err = time.Parse(time.RFC3339, sq.Time)
+		tFind := fmt.Sprintf("%v:%v:%v", t.Weekday().String(), t.Hour(), "true")
+		if err == nil {
+			q += `{ "query":  {"term": { "timetable": "` + strings.ToLower(tFind) + `"}}}`
+			delim = ","
+		}
+		tStr := t.Format(time.RFC3339)
+		q += delim + `{ "range":  {"start_date": { "lte": "` + tStr + `"}}}`
+		delim = ","
+		q += delim + `{ "range":  {"end_date": { "gte": "` + tStr + `"}}}`
+		delim = ","
+
 		if sq.Locations != nil && len(sq.Locations) > 0 {
 			loc, err = json.Marshal(sq.Locations)
 			if err == nil {
-				q += `{ "query":  {"terms": { "locations":` + strings.ToLower(string(loc)) + `}}}`
+				q += delim + `{ "query":  {"terms": { "locations":` + strings.ToLower(string(loc)) + `}}}`
 				delim = ","
 			}
 		}
@@ -434,6 +474,8 @@ func CreateIndex() {
                 "ad" : { "type" : "string", "index" : "not_analyzed" },
                 "_updated" : { "type" : "date", "format":"date_time_no_millis","index" : "not_analyzed" },
                 "_created" : { "type" : "date", "format":"date_time_no_millis","index" : "not_analyzed" },
+                "start_date" : { "type" : "date", "format":"date_time_no_millis","index" : "not_analyzed" },
+                "end_date" : { "type" : "date", "format":"date_time_no_millis","index" : "not_analyzed" },
                 "locations" : { "type" : "string", "index" : "not_analyzed" },
                 "languages" : { "type" : "string", "index" : "not_analyzed" },
                 "excluded_locations" : { "type" : "string", "index" : "not_analyzed" },
@@ -444,6 +486,7 @@ func CreateIndex() {
                 "status" : { "type" : "string", "index" : "not_analyzed" },
                 "formats" : { "type" : "string", "index" : "not_analyzed" },
 		        "campaign" : { "type" : "string", "index" : "not_analyzed" },
+		        "timetable" : { "type" : "string", "index" : "not_analyzed" },
                 "tactic" : { "type" : "string", "index" : "no" },
                 "title" : { "type" : "string", "index" : "no" },
                 "cpc" : { "type" : "float", "index" : "no" },
@@ -475,4 +518,29 @@ func CreateIndex() {
 		}
 		fmt.Println("created index:" + *indexName + ",type:" + *typeName)
 	}
+}
+
+func isHourSet(hour uint, mask uint) bool {
+	return mask&(1<<hour) > 0
+}
+
+func convertScheduleToES(schedules []uint) []string {
+	var (
+		es   []string
+		i    int
+		mask uint
+	)
+	if len(schedules) > 0 {
+		for i, mask = range schedules {
+			day := strings.ToLower(time.Weekday(i).String())
+			for i := 0; i < 24; i++ {
+				hourSet := isHourSet(uint(i), mask)
+				es = append(es, day+":"+strconv.Itoa(i)+":"+strconv.FormatBool(hourSet))
+
+			}
+		}
+	} else {
+		return []string{"all"}
+	}
+	return es
 }
