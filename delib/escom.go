@@ -49,11 +49,11 @@ func InsertAdUnit(unit *Unit) *DeError {
 	unit.Schedules = nil
 
 	if unit.StartDate == nil {
-		unit.StartDate = &jTime{time.Now()}
+		unit.StartDate = &jTime{t: time.Now()}
 	}
 	//add 100 years to current date if end date is not set
 	if unit.EndDate == nil {
-		unit.EndDate = &jTime{time.Now().AddDate(100, 0, 0)}
+		unit.EndDate = &jTime{t: time.Now().AddDate(100, 0, 0)}
 	}
 
 	for index, _ = range unit.Languages {
@@ -93,7 +93,6 @@ func UpdateAdUnit(unit *Unit) *DeError {
 		glog.Error(serr)
 		return NewError(500, serr)
 	} else {
-		glog.Info("Updating adunit:", string(jsonBytes))
 		if _, serr := c.UpdateWithPartialDoc(*indexName, *typeName, unit.Id, nil, string(jsonBytes), true); serr != nil {
 			glog.Error(serr)
 			return NewError(500, serr)
@@ -146,17 +145,6 @@ func QueryUniqAdFromES(positions int, sq SearchQuery) ([]Unit, *DeError) {
 	} else {
 		sq.Device = `["all","` + strings.ToLower(sq.Device) + `"]`
 	}
-	if sq.Time == "" {
-		glog.Info("Using server time because ad server did not send user time")
-		sq.Time = time.Now().Format(time.RFC3339)
-	}
-	var t time.Time
-	t, err := time.Parse(time.RFC3339, sq.Time)
-	if err != nil {
-		glog.Info(err, sq.Time)
-	}
-	sq.Schedule = []string{fmt.Sprintf("%v:%v:%v", t.Weekday().String(), t.Hour(), "true"), "all"}
-
 	//send query to es and request n=4 times the number of requested positions
 	n := 4
 	if units, err := queryES(n*positions, sq); err != nil {
@@ -203,6 +191,7 @@ func createESQueryString(numPositions int, sq SearchQuery) string {
 		loc  []byte
 		cats []byte
 		lang []byte
+		sch  []byte
 		q    string
 	)
 	q = "{"
@@ -225,22 +214,26 @@ func createESQueryString(numPositions int, sq SearchQuery) string {
 	q += `"bool":{`
 	if useMustFilter {
 		q += `"must":[`
-		if sq.Time == "" {
-			glog.Info("Using server time because ad server did not send user time")
-			sq.Time = time.Now().Format(time.RFC3339)
-		}
-		var t time.Time
-		t, err = time.Parse(time.RFC3339, sq.Time)
-		tFind := fmt.Sprintf("%v:%v:%v", t.Weekday().String(), t.Hour(), "true")
-		if err == nil {
-			q += `{ "query":  {"term": { "timetable": "` + strings.ToLower(tFind) + `"}}}`
+
+		if sq.DisableDateCheck == false {
+			if sq.Time == nil || sq.Time.t.IsZero() {
+				glog.Info("Using server time because ad server did not send user time")
+				t := time.Now()
+				sq.Time = &jTime{t: t}
+			}
+			sq.TimeTable = []string{fmt.Sprintf("%v:%v:%v", sq.Time.Weekday(), sq.Time.Hour(), "true"), "all"}
+
+			q += delim + `{ "range":  {"start_date": { "lte": "` + sq.Time.String() + `"}}}`
 			delim = ","
+			q += delim + `{ "range":  {"end_date": { "gte": "` + sq.Time.String() + `"}}}`
+			delim = ","
+
+			sch, err = json.Marshal(sq.TimeTable)
+			if err == nil {
+				q += delim + `{ "query":  {"terms": { "timetable":` + strings.ToLower(string(sch)) + `}}}`
+				delim = ","
+			}
 		}
-		tStr := t.Format(time.RFC3339)
-		q += delim + `{ "range":  {"start_date": { "lte": "` + tStr + `"}}}`
-		delim = ","
-		q += delim + `{ "range":  {"end_date": { "gte": "` + tStr + `"}}}`
-		delim = ","
 
 		if sq.Locations != nil && len(sq.Locations) > 0 {
 			loc, err = json.Marshal(sq.Locations)
@@ -307,7 +300,7 @@ func createESQueryString(numPositions int, sq SearchQuery) string {
 }
 func GetAllAdUnits() ([]Unit, *DeError) {
 	BIGNUMBER := 10000000
-	return queryES(BIGNUMBER, SearchQuery{DisableActiveCheck: true, DisableIncludes: true, DisableGoalReachedCheck: true})
+	return queryES(BIGNUMBER, SearchQuery{DisableDateCheck: true, DisableActiveCheck: true, DisableIncludes: true, DisableGoalReachedCheck: true})
 }
 
 func GetAdUnitById(id string) ([]byte, *DeError) {
@@ -524,6 +517,8 @@ func isHourSet(hour uint, mask uint) bool {
 	return mask&(1<<hour) > 0
 }
 
+// used when inserting schedule info into ES
+// if no schedule is provided insert keyword "all"
 func convertScheduleToES(schedules []uint) []string {
 	var (
 		es   []string

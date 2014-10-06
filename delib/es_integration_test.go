@@ -187,6 +187,64 @@ func TestGetAllAdUnits(t *testing.T) {
 	Assert(len(units) == 4, t, "testing", len(units))
 }
 
+func TestSearchByDateOutOfRange(t *testing.T) {
+	d1 := NewData("1", "1")
+	d1["categories"] = nil
+	d1["locations"] = nil
+	d1["languages"] = nil
+	d1["formats"] = nil
+	d1["devices"] = nil
+	d1["start_date"] = time.Now().Format(time.RFC3339)
+	d1["end_date"] = time.Now().AddDate(0, 1, 0).Format(time.RFC3339)
+	loadData(t, d1)
+
+	var sq SearchQuery
+	search := map[string]interface{}{
+		"time": time.Now().AddDate(0, 0, -1).Format(time.RFC3339),
+	}
+	sqb, e1 := json.Marshal(search)
+	if e1 != nil {
+		t.Error("Could not marshall search query")
+	}
+	e2 := json.Unmarshal(sqb, &sq)
+	if e2 != nil {
+		t.Errorf("Could not unmarshall search query")
+	}
+	wait()
+	_, err := QueryUniqAdFromES(4, sq)
+	Assert(err.Code == 200, t, "err code should be 200", err.Code)
+
+}
+
+func TestSearchByDateRange(t *testing.T) {
+	d1 := NewData("1", "1")
+	d1["categories"] = nil
+	d1["locations"] = nil
+	d1["languages"] = nil
+	d1["formats"] = nil
+	d1["devices"] = nil
+	d1["start_date"] = time.Now().Format(time.RFC3339)
+	d1["end_date"] = time.Now().AddDate(0, 1, 0).Format(time.RFC3339)
+	loadData(t, d1)
+
+	var sq SearchQuery
+	search := map[string]interface{}{
+		"time": time.Now().AddDate(0, 0, 1).Format(time.RFC3339),
+	}
+	sqb, e1 := json.Marshal(search)
+	if e1 != nil {
+		t.Error("Could not marshall search query")
+	}
+	e2 := json.Unmarshal(sqb, &sq)
+	if e2 != nil {
+		t.Errorf("Could not unmarshall search query")
+	}
+	wait()
+	units, _ := QueryUniqAdFromES(4, sq)
+	Assert(len(units) == 1, t, "ad units should be 1", len(units))
+
+}
+
 func TestGetAdUnitsByCampaign_InvalidId(t *testing.T) {
 	units, err := GetAdUnitsByCampaign("INVALID")
 	if err != nil {
@@ -219,13 +277,14 @@ func TestStatusInactive(t *testing.T) {
 		"categories": []string{"cat1"},
 	}
 	sqb, e1 := json.Marshal(search)
+	if e1 != nil {
+		t.Error("Could not marshall search query")
+	}
 	e2 := json.Unmarshal(sqb, &sq)
 	if e2 != nil {
-		t.Fail()
+		t.Errorf("Could not unmarshall search query")
 	}
-	if e1 != nil {
-		t.Fail()
-	}
+
 	//wait for data to be fully loaded
 	wait()
 	units, _ := QueryUniqAdFromES(2, sq)

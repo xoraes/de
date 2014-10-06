@@ -49,11 +49,12 @@ type SearchQuery struct {
 	Categories              []string `json:"categories,omitempty"`
 	Device                  string   `json:"device,omitempty"`
 	AdFormat                string   `json:"format,omitempty"`
-	Time                    string   `json:"time,omitempty"`
-	Schedule                []string
+	Time                    *jTime   `json:"time,omitempty"`
+	TimeTable               []string `json:"timetable,omitempty"`
 	DisableIncludes         bool
 	DisableActiveCheck      bool
 	DisableGoalReachedCheck bool
+	DisableDateCheck        bool
 }
 
 type DeError struct {
@@ -88,6 +89,20 @@ func (jt *jTime) MarshalJSON() ([]byte, error) {
 	}
 	return []byte(jt.t.Format(`"` + time.RFC3339 + `"`)), nil
 }
+func (jt *jTime) String() string {
+
+	if jt == nil {
+		return ""
+	} else {
+		return jt.t.Format(time.RFC3339)
+	}
+}
+func (jt *jTime) Weekday() string {
+	return jt.t.Weekday().String()
+}
+func (jt *jTime) Hour() int {
+	return jt.t.Hour()
+}
 func (jt *jTime) UnmarshalJSON(data []byte) error {
 	var s string
 	if err := json.Unmarshal(data, &s); err != nil {
@@ -97,6 +112,6 @@ func (jt *jTime) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
-	jt = &jTime{t: t}
+	*jt = jTime{t: t}
 	return nil
 }
