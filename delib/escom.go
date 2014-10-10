@@ -48,6 +48,11 @@ func InsertAdUnit(unit *Unit) *DeError {
 	// nullify schedules once we are done with it
 	unit.Timetable = convertScheduleToES(unit.Schedules)
 	unit.Schedules = nil
+	//this seems to work - if the cpc is not set then Go gives it a zero value of 0. But if we explicitly set it to zero
+	//the cpc is marshalled as 0
+	if unit.Cpc == 0 {
+		unit.Cpc = 0
+	}
 
 	if unit.StartDate == nil {
 		unit.StartDate = &jTime{t: time.Now()}
