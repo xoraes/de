@@ -43,7 +43,8 @@ func InsertAdUnit(unit *Unit) *DeError {
 	unit.Categories = setNullValueOnEmpty(unit.Categories)
 	unit.Devices = setNullValueOnEmpty(unit.Devices)
 
-	//since schedule is an array of ints and we store array of string in es, we have to use timetable and also
+	//since schedule is an array of ints and we store array of string in es (because we need to store "all" as well)
+	// we have to use timetable and also
 	// nullify schedules once we are done with it
 	unit.Timetable = convertScheduleToES(unit.Schedules)
 	unit.Schedules = nil

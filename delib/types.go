@@ -30,14 +30,14 @@ type Unit struct {
 	GoalPeriod         string     `json:"goal_period"`
 	GoalViews          float64    `json:"goal_views"`
 	Duration           uint32     `json:"duration"`
-	Clicks             float64    `json:"clicks"`
-	Views              float64    `json:"views"`
+	Clicks             float64    `json:"clicks,omitempty"` //omitempty because this is always updated from insightsdb
+	Views              float64    `json:"views,omitempty"`  //omitempty because this is always updated from insightsdb
 	ExcludedCategories []string   `json:"excluded_categories"`
 	Devices            []string   `json:"devices"`
 	Categories         []string   `json:"categories"`
 	Cpc                uint64     `json:"cpc"`
 	GoalReached        bool       `json:"goal_reached"`
-	Schedules          []uint     `json:"schedules,omitempty"`
+	Schedules          []uint     `json:"schedules,omitempty"` //omitempty because we actually use timetable
 	Timetable          []string   `json:"timetable"`
 	StartDate          *jTime     `json:"start_date"`
 	EndDate            *jTime     `json:"end_date"`
