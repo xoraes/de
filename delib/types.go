@@ -37,10 +37,10 @@ type Unit struct {
 	Categories         []string   `json:"categories,omitempty"`
 	Cpc                uint64     `json:"cpc,omitempty"`
 	GoalReached        bool       `json:"goal_reached,omitempty"`
-	Schedules          []uint     `json:"schedules,omitempty"`
-	Timetable          []string   `json:"timetable,omitempty"`
-	StartDate          *jTime     `json:"start_date,omitempty"`
-	EndDate            *jTime     `json:"end_date,omitempty"`
+	//	Schedules          []uint     `json:"schedules,omitempty"`
+	//	Timetable          []string   `json:"timetable,omitempty"`
+	StartDate *jTime `json:"start_date,omitempty"`
+	EndDate   *jTime `json:"end_date,omitempty"`
 }
 
 type SearchQuery struct {

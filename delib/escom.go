@@ -45,8 +45,8 @@ func InsertAdUnit(unit *Unit) *DeError {
 
 	//since schedule is an array of ints and we store array of string in es, we have to use timetable and also
 	// nullify schedules once we are done with it
-	unit.Timetable = convertScheduleToES(unit.Schedules)
-	unit.Schedules = nil
+	//unit.Timetable = convertScheduleToES(unit.Schedules)
+	//unit.Schedules = nil
 
 	if unit.StartDate == nil {
 		unit.StartDate = &jTime{t: time.Now()}
@@ -214,7 +214,7 @@ func createESQueryString(numPositions int, sq SearchQuery) string {
 	q += `"bool":{`
 	if useMustFilter {
 		q += `"must":[`
-
+		sq.DisableDateCheck = true
 		if sq.DisableDateCheck == false {
 			if sq.Time == nil || sq.Time.t.IsZero() {
 				glog.Info("Using server time because ad server did not send user time")
