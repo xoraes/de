@@ -9,38 +9,38 @@ type AdUnits struct {
 	Items []Unit `json:"_items"`
 }
 type Unit struct {
-	Id                 string     `json:"_id,omitempty"`
-	Updated            *time.Time `json:"_updated,omitempty"`
-	Created            *time.Time `json:"_created,omitempty"`
-	Ad                 string     `json:"ad,omitempty"`
-	CampaignId         string     `json:"campaign,omitempty"`
-	TacticId           string     `json:"tactic,omitempty"`
-	Channel            string     `json:"channel,omitempty"`
-	Account            string     `json:"account,omitempty"`
-	Languages          []string   `json:"languages,omitempty"`
-	Locations          []string   `json:"locations,omitempty"`
-	ExcludedLocations  []string   `json:"excluded_locations,omitempty"`
-	AdFormats          []string   `json:"formats,omitempty"`
-	VideoUrl           string     `json:"video_url,omitempty"`
-	ThumbnailUrl       string     `json:"thumbnail_url,omitempty"`
-	Description        string     `json:"description,omitempty"`
-	Title              string     `json:"title,omitempty"`
-	ChannelUrl         string     `json:"channel_url,omitempty"`
-	Status             string     `json:"status,omitempty"`
-	GoalPeriod         string     `json:"goal_period,omitempty"`
-	GoalViews          float64    `json:"goal_views,omitempty"`
-	Duration           uint32     `json:"duration,omitempty"`
-	Clicks             float64    `json:"clicks,omitempty"`
-	Views              float64    `json:"views,omitempty"`
-	ExcludedCategories []string   `json:"excluded_categories,omitempty"`
-	Devices            []string   `json:"devices,omitempty"`
-	Categories         []string   `json:"categories,omitempty"`
-	Cpc                uint64     `json:"cpc,omitempty"`
-	GoalReached        bool       `json:"goal_reached,omitempty"`
-	//	Schedules          []uint     `json:"schedules,omitempty"`
-	//	Timetable          []string   `json:"timetable,omitempty"`
-	StartDate *jTime `json:"start_date,omitempty"`
-	EndDate   *jTime `json:"end_date,omitempty"`
+	Id                 string     `json:"_id"`
+	Updated            *time.Time `json:"_updated"`
+	Created            *time.Time `json:"_created"`
+	Ad                 string     `json:"ad"`
+	CampaignId         string     `json:"campaign"`
+	TacticId           string     `json:"tactic"`
+	Channel            string     `json:"channel"`
+	Account            string     `json:"account"`
+	Languages          []string   `json:"languages"`
+	Locations          []string   `json:"locations"`
+	ExcludedLocations  []string   `json:"excluded_locations"`
+	AdFormats          []string   `json:"formats"`
+	VideoUrl           string     `json:"video_url"`
+	ThumbnailUrl       string     `json:"thumbnail_url"`
+	Description        string     `json:"description"`
+	Title              string     `json:"title"`
+	ChannelUrl         string     `json:"channel_url"`
+	Status             string     `json:"status"`
+	GoalPeriod         string     `json:"goal_period"`
+	GoalViews          float64    `json:"goal_views"`
+	Duration           uint32     `json:"duration"`
+	Clicks             float64    `json:"clicks"`
+	Views              float64    `json:"views"`
+	ExcludedCategories []string   `json:"excluded_categories"`
+	Devices            []string   `json:"devices"`
+	Categories         []string   `json:"categories"`
+	Cpc                uint64     `json:"cpc"`
+	GoalReached        bool       `json:"goal_reached"`
+	Schedules          []uint     `json:"schedules,omitempty"`
+	Timetable          []string   `json:"timetable"`
+	StartDate          *jTime     `json:"start_date"`
+	EndDate            *jTime     `json:"end_date"`
 }
 
 type SearchQuery struct {

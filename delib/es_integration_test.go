@@ -187,7 +187,7 @@ func TestGetAllAdUnits(t *testing.T) {
 	Assert(len(units) == 4, t, "testing", len(units))
 }
 
-func DisabledTestSearchByDateOutOfRange(t *testing.T) {
+func TestSearchByDateOutOfRange(t *testing.T) {
 	d1 := NewData("1", "1")
 	d1["categories"] = nil
 	d1["locations"] = nil
@@ -216,7 +216,7 @@ func DisabledTestSearchByDateOutOfRange(t *testing.T) {
 
 }
 
-func DisabledTestSearchByDateRange(t *testing.T) {
+func TestSearchByDateRange(t *testing.T) {
 	d1 := NewData("1", "1")
 	d1["categories"] = nil
 	d1["locations"] = nil
