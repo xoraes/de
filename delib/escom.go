@@ -201,6 +201,8 @@ func createESQueryString(numPositions int, sq SearchQuery) string {
 		q    string
 	)
 	q = "{"
+	// Don't add to this list unless you want the field to be sent to ad server
+	// Any query not sent to ad server has DisableIncludes set to true
 	if sq.DisableIncludes == false {
 		q += `"_source":
 			{
@@ -294,6 +296,10 @@ func createESQueryString(numPositions int, sq SearchQuery) string {
 			q += delim + `{ "query":  {"term": { "goal_reached": true}}}`
 			delim = ","
 		}
+		if sq.DisablePausedCheck == false {
+			q += delim + `{ "query":  {"term": { "paused": true}}}`
+			delim = ","
+		}
 		q += `]`
 	}
 	q += `}}}},"random_score": {}}}}`
@@ -305,7 +311,12 @@ func createESQueryString(numPositions int, sq SearchQuery) string {
 }
 func GetAllAdUnits() ([]Unit, *DeError) {
 	BIGNUMBER := 10000000
-	return queryES(BIGNUMBER, SearchQuery{DisableDateCheck: true, DisableActiveCheck: true, DisableIncludes: true, DisableGoalReachedCheck: true})
+	return queryES(BIGNUMBER, SearchQuery{
+		DisablePausedCheck:      true,
+		DisableDateCheck:        true,
+		DisableActiveCheck:      true,
+		DisableIncludes:         true,
+		DisableGoalReachedCheck: true})
 }
 
 func GetAdUnitById(id string) ([]byte, *DeError) {
@@ -479,6 +490,7 @@ func CreateIndex() {
                 "excluded_locations" : { "type" : "string", "index" : "not_analyzed" },
                 "excluded_categories" : { "type" : "string", "index" : "not_analyzed" },
                 "goal_reached" : { "type" : "boolean", "index" : "not_analyzed" },
+                "paused" : { "type" : "boolean", "index" : "not_analyzed" },
                 "devices" : { "type" : "string", "index" : "not_analyzed" },
                 "categories" : { "type" : "string", "index" : "not_analyzed" },
                 "status" : { "type" : "string", "index" : "not_analyzed" },
@@ -500,6 +512,7 @@ func CreateIndex() {
                 "views" : { "type" : "float", "index" : "no" },
                 "duration" : { "type" : "integer", "index" : "no" },
                 "account" : { "type" : "string", "index" : "no" }
+                "delivery" : { "type" : "string", "index" : "no" }
             }
         }
     }

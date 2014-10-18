@@ -36,11 +36,15 @@ type Unit struct {
 	Devices            []string   `json:"devices,omitempty"`
 	Categories         []string   `json:"categories,omitempty"`
 	Cpc                uint64     `json:"cpc,omitempty"`
-	GoalReached        bool       `json:"goal_reached,omitempty"`
 	Schedules          []uint     `json:"schedules,omitempty"`
 	Timetable          []string   `json:"timetable,omitempty"`
 	StartDate          *jTime     `json:"start_date,omitempty"`
 	EndDate            *jTime     `json:"end_date,omitempty"`
+	Delivery           string     `json:"delivery,omitempty"`
+	// bool types should be never omitempty otherwise false value
+	// is never written back since zero value for bool is false :(
+	Paused      bool `json:"paused"`
+	GoalReached bool `json:"goal_reached"`
 }
 
 type SearchQuery struct {
@@ -55,6 +59,7 @@ type SearchQuery struct {
 	DisableActiveCheck      bool
 	DisableGoalReachedCheck bool
 	DisableDateCheck        bool
+	DisablePausedCheck      bool
 }
 
 type DeError struct {
@@ -102,6 +107,12 @@ func (jt *jTime) Weekday() string {
 }
 func (jt *jTime) Hour() int {
 	return jt.t.Hour()
+}
+func (jt *jTime) Unix() int64 {
+	return jt.t.Unix()
+}
+func (jt *jTime) UTC() time.Time {
+	return jt.t.UTC()
 }
 func (jt *jTime) UnmarshalJSON(data []byte) error {
 	var s string
