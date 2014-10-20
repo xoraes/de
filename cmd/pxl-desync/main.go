@@ -137,7 +137,8 @@ func updateAdUnitsForEvenDistibution() {
 	else
 	unpause_ad()
 	*/
-	var tr, vr, cr uint64
+	const SLIDING_WINDOW_HOURS = 24
+	var tr, vr, cr float64
 	if units, eserr := de.GetAllAdUnits(); eserr != nil {
 		glog.Error(eserr)
 	} else {
@@ -149,24 +150,24 @@ func updateAdUnitsForEvenDistibution() {
 				v.EndDate.Unix() > time.Now().AddDate(5, 0, 0).Unix() {
 				break
 			}
-			vr = uint64(v.GoalViews - v.Clicks) //TODO change this to view once we do views
-			tr = uint64(v.EndDate.UTC().Sub(time.Now().UTC()).Hours())
-			rr := uint64(vr / tr)
-			cc, err := cass.GetPast24HrClickCount(v.CampaignId)
+			vr = float64(v.GoalViews - v.Clicks) //TODO change this to view once we do views
+			tr = float64(v.EndDate.UTC().Sub(time.Now().UTC()).Hours())
+			rr := float64(vr / tr)
+			cc, err := cass.GetPastClickCountByHours(v.CampaignId, SLIDING_WINDOW_HOURS*time.Hour)
 			if err != nil {
 				glog.Error("no-op because of error getting data from cassandra -- " + err.Error())
 				break
 			}
 			//this will return the floor
-			cr = cc / 24
-			//rr of 0 means number of clicks remaining is less than number of hours remaining,
+			cr = float64(cc / SLIDING_WINDOW_HOURS)
+			//rr of < 1.0 means number of clicks remaining is less than number of hours remaining,
 			//so in this case do not pause the ad and let goal_reached naturally get set to true
 
-			if rr != 0 && cr > rr {
-				glog.Info("Pausing adunit: current views =", v.Clicks, "Required Views: ", v.GoalViews)
+			if rr >= 1.0 && cr > rr {
+				glog.Info("Pausing adunit => current views: ", v.Clicks, "required views: ", v.GoalViews)
 				de.UpdateAdUnit(&de.Unit{Id: v.Id, Paused: true})
 			} else {
-				glog.Info("Un-Pausing adunit: current views =", v.Clicks, "Required Views =", v.GoalViews)
+				glog.Info("Un-Pausing adunit => current views: ", v.Clicks, "required views: ", v.GoalViews)
 				de.UpdateAdUnit(&de.Unit{Id: v.Id, Paused: false})
 			}
 		}
