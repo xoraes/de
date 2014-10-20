@@ -13,32 +13,33 @@ func NewData(id string, campaignId string) map[string]interface{} {
 	var (
 		timenow = time.Now().Format(time.RFC3339)
 		data    = map[string]interface{}{
-			"_id":                 id,
-			"ad":                  id,
-			"duration":            123,
-			"campaign":            campaignId,
-			"_updated":            timenow,
-			"_created":            timenow,
-			"categories":          []string{"cat1", "cat2"},
-			"devices":             []string{"dev1", "dev2"},
-			"title":               "title",
-			"description":         "description",
-			"channel":             "channel",
-			"channel_url":         "http://channel-url",
-			"formats":             []string{"format1", "format2"},
-			"thumbnail_url":       "http://thumbnail-url",
-			"video_url":           "http://video-url",
-			"tactic":              "1",
-			"status":              "active",
-			"account":             "1",
-			"goal_views":          9,
-			"goal_period":         "total",
-			"cpc":                 12,
-			"schedules":           []uint{16777215, 16777215, 16777215, 16777215, 16777215, 16777215, 16777215},
-			"locations":           []string{"us", "fr"},
-			"languages":           []string{"en", "fr"},
-			"excluded_categories": []string{"ec1", "ec2"},
-			"excluded_locations":  []string{"el1", "el2"},
+			"_id":                      id,
+			"ad":                       id,
+			"duration":                 123,
+			"campaign":                 campaignId,
+			"_updated":                 timenow,
+			"_created":                 timenow,
+			"categories":               []string{"cat1", "cat2"},
+			"devices":                  []string{"dev1", "dev2"},
+			"title":                    "title",
+			"description":              "description",
+			"channel":                  "channel",
+			"channel_url":              "http://channel-url",
+			"resizeable_thumbnail_url": "//resizable-thumbnail-url",
+			"formats":                  []string{"format1", "format2"},
+			"thumbnail_url":            "http://thumbnail-url",
+			"video_url":                "http://video-url",
+			"tactic":                   "1",
+			"status":                   "active",
+			"account":                  "1",
+			"goal_views":               9,
+			"goal_period":              "total",
+			"cpc":                      12,
+			"schedules":                []uint{16777215, 16777215, 16777215, 16777215, 16777215, 16777215, 16777215},
+			"locations":                []string{"us", "fr"},
+			"languages":                []string{"en", "fr"},
+			"excluded_categories":      []string{"ec1", "ec2"},
+			"excluded_locations":       []string{"el1", "el2"},
 		}
 	)
 	for k, v := range data {
@@ -326,7 +327,7 @@ func deepEqual(a *Unit, b *Unit, t *testing.T) {
 	Assert(a.VideoUrl == b.VideoUrl, t, "testing", nil)
 	Assert(a.Account == b.Account, t, "testing", nil)
 	Assert(a.GoalReached == b.GoalReached, t, "testing", nil)
-
+	Assert(a.Resizable_thumbnail_url == b.Resizable_thumbnail_url, t, "testing", nil)
 	//Assert(a.GoalPeriod == b.GoalPeriod, t, "testing", nil)
 	//Assert(a.Status == b.Status, t, "testing", nil)
 	Assert(a.Title == b.Title, t, "testing", nil)

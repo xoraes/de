@@ -206,7 +206,7 @@ func createESQueryString(numPositions int, sq SearchQuery) string {
 	if sq.DisableIncludes == false {
 		q += `"_source":
 			{
-			"include": ["ad","campaign","title","description","account","tactic","video_url","thumbnail_url","channel","channel_url","duration","cpc"]
+			"include": ["ad","campaign","title","description","account","tactic","video_url","thumbnail_url","channel","channel_url","duration","cpc","resizable_thumbnail_url"]
 			},`
 	}
 	q += `"size":`
@@ -511,7 +511,8 @@ func CreateIndex() {
                 "clicks" : { "type" : "float", "index" : "no" },
                 "views" : { "type" : "float", "index" : "no" },
                 "duration" : { "type" : "integer", "index" : "no" },
-                "account" : { "type" : "string", "index" : "no" }
+                "account" : { "type" : "string", "index" : "no" },
+                "resizable_thumbnail_url" : { "type" : "string", "index" : "no" },
                 "delivery" : { "type" : "string", "index" : "no" }
             }
         }
