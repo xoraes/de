@@ -40,7 +40,10 @@ func main() {
 	de.DeleteIndex()
 	//create the ES index
 	de.CreateIndex()
-
+	var err error
+	if cass, err = pacdal.NewAnalyticsDbSession(keyspace); err != nil {
+		glog.Error("Error creating cassandra session -- ", err)
+	}
 	for {
 		updateAdUnitsFromApi()
 		updateClickCount()
@@ -53,10 +56,6 @@ func main() {
 // Update the click count in es for each adunit based on campaign click count updates from cassandra
 // If click count > goal, then set GoalReached to true
 func updateClickCount() {
-	var err error
-	if cass, err = pacdal.NewAnalyticsDbSession(keyspace); err != nil {
-		glog.Error("Error creating cassandra session -- ", err)
-	}
 	if m, casserr := cass.GetClickCountMap(); casserr != nil {
 		glog.Error("Error connecting to counter db -- ", casserr)
 	} else {
