@@ -88,9 +88,6 @@ func InsertAdUnit(unit *Unit) *DeError {
 	for index, _ = range unit.Devices {
 		unit.Devices[index] = strings.ToLower(unit.Devices[index])
 	}
-
-	unit.Status = strings.ToLower(unit.Status)
-
 	return UpdateAdUnit(unit)
 
 }
@@ -206,7 +203,7 @@ func createESQueryString(numPositions int, sq SearchQuery) string {
 	if sq.DisableIncludes == false {
 		q += `"_source":
 			{
-			"include": ["ad","campaign","title","description","account","tactic","video_url","thumbnail_url","channel","channel_url","duration","cpc","resizable_thumbnail_url"]
+			"include": ["ad","campaign","title","description","account","tactic","video_url","video_id", "thumbnail_url","channel","channel_url","duration","cpc","resizable_thumbnail_url"]
 			},`
 	}
 	q += `"size":`
@@ -501,9 +498,9 @@ func CreateIndex() {
                 "title" : { "type" : "string", "index" : "no" },
                 "cpc" : { "type" : "float", "index" : "no" },
                 "description" : { "type" : "string", "index" : "no" },
-                "video_url" : { "type" : "string", "index" : "no" },
                 "thumbnail_url" : { "type" : "string", "index" : "no" },
 		        "video_url" : { "type" : "string", "index" : "no" },
+		        "video_id" : { "type" : "string", "index" : "no" },
                 "channel" : { "type" : "string", "index" : "no" },
                 "channel_url" : { "type" : "string", "index" : "no" },
                 "goal_period" : { "type" : "string", "index" : "no" },

@@ -22,6 +22,7 @@ type Unit struct {
 	ExcludedLocations       []string   `json:"excluded_locations,omitempty"`
 	AdFormats               []string   `json:"formats,omitempty"`
 	VideoUrl                string     `json:"video_url,omitempty"`
+	VideoId                string     `json:"video_id,omitempty"`
 	ThumbnailUrl            string     `json:"thumbnail_url,omitempty"`
 	Description             string     `json:"description,omitempty"`
 	Title                   string     `json:"title,omitempty"`

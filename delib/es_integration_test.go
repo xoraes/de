@@ -29,6 +29,7 @@ func NewData(id string, campaignId string) map[string]interface{} {
 			"formats":                  []string{"format1", "format2"},
 			"thumbnail_url":            "http://thumbnail-url",
 			"video_url":                "http://video-url",
+			"video_id":                "12345",
 			"tactic":                   "1",
 			"status":                   "active",
 			"account":                  "1",
@@ -325,6 +326,7 @@ func deepEqual(a *Unit, b *Unit, t *testing.T) {
 	Assert(a.ChannelUrl == b.ChannelUrl, t, "testing", nil)
 	Assert(a.ThumbnailUrl == a.ThumbnailUrl, t, "testing", nil)
 	Assert(a.VideoUrl == b.VideoUrl, t, "testing", nil)
+	Assert(a.VideoId == b.VideoId, t, "testing", nil)
 	Assert(a.Account == b.Account, t, "testing", nil)
 	Assert(a.GoalReached == b.GoalReached, t, "testing", nil)
 	Assert(a.Resizable_thumbnail_url == b.Resizable_thumbnail_url, t, "testing", nil)
