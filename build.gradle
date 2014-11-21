@@ -1,7 +1,12 @@
 apply plugin: 'java'
+apply plugin: 'application'
 
-sourceCompatibility = 1.5
-version = '0.1'
+// Use Java 7 by default
+sourceCompatibility = '1.7'
+targetCompatibility = '1.7'
+// UTF-8 should be standard by now. So use it!
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+
 
 repositories {
     mavenCentral()
@@ -22,17 +27,19 @@ findbugs {
 apply plugin: 'pmd'
 //tasks.withType(Pmd) { reports.html.enabled true }
 
-
-
+// Set our project variables
+project.ext {
+    deserver = '0.1.0'
+}
 dependencies {
     compile 'org.elasticsearch:elasticsearch:1.4.0'
-    compile 'com.google.guava:guava:latest.release'
+    compile 'com.google.guava:guava:18.0'
     compile 'org.eclipse.jetty:jetty-servlet:9.2.3.v20140905'
     compile 'org.eclipse.jetty:jetty-server:9.2.3.v20140905'
-    compile 'com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:latest.release'
-    compile 'org.glassfish.jersey.core:jersey-server:latest.release'
-    compile 'com.sun.jersey.contribs:jersey-guice:latest.release'
-    compile 'org.slf4j:slf4j-api:latest.release'
+    compile 'com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.4.3'
+    compile 'com.sun.jersey:jersey-server:1.18.2'
+    compile 'com.sun.jersey.contribs:jersey-guice:1.18.2'
+    compile 'org.slf4j:slf4j-api:1.7.7'
     compile 'joda-time:joda-time:2.5'
     compile 'org.apache.commons:commons-lang3:3.3.2'
     compile 'com.netflix.archaius:archaius-core:0.6.3'
@@ -44,13 +51,34 @@ dependencies {
     testCompile 'junit:junit:latest.release'
 
 }
-task de(dependsOn: [classes], type: JavaExec) {
-    group = "Server"
-    description = "Bootstrap DE"
 
-    main = "com.dailymotion.pixelle.deserver.StartServer"
-    classpath = sourceSets.main.runtimeClasspath
-
-    jvmArgs "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
-    systemProperty 'java.awt.headless', 'true'
+mainClassName = "com.dailymotion.pixelle.deserver.StartServer"
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.2'
 }
+
+applicationName = "pxl-deserver"
+applicationDefaultJvmArgs += "-Dfile.encoding=UTF-8"
+applicationDefaultJvmArgs += "-server"
+//applicationDefaultJvmArgs += "-verbose:class"
+applicationDefaultJvmArgs += "-Xms256m"
+applicationDefaultJvmArgs += "-Xmx1g"
+applicationDefaultJvmArgs += "-Xss256k"
+
+applicationDefaultJvmArgs += "-Djava.awt.headless=true"
+applicationDefaultJvmArgs += "-Djava.net.preferIPv4Stack=true"
+
+applicationDefaultJvmArgs += "-XX:+UseParNewGC"
+applicationDefaultJvmArgs += "-XX:+UseConcMarkSweepGC"
+applicationDefaultJvmArgs += "-XX:CMSInitiatingOccupancyFraction=75"
+applicationDefaultJvmArgs += "-XX:+UseCMSInitiatingOccupancyOnly"
+applicationDefaultJvmArgs += "-XX:+PrintGCDetails"
+applicationDefaultJvmArgs += "-XX:+PrintGCTimeStamps"
+applicationDefaultJvmArgs += "-XX:+PrintClassHistogram"
+applicationDefaultJvmArgs += "-XX:+PrintTenuringDistribution"
+applicationDefaultJvmArgs += "-XX:+PrintGCApplicationStoppedTime"
+applicationDefaultJvmArgs += "-Xloggc:/var/log/elasticsearch/gc.log"
+applicationDefaultJvmArgs += "-XX:+HeapDumpOnOutOfMemoryError"
+applicationDefaultJvmArgs += "-XX:HeapDumpPath=/var/log/pxl-deserver-heapdump.hprof"
+applicationDefaultJvmArgs += "-XX:+DisableExplicitGC"
+applicationDefaultJvmArgs += "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"

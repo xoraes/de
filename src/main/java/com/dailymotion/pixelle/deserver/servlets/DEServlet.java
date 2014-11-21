@@ -9,6 +9,7 @@ import com.dailymotion.pixelle.deserver.processor.DEProcessor;
 import com.dailymotion.pixelle.deserver.processor.DeException;
 import com.google.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +33,7 @@ public class DEServlet {
     @GET
     @Path("/status")
     @Produces(MediaType.APPLICATION_JSON)
-    public HealthCheck healthCheck(@QueryParam("success") String success) throws DeException {
+    public ClusterHealthResponse healthCheck(@QueryParam("success") String success) throws DeException {
         return health.getHealthCheck();
     }
 
@@ -64,13 +65,13 @@ public class DEServlet {
         try {
             isCreated = processor.updateAdUnit(unit);
         } catch (DeException e) {
-            logger.info(e.getMessage());
+            logger.error(e.getMessage());
             throw e;
         }
         if (isCreated) {
             return Response.noContent().build();
         } else {
-            logger.info("Error updating ad unit ===>" + unit.toString());
+            logger.error("Error updating ad unit ===>" + unit.toString());
             throw new DeException(new Throwable("Error updating ad unit"), 500);
         }
     }
@@ -83,13 +84,13 @@ public class DEServlet {
         try {
             isCreated = processor.insertAdUnit(unit);
         } catch (DeException e) {
-            logger.info(e.getMessage());
+            logger.error(e.getMessage());
             throw e;
         }
         if (isCreated == true) {
             return Response.noContent().build();
         } else {
-            logger.info("Error inserting ad unit ===>" + unit.toString());
+            logger.error("Error inserting ad unit ===>" + unit.toString());
             throw new DeException(new Throwable("Error inserting ad unit"), 500);
         }
     }

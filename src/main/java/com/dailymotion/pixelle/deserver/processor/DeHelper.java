@@ -36,7 +36,6 @@ public class DeHelper {
             DynamicPropertyFactory.getInstance().getIntProperty("port", 8080);
 
 
-
     public static String getCluster() {
         return clusterName.get();
     }
@@ -67,7 +66,7 @@ public class DeHelper {
 
     public static List<AdUnitResponse> removeDuplicateCampaigns(int positions, List<AdUnitResponse> units) {
         int count = 1;
-        Map m = new HashMap<String, Integer>();
+        Map<String, Integer> m = new HashMap<String, Integer>();
         List<AdUnitResponse> uniqueAds = new ArrayList<AdUnitResponse>();
 
         for (AdUnitResponse unit : units) {
@@ -83,18 +82,18 @@ public class DeHelper {
         return uniqueAds;
     }
 
-    public final static List<String> stringListToLowerCase(List<String> listStr) {
+    public static List<String> stringListToLowerCase(List<String> listStr) {
         for (int i = 0; i < listStr.size(); i++) {
             listStr.set(i, listStr.get(i).toLowerCase());
         }
         return listStr;
     }
 
-    public final static Boolean isHourSet(int hour, int mask) {
+    public static Boolean isHourSet(int hour, int mask) {
         return (mask & (1 << hour)) > 0;
     }
 
-    public final static List<String> convertSchedulesToTimeTable(Integer[] schedules) {
+    public static List<String> convertSchedulesToTimeTable(Integer[] schedules) {
         String day;
         Boolean hourSet;
         List<String> timeTable = null;
@@ -117,7 +116,7 @@ public class DeHelper {
         return timeTable;
     }
 
-    public final static Boolean isEmptyArray(List<? extends Object> cList) {
+    public static Boolean isEmptyArray(List<? extends Object> cList) {
         if (cList == null || cList.size() == 0) {
             return true;
         }

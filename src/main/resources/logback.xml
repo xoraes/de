@@ -1,4 +1,4 @@
-<configuration debug="true" scan="true" scanPeriod="120 seconds">
+<configuration debug="true">
     <property resource="config.properties"/>
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
