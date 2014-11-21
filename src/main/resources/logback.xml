@@ -1,0 +1,36 @@
+<configuration debug="true" scan="true" scanPeriod="120 seconds">
+    <property resource="config.properties"/>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d %-5level %logger{35} - %msg %n</pattern>
+        </encoder>
+    </appender>
+    <if condition='isDefined("logback.loggly.inputKey")'>
+        <then>
+            <appender name="loggly" class="ch.qos.logback.ext.loggly.LogglyBatchAppender">
+                <inputKey>${logback.loggly.inputKey}</inputKey>
+                <debug>${logback.loggly.debug:-false}</debug>
+                <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
+                    <layout class="ch.qos.logback.contrib.json.classic.JsonLayout">
+                        <jsonFormatter class="ch.qos.logback.contrib.jackson.JacksonJsonFormatter">
+                            <!-- prettyPrint is probably ok in dev, but usually not ideal in production: -->
+                            <prettyPrint>false</prettyPrint>
+                        </jsonFormatter>
+                        <context>DE</context>
+                        <timestampFormat>yyyy-MM-dd'T'HH:mm:ss.SSS'000Z'</timestampFormat>
+                        <timestampFormatTimezoneId>UTC</timestampFormatTimezoneId>
+                        <appendLineSeparator>true</appendLineSeparator>
+                    </layout>
+                </encoder>
+            </appender>
+        </then>
+    </if>
+    <root level="info">
+        <if condition='isDefined("logback.loggly.inputKey")'>
+            <then>
+                <appender-ref ref="loggly"/>
+            </then>
+        </if>
+        <appender-ref ref="STDOUT"/>
+    </root>
+</configuration>

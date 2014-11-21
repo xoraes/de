@@ -1,0 +1,56 @@
+apply plugin: 'java'
+
+sourceCompatibility = 1.5
+version = '0.1'
+
+repositories {
+    mavenCentral()
+}
+apply plugin: 'checkstyle'
+checkstyle {
+    ignoreFailures = true
+    configFile = rootProject.file('codequality/checkstyle.xml')
+}
+
+// FindBugs
+apply plugin: 'findbugs'
+findbugs {
+    ignoreFailures = true
+}
+
+// PMD
+apply plugin: 'pmd'
+//tasks.withType(Pmd) { reports.html.enabled true }
+
+
+
+dependencies {
+    compile 'org.elasticsearch:elasticsearch:1.4.0'
+    compile 'com.google.guava:guava:latest.release'
+    compile 'org.eclipse.jetty:jetty-servlet:9.2.3.v20140905'
+    compile 'org.eclipse.jetty:jetty-server:9.2.3.v20140905'
+    compile 'com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:latest.release'
+    compile 'org.glassfish.jersey.core:jersey-server:latest.release'
+    compile 'com.sun.jersey.contribs:jersey-guice:latest.release'
+    compile 'org.slf4j:slf4j-api:latest.release'
+    compile 'joda-time:joda-time:2.5'
+    compile 'org.apache.commons:commons-lang3:3.3.2'
+    compile 'com.netflix.archaius:archaius-core:0.6.3'
+    compile 'ch.qos.logback:logback-classic:1.1.2'
+    compile 'org.logback-extensions:logback-ext-loggly:0.1.2'
+    compile 'ch.qos.logback.contrib:logback-json-classic:0.1.2'
+    compile 'ch.qos.logback.contrib:logback-jackson:0.1.2'
+    compile 'org.codehaus.janino:janino:2.6.1'
+    testCompile 'junit:junit:latest.release'
+
+}
+task de(dependsOn: [classes], type: JavaExec) {
+    group = "Server"
+    description = "Bootstrap DE"
+
+    main = "com.dailymotion.pixelle.deserver.StartServer"
+    classpath = sourceSets.main.runtimeClasspath
+
+    jvmArgs "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
+    systemProperty 'java.awt.headless', 'true'
+}
