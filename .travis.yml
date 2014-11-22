@@ -5,7 +5,7 @@ jdk:
 - oraclejdk7
 
 
-script: ./gradlew -q jar oneJar distTar
+script: ./gradlew -q check jar oneJar distTar installApp
 after_script:
   - test -f ./build/libs/de.jar
   - test -f ./build/libs/de-standalone.jar
