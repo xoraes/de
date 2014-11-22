@@ -1,14 +1,13 @@
 language: java
 
 jdk:
-- openjdk7
 - oraclejdk7
 
 
-script: ./gradlew -q check jar oneJar distTar installApp
+script: ./gradlew -q clean check jar de distTar installApp
 after_script:
   - test -f ./build/libs/de.jar
-  - test -f ./build/libs/de-standalone.jar
+  - test -f ./build/libs/pxl-deserver.jar
   - test -f ./build/distributions/de.tar
 
 install: /bin/true

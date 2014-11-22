@@ -69,7 +69,7 @@ task wrapper(type: Wrapper) {
     gradleVersion = '2.2'
 }
 
-applicationName = "pxl-deserver"
+applicationName = "de"
 applicationDefaultJvmArgs += "-Dfile.encoding=UTF-8"
 applicationDefaultJvmArgs += "-server"
 //applicationDefaultJvmArgs += "-verbose:class"
@@ -95,10 +95,11 @@ applicationDefaultJvmArgs += "-XX:HeapDumpPath=/var/log/pxl-deserver-heapdump.hp
 applicationDefaultJvmArgs += "-XX:+DisableExplicitGC"
 applicationDefaultJvmArgs += "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
 
-// Configure the oneJar task
-task oneJar(type: OneJar) {
-    mainClass = mainClassName
+task de(type: OneJar) {
+    mainClass = 'com.dailymotion.pixelle.deserver.StartServer'
+    archiveName = 'pxl-deserver.jar'
 }
+
 artifacts {
-    oneJar
+    archives de
 }
