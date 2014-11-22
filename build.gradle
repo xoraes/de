@@ -1,5 +1,6 @@
 apply plugin: 'java'
 apply plugin: 'application'
+apply plugin: 'gradle-one-jar'
 
 // Use Java 7 by default
 sourceCompatibility = '1.7'
@@ -11,6 +12,17 @@ targetCompatibility = '1.7'
 repositories {
     mavenCentral()
 }
+// Add Gradle OneJar Plugin, see https://github.com/rholder/gradle-one-jar
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'com.github.rholder:gradle-one-jar:1.0.4'
+    }
+}
+
 apply plugin: 'checkstyle'
 checkstyle {
     ignoreFailures = true
@@ -82,3 +94,11 @@ applicationDefaultJvmArgs += "-XX:+HeapDumpOnOutOfMemoryError"
 applicationDefaultJvmArgs += "-XX:HeapDumpPath=/var/log/pxl-deserver-heapdump.hprof"
 applicationDefaultJvmArgs += "-XX:+DisableExplicitGC"
 applicationDefaultJvmArgs += "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
+
+// Configure the oneJar task
+task oneJar(type: OneJar) {
+    mainClass = mainClassName
+}
+artifacts {
+    oneJar
+}
