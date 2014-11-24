@@ -1,31 +1,33 @@
 language: java
-
 jdk:
 - oraclejdk7
-
 script:
-  - ./gradlew -q clean check jar de distTar installApp
-
-
+- ./gradlew -q clean check jar de distTar installApp
 after_script:
-  - test -f ./build/libs/de.jar
-  - test -f ./build/libs/pxl-deserver.jar
-  - test -f ./build/distributions/de.tar
-
+- test -f ./build/libs/de.jar
+- test -f ./build/libs/pxl-deserver.jar
+- test -f ./build/distributions/de.tar
 deploy:
   - provider: s3
     access_key_id: AKIAIMEUE7V64YWR6OAQ
     secret_access_key:
-      secure: QTEHzGhp2mr3/QL4hGNYQl2Yrvf4eDouyMtEYSy+9jsyRB0XsxV1YxA2bWhDrhqOXg8firA42dJq86tg2ZqJm7UMf5eEP58C9EhW/oqhww76EAoYFbX+Wj0wlQDX3SSoaPHGY+0dY1IlgCak63Z5Yut9n9KN/MQLBVtz50KBW+k=
-    bucket: pixelle-salt/s3/pixelle-de-java/prod
-    local-dir: ./build/libs
+      secure: mYlbJK+zPS+KyBrbdbYBXgaEEk8IKn8Ius4fBZSW6LL+BQEbd6Zx7gyPjWBmjvNjXCjeqhMHbjh3Q0fALjOEeb52vd6gFQ2M0jyz2M0gfq+zWX2J2SpFB1XHoE53qoeFp4ARLV+RnMBWDQ2+ruvtWvJ0iTUTsxUyVzM/f16cEa4=
+    bucket: pixelle-salt
+    file: ./build/libs/pxl-deserver.jar
+    bucket: pixelle-salt/s3/pixelle-de-java/dev
+    acl: private
     on:
-      branch: prod
+      repo: dailymotion/pixelle-de
+      branch: master
   - provider: s3
     access_key_id: AKIAIMEUE7V64YWR6OAQ
     secret_access_key:
-      secure: QTEHzGhp2mr3/QL4hGNYQl2Yrvf4eDouyMtEYSy+9jsyRB0XsxV1YxA2bWhDrhqOXg8firA42dJq86tg2ZqJm7UMf5eEP58C9EhW/oqhww76EAoYFbX+Wj0wlQDX3SSoaPHGY+0dY1IlgCak63Z5Yut9n9KN/MQLBVtz50KBW+k=
-    bucket: pixelle-salt/s3/pixelle-de-java/dev
-    local-dir: ./build/libs
+      secure: mYlbJK+zPS+KyBrbdbYBXgaEEk8IKn8Ius4fBZSW6LL+BQEbd6Zx7gyPjWBmjvNjXCjeqhMHbjh3Q0fALjOEeb52vd6gFQ2M0jyz2M0gfq+zWX2J2SpFB1XHoE53qoeFp4ARLV+RnMBWDQ2+ruvtWvJ0iTUTsxUyVzM/f16cEa4=
+    bucket: pixelle-salt
+    file: ./build/libs/pxl-deserver.jar
+    bucket: pixelle-salt/s3/pixelle-de-java/prod
+    acl: private
     on:
-      branch: master
+      repo: dailymotion/pixelle-de
+      branch: prod
+
