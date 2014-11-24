@@ -20,7 +20,7 @@ deploy:
     secret_access_key:
       secure: QTEHzGhp2mr3/QL4hGNYQl2Yrvf4eDouyMtEYSy+9jsyRB0XsxV1YxA2bWhDrhqOXg8firA42dJq86tg2ZqJm7UMf5eEP58C9EhW/oqhww76EAoYFbX+Wj0wlQDX3SSoaPHGY+0dY1IlgCak63Z5Yut9n9KN/MQLBVtz50KBW+k=
     bucket: pixelle-salt/s3/pixelle-de-java/prod
-    file: ./build/libs/pxl-deserver.jar
+    local-dir: ./build/libs
     on:
       branch: prod
   - provider: s3
@@ -28,6 +28,6 @@ deploy:
     secret_access_key:
       secure: QTEHzGhp2mr3/QL4hGNYQl2Yrvf4eDouyMtEYSy+9jsyRB0XsxV1YxA2bWhDrhqOXg8firA42dJq86tg2ZqJm7UMf5eEP58C9EhW/oqhww76EAoYFbX+Wj0wlQDX3SSoaPHGY+0dY1IlgCak63Z5Yut9n9KN/MQLBVtz50KBW+k=
     bucket: pixelle-salt/s3/pixelle-de-java/dev
-    file: ./build/libs/pxl-deserver.jar
+    local-dir: ./build/libs
     on:
       branch: master
