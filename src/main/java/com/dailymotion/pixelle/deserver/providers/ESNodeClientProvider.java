@@ -28,7 +28,8 @@ public class ESNodeClientProvider implements Provider<Client> {
                 .client();
 
         //createIndex accepts multiple types name delimited by ,
-        ESIndexTypeFactory.createIndex(client, DeHelper.getIndex(), elasticsearchSettings.build(), DeHelper.getAdUnitsType());
+        //TODO Let desync manage the index until we migrate all sync code here
+        //ESIndexTypeFactory.createIndex(client, DeHelper.getIndex(), elasticsearchSettings.build(), DeHelper.getAdUnitsType());
         return client;
     }
 }
