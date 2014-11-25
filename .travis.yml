@@ -20,7 +20,6 @@ deploy:
     secret_access_key:
       secure: mYlbJK+zPS+KyBrbdbYBXgaEEk8IKn8Ius4fBZSW6LL+BQEbd6Zx7gyPjWBmjvNjXCjeqhMHbjh3Q0fALjOEeb52vd6gFQ2M0jyz2M0gfq+zWX2J2SpFB1XHoE53qoeFp4ARLV+RnMBWDQ2+ruvtWvJ0iTUTsxUyVzM/f16cEa4=
     bucket: pixelle-salt/s3/pixelle-de-java/dev
-    local-dir: libs
     acl: private
     on:
       repo: dailymotion/pixelle-de
@@ -31,7 +30,6 @@ deploy:
       secure: mYlbJK+zPS+KyBrbdbYBXgaEEk8IKn8Ius4fBZSW6LL+BQEbd6Zx7gyPjWBmjvNjXCjeqhMHbjh3Q0fALjOEeb52vd6gFQ2M0jyz2M0gfq+zWX2J2SpFB1XHoE53qoeFp4ARLV+RnMBWDQ2+ruvtWvJ0iTUTsxUyVzM/f16cEa4=
     bucket: pixelle-salt/s3/pixelle-de-java/prod
     acl: private
-    local-dir: libs
     on:
       repo: dailymotion/pixelle-de
       branch: prod
