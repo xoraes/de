@@ -3,7 +3,7 @@ jdk:
 - oraclejdk7
 
 script:
-- ./gradlew -q clean check jar de distTar installApp
+- ./gradlew -q check jar de distTar installApp
 
 after_script:
 - test -f ./build/libs/de.jar
@@ -21,6 +21,8 @@ deploy:
       secure: mYlbJK+zPS+KyBrbdbYBXgaEEk8IKn8Ius4fBZSW6LL+BQEbd6Zx7gyPjWBmjvNjXCjeqhMHbjh3Q0fALjOEeb52vd6gFQ2M0jyz2M0gfq+zWX2J2SpFB1XHoE53qoeFp4ARLV+RnMBWDQ2+ruvtWvJ0iTUTsxUyVzM/f16cEa4=
     bucket: pixelle-salt/s3/pixelle-de-java/dev
     acl: private
+    skip_cleanup: true
+    file: ./build/libs/pxl-deserver.jar
     on:
       repo: dailymotion/pixelle-de
       branch: master
@@ -29,7 +31,9 @@ deploy:
     secret_access_key:
       secure: mYlbJK+zPS+KyBrbdbYBXgaEEk8IKn8Ius4fBZSW6LL+BQEbd6Zx7gyPjWBmjvNjXCjeqhMHbjh3Q0fALjOEeb52vd6gFQ2M0jyz2M0gfq+zWX2J2SpFB1XHoE53qoeFp4ARLV+RnMBWDQ2+ruvtWvJ0iTUTsxUyVzM/f16cEa4=
     bucket: pixelle-salt/s3/pixelle-de-java/prod
+    file: ./build/libs/pxl-deserver.jar
     acl: private
+    skip_cleanup: true
     on:
       repo: dailymotion/pixelle-de
       branch: prod
