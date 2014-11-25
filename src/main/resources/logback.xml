@@ -25,7 +25,7 @@
             </appender>
         </then>
     </if>
-    <root level="warn">
+    <root level="${loglevel}">
         <if condition='isDefined("logback.loggly.inputKey")'>
             <then>
                 <appender-ref ref="loggly"/>
