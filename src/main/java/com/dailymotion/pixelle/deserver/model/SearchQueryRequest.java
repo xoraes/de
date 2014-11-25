@@ -3,6 +3,7 @@ package com.dailymotion.pixelle.deserver.model;
 import com.dailymotion.pixelle.deserver.logger.InjectLogger;
 import com.dailymotion.pixelle.deserver.processor.DeException;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -14,6 +15,7 @@ import java.util.List;
 /**
  * Created by n.dhupia on 10/29/14.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY) //this will ensure only non-null values are included in the serialized json
 public class SearchQueryRequest {
     @InjectLogger
@@ -31,6 +33,8 @@ public class SearchQueryRequest {
     private String format;
     @JsonProperty("time")
     private String time;
+   @JsonProperty("browser")
+    private String browser;
     @JsonIgnore
     private String timeTable;
 
@@ -91,6 +95,14 @@ public class SearchQueryRequest {
 
     public void setTimeTable(String timeTable) {
         this.timeTable = timeTable;
+    }
+
+    public String getBrowser() {
+        return browser;
+    }
+
+    public void setBrowser(String browser) {
+        this.browser = browser;
     }
 
     public String toString() {
