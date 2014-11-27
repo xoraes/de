@@ -15,11 +15,13 @@ public class StartServer {
 
     public static void main(String[] args) throws Exception {
         System.setProperty(DynamicPropertyFactory.ENABLE_JMX, "true");
+        System.setProperty("archaius.configurationSource.additionalUrls", "file:///etc/de.conf");
         String env = System.getProperty("env");
         if (!StringUtils.isBlank(env)) {
             System.setProperty("archaius.deployment.environment", env);
         }
         ConfigurationManager.loadCascadedPropertiesFromResources("de");
+
         // Create the server.
         Server server = new Server(DeHelper.getPort());
 
