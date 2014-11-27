@@ -12,6 +12,9 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.matcher.Matchers;
+import com.netflix.config.ConfigurationManager;
+import com.netflix.config.DynamicPropertyFactory;
+import org.apache.commons.lang.StringUtils;
 import org.elasticsearch.client.Client;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -30,6 +33,7 @@ public class ESAdUnitsIntegrationTest {
 
     @BeforeClass
     public static void setUp() throws Exception {
+        ConfigurationManager.loadCascadedPropertiesFromResources("de");
         System.out.println("Running Setup");
         injector = Guice.createInjector(new AbstractModule() {
 
