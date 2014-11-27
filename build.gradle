@@ -60,6 +60,8 @@ dependencies {
     compile 'ch.qos.logback.contrib:logback-json-classic:0.1.2'
     compile 'ch.qos.logback.contrib:logback-jackson:0.1.2'
     compile 'org.codehaus.janino:janino:2.6.1'
+    compile 'org.codehaus.groovy:groovy-all:2.3.7'
+    compile 'org.apache.lucene:lucene-expressions:4.10.2'
     testCompile 'junit:junit:latest.release'
 
 }

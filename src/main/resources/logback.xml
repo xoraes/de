@@ -1,5 +1,5 @@
 <configuration debug="true">
-    <property resource="config.properties"/>
+    <property resource="de.properties"/>
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>%d %-5level %logger{35} - %msg %n</pattern>
