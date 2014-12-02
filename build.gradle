@@ -62,7 +62,7 @@ dependencies {
     compile 'org.codehaus.janino:janino:2.6.1'
     compile 'org.codehaus.groovy:groovy-all:2.3.7'
     compile 'org.apache.lucene:lucene-expressions:4.10.2'
-    compile 'com.netflix.hystrix:hystrix-core:latest.release'
+    compile 'com.netflix.hystrix:hystrix-core:1.4.0-RC5'
     testCompile 'junit:junit:latest.release'
 
 }
