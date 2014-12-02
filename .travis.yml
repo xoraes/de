@@ -16,9 +16,9 @@ cache:
 
 deploy:
   - provider: s3
-    access_key_id: AKIAIMEUE7V64YWR6OAQ
+    access_key_id: AKIAIJN4I4KQTPPM45WQ
     secret_access_key:
-      secure: aOp+yZ5mF25HU6zELWfqam/AsaqBbl1SQ14T9ert0brQ37Ol24jBXM53MLfzkL6m03apSSJrLaKexEIKCeScOqoCdp+TctXqXRrFFGWMgd3QYqv5+wLbtHpkuSPX928KpepZMTu1JQUeahVaYwqeMLYeKIbB4TF6RdlCcNNma+M=
+      secure: IBQdVvLarxSaida1dr8agaBsL0kF2uJYCmuv1FRpFKlhHrCKhBJEFFwNzRHv4gm93OF0R7YxtoHe3D0lQMkxDMdoXMrdmeFX297cc9SVYNIG0/RWrq4pofAZxkEZy0FoZINQ3Ra2LLuUAyFxpuumpPFcSEuUpb/ddqmyC/Gw+rA=
     bucket: pixelle-salt/s3/pixelle-de-java/dev
     acl: private
     skip_cleanup: true
@@ -27,9 +27,9 @@ deploy:
       repo: dailymotion/pixelle-de
       branch: master
   - provider: s3
-    access_key_id: AKIAIMEUE7V64YWR6OAQ
+    access_key_id: AKIAIJN4I4KQTPPM45WQ
     secret_access_key:
-      secure: aOp+yZ5mF25HU6zELWfqam/AsaqBbl1SQ14T9ert0brQ37Ol24jBXM53MLfzkL6m03apSSJrLaKexEIKCeScOqoCdp+TctXqXRrFFGWMgd3QYqv5+wLbtHpkuSPX928KpepZMTu1JQUeahVaYwqeMLYeKIbB4TF6RdlCcNNma+M=
+      secure: IBQdVvLarxSaida1dr8agaBsL0kF2uJYCmuv1FRpFKlhHrCKhBJEFFwNzRHv4gm93OF0R7YxtoHe3D0lQMkxDMdoXMrdmeFX297cc9SVYNIG0/RWrq4pofAZxkEZy0FoZINQ3Ra2LLuUAyFxpuumpPFcSEuUpb/ddqmyC/Gw+rA=
     bucket: pixelle-salt/s3/pixelle-de-java/prod
     local-dir: ./build/distributions/
     acl: private
