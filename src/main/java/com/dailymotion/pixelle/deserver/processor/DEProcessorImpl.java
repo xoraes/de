@@ -35,6 +35,13 @@ import java.util.List;
  * Created by n.dhupia on 11/3/14.
  */
 public class DEProcessorImpl implements DEProcessor {
+
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
+    static {
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    }
+
     private static Logger logger = LoggerFactory.getLogger(DEProcessorImpl.class);
 
     private static Client client;
@@ -105,8 +112,8 @@ public class DEProcessorImpl implements DEProcessor {
             QueryBuilder qb = QueryBuilders.functionScoreQuery(fb)
                     .add(ScoreFunctionBuilders.randomFunction((int) (Math.random() * 100)));
 
-            SearchRequestBuilder srb1 = client.prepareSearch("pixelle")
-                    .setTypes("adunits")
+            SearchRequestBuilder srb1 = client.prepareSearch(DeHelper.getIndex())
+                    .setTypes(DeHelper.getAdUnitsType())
                     .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
                     .setQuery(qb)
                     .setSize(positions * 4);
@@ -118,8 +125,6 @@ public class DEProcessorImpl implements DEProcessor {
             List<AdUnitResponse> adUnitResponses = new ArrayList<AdUnitResponse>();
 
             for (SearchHit hit : searchResponse.getHits().getHits()) {
-                ObjectMapper objectMapper = new ObjectMapper();
-                objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
                 AdUnitResponse unit;
                 try {
                     unit = objectMapper.readValue(hit.getSourceAsString(), AdUnitResponse.class);
@@ -188,11 +193,10 @@ public class DEProcessorImpl implements DEProcessor {
 
     @Override
     public boolean updateAdUnit(AdUnit unit) throws DeException {
-        ObjectMapper mapper = new ObjectMapper();
         boolean result = false;
         try {
             result = client.prepareUpdate(DeHelper.getIndex(), DeHelper.getAdUnitsType(), unit.getId())
-                    .setDoc(mapper.writeValueAsString(unit)).setDocAsUpsert(true).execute().actionGet().isCreated();
+                    .setDoc(objectMapper.writeValueAsString(unit)).setDocAsUpsert(true).execute().actionGet().isCreated();
         } catch (JsonProcessingException e) {
             logger.error("Error converting adunit to string", e);
             throw new DeException(e, 500);

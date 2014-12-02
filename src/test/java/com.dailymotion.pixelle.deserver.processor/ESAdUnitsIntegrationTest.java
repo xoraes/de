@@ -24,6 +24,7 @@ import java.util.Map;
 
 public class ESAdUnitsIntegrationTest {
 
+    private static final ObjectMapper mapper = new ObjectMapper();
     private static Injector injector;
     private static DEProcessor es;
 
@@ -37,7 +38,6 @@ public class ESAdUnitsIntegrationTest {
             protected void configure() {
                 bind(Client.class).toProvider(ESTestNodeClientProvider.class).asEagerSingleton();
                 bind(DEProcessor.class).to(DEProcessorImpl.class).asEagerSingleton();
-
             }
         });
 
@@ -238,7 +238,6 @@ public class ESAdUnitsIntegrationTest {
 
 
     void loadDataMaps(Map<String, Object>... map) throws Exception {
-        ObjectMapper mapper = new ObjectMapper();
         String json;
         AdUnit unit;
         for (Map m : map) {
