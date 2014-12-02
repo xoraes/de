@@ -18,7 +18,7 @@ deploy:
   - provider: s3
     access_key_id: AKIAIMEUE7V64YWR6OAQ
     secret_access_key:
-      secure: mYlbJK+zPS+KyBrbdbYBXgaEEk8IKn8Ius4fBZSW6LL+BQEbd6Zx7gyPjWBmjvNjXCjeqhMHbjh3Q0fALjOEeb52vd6gFQ2M0jyz2M0gfq+zWX2J2SpFB1XHoE53qoeFp4ARLV+RnMBWDQ2+ruvtWvJ0iTUTsxUyVzM/f16cEa4=
+      secure: aOp+yZ5mF25HU6zELWfqam/AsaqBbl1SQ14T9ert0brQ37Ol24jBXM53MLfzkL6m03apSSJrLaKexEIKCeScOqoCdp+TctXqXRrFFGWMgd3QYqv5+wLbtHpkuSPX928KpepZMTu1JQUeahVaYwqeMLYeKIbB4TF6RdlCcNNma+M=
     bucket: pixelle-salt/s3/pixelle-de-java/dev
     acl: private
     skip_cleanup: true
@@ -29,7 +29,7 @@ deploy:
   - provider: s3
     access_key_id: AKIAIMEUE7V64YWR6OAQ
     secret_access_key:
-      secure: mYlbJK+zPS+KyBrbdbYBXgaEEk8IKn8Ius4fBZSW6LL+BQEbd6Zx7gyPjWBmjvNjXCjeqhMHbjh3Q0fALjOEeb52vd6gFQ2M0jyz2M0gfq+zWX2J2SpFB1XHoE53qoeFp4ARLV+RnMBWDQ2+ruvtWvJ0iTUTsxUyVzM/f16cEa4=
+      secure: aOp+yZ5mF25HU6zELWfqam/AsaqBbl1SQ14T9ert0brQ37Ol24jBXM53MLfzkL6m03apSSJrLaKexEIKCeScOqoCdp+TctXqXRrFFGWMgd3QYqv5+wLbtHpkuSPX928KpepZMTu1JQUeahVaYwqeMLYeKIbB4TF6RdlCcNNma+M=
     bucket: pixelle-salt/s3/pixelle-de-java/prod
     local-dir: ./build/distributions/
     acl: private
