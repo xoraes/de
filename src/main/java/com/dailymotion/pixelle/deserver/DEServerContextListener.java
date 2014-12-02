@@ -2,7 +2,7 @@ package com.dailymotion.pixelle.deserver; /**
  * Created by n.dhupia on 10/29/14.
  */
 
-import com.dailymotion.pixelle.deserver.logger.Slf4jTypeListener;
+
 import com.dailymotion.pixelle.deserver.processor.DEProcessor;
 import com.dailymotion.pixelle.deserver.processor.DEProcessorImpl;
 import com.dailymotion.pixelle.deserver.providers.ESNodeClientProvider;
@@ -22,7 +22,6 @@ public class DEServerContextListener extends GuiceServletContextListener {
         return Guice.createInjector(new JerseyServletModule() {
             @Override
             protected void configureServlets() {
-                bindListener(Matchers.any(), new Slf4jTypeListener());
                 // Must configure at least one JAX-RS resource or the
                 // server will fail to start.
                 bind(Client.class).toProvider(ESNodeClientProvider.class).asEagerSingleton();

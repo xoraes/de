@@ -1,7 +1,6 @@
 package com.dailymotion.pixelle.deserver.processor;
 
 
-import com.dailymotion.pixelle.deserver.logger.Slf4jTypeListener;
 import com.dailymotion.pixelle.deserver.model.AdUnit;
 import com.dailymotion.pixelle.deserver.model.ItemsResponse;
 import com.dailymotion.pixelle.deserver.model.SearchQueryRequest;
@@ -13,8 +12,6 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.matcher.Matchers;
 import com.netflix.config.ConfigurationManager;
-import com.netflix.config.DynamicPropertyFactory;
-import org.apache.commons.lang.StringUtils;
 import org.elasticsearch.client.Client;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -39,7 +36,6 @@ public class ESAdUnitsIntegrationTest {
 
             @Override
             protected void configure() {
-                bindListener(Matchers.any(), new Slf4jTypeListener());
                 bind(Client.class).toProvider(ESTestNodeClientProvider.class).asEagerSingleton();
                 bind(DEProcessor.class).to(DEProcessorImpl.class).asEagerSingleton();
 
@@ -70,7 +66,7 @@ public class ESAdUnitsIntegrationTest {
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
 
-        ItemsResponse i = es.recommend(sq, 3, null);
+        ItemsResponse i = new AdQueryCommand(es, sq, 3, null).execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getAdUnitResponse().size() == 3);
@@ -90,7 +86,7 @@ public class ESAdUnitsIntegrationTest {
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
 
-        ItemsResponse i = es.recommend(sq, 10, null);
+        ItemsResponse i = new AdQueryCommand(es, sq, 10, null).execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getAdUnitResponse().size() == 1);
@@ -111,7 +107,7 @@ public class ESAdUnitsIntegrationTest {
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
 
         System.out.println("Search Query ====>" + sq.toString());
-        ItemsResponse i = es.recommend(sq, 10, null);
+        ItemsResponse i = new AdQueryCommand(es, sq, 10, null).execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getAdUnitResponse().size() == 1);
@@ -133,7 +129,7 @@ public class ESAdUnitsIntegrationTest {
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
 
         System.out.println("Search Query ====>" + sq.toString());
-        ItemsResponse i = es.recommend(sq, 10, null);
+        ItemsResponse i = new AdQueryCommand(es, sq, 10, null).execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getAdUnitResponse().size() == 1);
@@ -155,7 +151,7 @@ public class ESAdUnitsIntegrationTest {
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
 
         System.out.println("Search Query ====>" + sq.toString());
-        ItemsResponse i = es.recommend(sq, 10, null);
+        ItemsResponse i = new AdQueryCommand(es, sq, 10, null).execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getAdUnitResponse().size() == 0);
@@ -176,7 +172,7 @@ public class ESAdUnitsIntegrationTest {
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
 
         System.out.println("Search Query ====>" + sq.toString());
-        ItemsResponse i = es.recommend(sq, 10, null);
+        ItemsResponse i = new AdQueryCommand(es, sq, 10, null).execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getAdUnitResponse().size() == 0);
@@ -197,7 +193,7 @@ public class ESAdUnitsIntegrationTest {
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
 
         System.out.println("Search Query ====>" + sq.toString());
-        ItemsResponse i = es.recommend(sq, 10, null);
+        ItemsResponse i = new AdQueryCommand(es, sq, 10, null).execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getAdUnitResponse().size() == 0);
@@ -257,7 +253,7 @@ public class ESAdUnitsIntegrationTest {
             if (json != null) {
                 //deserialize to adunit
                 unit = mapper.readValue(json, AdUnit.class);
-                es.insertAdUnit(unit);
+                Assert.assertTrue(new AdInsertCommand(es, unit).execute());
             }
 
         }

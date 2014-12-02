@@ -1,6 +1,5 @@
 package com.dailymotion.pixelle.deserver.model;
 
-import com.dailymotion.pixelle.deserver.logger.InjectLogger;
 import com.dailymotion.pixelle.deserver.processor.DeException;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -9,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -18,8 +18,7 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY) //this will ensure only non-null values are included in the serialized json
 public class SearchQueryRequest {
-    @InjectLogger
-    private static Logger logger;
+    private static Logger logger = LoggerFactory.getLogger(SearchQueryRequest.class);
 
     @JsonProperty("languages")
     private List<String> languages;
@@ -33,7 +32,7 @@ public class SearchQueryRequest {
     private String format;
     @JsonProperty("time")
     private String time;
-   @JsonProperty("browser")
+    @JsonProperty("browser")
     private String browser;
     @JsonIgnore
     private String timeTable;

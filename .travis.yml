@@ -37,4 +37,3 @@ deploy:
     on:
       repo: dailymotion/pixelle-de
       branch: prod
-

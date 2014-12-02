@@ -1,5 +1,10 @@
-<configuration debug="true">
+<!-- /etc/de.conf will have loggly key and loglevel set to warn. de.conf overwrites de.properties -->
+<!-- de.properties is only for dev purposes -->
+
+<configuration debug="true" scan="true" scanPeriod="120 seconds">
     <property resource="de.properties"/>
+    <property file="/etc/de.conf"/>
+    <jmxConfigurator/>
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>%d %-5level %logger{35} - %msg %n</pattern>

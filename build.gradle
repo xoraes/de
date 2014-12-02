@@ -62,6 +62,7 @@ dependencies {
     compile 'org.codehaus.janino:janino:2.6.1'
     compile 'org.codehaus.groovy:groovy-all:2.3.7'
     compile 'org.apache.lucene:lucene-expressions:4.10.2'
+    compile 'com.netflix.hystrix:hystrix-core:latest.release'
     testCompile 'junit:junit:latest.release'
 
 }
@@ -96,6 +97,13 @@ applicationDefaultJvmArgs += "-XX:+HeapDumpOnOutOfMemoryError"
 applicationDefaultJvmArgs += "-XX:HeapDumpPath=/var/log/pxl-deserver-heapdump.hprof"
 applicationDefaultJvmArgs += "-XX:+DisableExplicitGC"
 applicationDefaultJvmArgs += "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
+
+//enable jmx on port 8005 for prod env
+applicationDefaultJvmArgs += "-Dcom.sun.management.jmxremote"
+applicationDefaultJvmArgs += "-Dcom.sun.management.jmxremote.port=8005"
+applicationDefaultJvmArgs += "-Dcom.sun.management.jmxremote.local.only=false"
+applicationDefaultJvmArgs += "-Dcom.sun.management.jmxremote.authenticate=false"
+applicationDefaultJvmArgs += "-Dcom.sun.management.jmxremote.ssl=false"
 
 task de(type: OneJar) {
     mainClass = 'com.dailymotion.pixelle.deserver.StartServer'

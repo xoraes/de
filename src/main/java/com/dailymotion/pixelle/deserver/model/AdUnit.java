@@ -1,12 +1,12 @@
 package com.dailymotion.pixelle.deserver.model;
 
-import com.dailymotion.pixelle.deserver.logger.InjectLogger;
 import com.dailymotion.pixelle.deserver.processor.DeException;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -15,8 +15,7 @@ import java.util.List;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class AdUnit {
-    @InjectLogger
-    private static Logger logger;
+    private static Logger logger = LoggerFactory.getLogger(AdUnit.class);
     @JsonProperty("_id")
     private String id;
     @JsonProperty("ad")

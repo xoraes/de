@@ -1,6 +1,5 @@
 package com.dailymotion.pixelle.deserver.processor;
 
-import com.dailymotion.pixelle.deserver.logger.InjectLogger;
 import com.dailymotion.pixelle.deserver.model.AdUnit;
 import com.dailymotion.pixelle.deserver.model.AdUnitResponse;
 import com.dailymotion.pixelle.deserver.model.ItemsResponse;
@@ -25,6 +24,7 @@ import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -35,8 +35,7 @@ import java.util.List;
  * Created by n.dhupia on 11/3/14.
  */
 public class DEProcessorImpl implements DEProcessor {
-    @InjectLogger
-    private static Logger logger;
+    private static Logger logger = LoggerFactory.getLogger(DEProcessorImpl.class);
 
     private static Client client;
 
@@ -125,7 +124,6 @@ public class DEProcessorImpl implements DEProcessor {
                 try {
                     unit = objectMapper.readValue(hit.getSourceAsString(), AdUnitResponse.class);
                 } catch (IOException e) {
-                    logger.error(e.getMessage());
                     throw new DeException(e.getCause(), 500);
                 }
                 adUnitResponses.add(unit);

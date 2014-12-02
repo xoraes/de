@@ -1,7 +1,6 @@
 package com.dailymotion.pixelle.deserver.servlets;
 
 
-import com.dailymotion.pixelle.deserver.logger.InjectLogger;
 import com.dailymotion.pixelle.deserver.processor.DeHelper;
 import com.google.inject.Inject;
 import org.elasticsearch.action.ActionFuture;
@@ -9,6 +8,7 @@ import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.client.Client;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -16,8 +16,7 @@ import org.slf4j.Logger;
  */
 
 public class HealthCheck {
-    @InjectLogger
-    private Logger logger;
+    private static Logger logger = LoggerFactory.getLogger(HealthCheck.class);
     private ClusterHealthResponse clusterHealthResponse;
     private Client client;
 
