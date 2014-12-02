@@ -10,7 +10,6 @@ import com.dailymotion.pixelle.deserver.servlets.DEServlet;
 import com.dailymotion.pixelle.deserver.servlets.HealthCheck;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.matcher.Matchers;
 import com.google.inject.servlet.GuiceServletContextListener;
 import com.sun.jersey.guice.JerseyServletModule;
 import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;

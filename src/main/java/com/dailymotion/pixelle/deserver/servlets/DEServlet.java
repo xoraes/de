@@ -29,10 +29,17 @@ public class DEServlet {
     }
 
     @GET
+    @Path("/healthcheck")
+    @Produces(MediaType.APPLICATION_JSON)
+    public ClusterHealthResponse healthCheck() throws DeException {
+        return health.getHealthCheck();
+    }
+
+    @GET
     @Path("/status")
     @Produces(MediaType.APPLICATION_JSON)
-    public ClusterHealthResponse healthCheck(@QueryParam("success") String success) throws DeException {
-        return health.getHealthCheck();
+    public ClusterHealthResponse status() throws DeException {
+        return healthCheck();
     }
 
     @POST
