@@ -29,7 +29,7 @@ public class DEServerContextListener extends GuiceServletContextListener {
                 bind(DEProcessor.class).to(DEProcessorImpl.class).asEagerSingleton();
                 bind(DEServlet.class).asEagerSingleton();
                 bind(HystrixMetricsStreamServlet.class).asEagerSingleton();
-                serve("/hystrix").with(HystrixMetricsStreamServlet.class);
+                serve("/hystrix.stream").with(HystrixMetricsStreamServlet.class);
                 // Route all requests through GuiceContainer
                 serve("/*").with(GuiceContainer.class);
             }
