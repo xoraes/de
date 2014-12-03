@@ -83,30 +83,30 @@ public class DEProcessorImpl implements DEProcessor {
             BoolFilterBuilder fb = FilterBuilders.boolFilter();
             fb.must(FilterBuilders.termFilter("status", "active"));
             fb.must(FilterBuilders.termFilter("timetable", timetable));
-            fb.must(FilterBuilders.termsFilter("categories", sq.getCategories()));
-            fb.must(FilterBuilders.termsFilter("languages", sq.getLanguages()));
-            fb.must(FilterBuilders.termsFilter("locations", sq.getLocations()));
+            fb.must(FilterBuilders.termsFilter("categories", DeHelper.toLowerCase(sq.getCategories())));
+            fb.must(FilterBuilders.termsFilter("languages", DeHelper.toLowerCase(sq.getLanguages())));
+            fb.must(FilterBuilders.termsFilter("locations", DeHelper.toLowerCase(sq.getLocations())));
             fb.mustNot(FilterBuilders.termFilter("goal_reached", true));
             fb.mustNot(FilterBuilders.termFilter("paused", true));
             fb.must(FilterBuilders.rangeFilter("start_date").lte(sq.getTime()));
             fb.must(FilterBuilders.rangeFilter("end_date").gte(sq.getTime()));
 
             if (sq.getDevice() != null) {
-                fb.must(FilterBuilders.termsFilter("devices", "all", sq.getDevice()));
+                fb.must(FilterBuilders.termsFilter("devices", "all", sq.getDevice().toLowerCase()));
             } else {
                 fb.must(FilterBuilders.termsFilter("devices", "all"));
             }
             if (sq.getFormat() != null) {
-                fb.must(FilterBuilders.termsFilter("formats", "all", sq.getFormat()));
+                fb.must(FilterBuilders.termsFilter("formats", "all", sq.getFormat().toLowerCase()));
             } else {
                 fb.must(FilterBuilders.termsFilter("formats", "all"));
             }
             if (sq.getLocations() != null && sq.getLocations().size() > 0) {
-                fb.mustNot(FilterBuilders.termsFilter("excluded_locations", sq.getLocations()));
+                fb.mustNot(FilterBuilders.termsFilter("excluded_locations", DeHelper.toLowerCase(sq.getLocations())));
             }
 
             if (sq.getCategories() != null && sq.getCategories().size() > 0) {
-                fb.mustNot(FilterBuilders.termsFilter("excluded_categories", sq.getCategories()));
+                fb.mustNot(FilterBuilders.termsFilter("excluded_categories", DeHelper.toLowerCase(sq.getCategories())));
             }
 
             QueryBuilder qb = QueryBuilders.functionScoreQuery(fb)

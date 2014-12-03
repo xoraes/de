@@ -62,8 +62,8 @@ public class ESAdUnitsIntegrationTest {
         sq.setCategories(new ArrayList(Arrays.asList("cat1")));
         sq.setDevice("dev1");
         sq.setFormat("fmt1");
-        sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
-        sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
+        sq.setLanguages(new ArrayList<String>(Arrays.asList("EN")));
+        sq.setLocations(new ArrayList<String>(Arrays.asList("US")));
 
         ItemsResponse i = new AdQueryCommand(es, sq, 3, null).execute();
         System.out.println("Response ====>:" + i.toString());

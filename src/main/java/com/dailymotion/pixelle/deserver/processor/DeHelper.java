@@ -10,10 +10,7 @@ import org.joda.time.LocalDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by n.dhupia on 11/6/14.
@@ -149,4 +146,11 @@ public class DeHelper {
 
         return dePort.get();
     }
+    public static List<String> toLowerCase(List<String> list) {
+        for (int i = 0; i < list.size(); i++) {
+            list.set(i,list.get(i).toLowerCase());
+        }
+        return list;
+        }
 }
+
