@@ -98,6 +98,12 @@ applicationDefaultJvmArgs += "-XX:+HeapDumpOnOutOfMemoryError"
 applicationDefaultJvmArgs += "-XX:HeapDumpPath=/var/log/pxl-deserver-heapdump.hprof"
 applicationDefaultJvmArgs += "-XX:+DisableExplicitGC"
 applicationDefaultJvmArgs += "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
+//enable jmx on port 8005 for prod env
+applicationDefaultJvmArgs += "-Dcom.sun.management.jmxremote"
+applicationDefaultJvmArgs += "-Dcom.sun.management.jmxremote.port=8005"
+applicationDefaultJvmArgs += "-Dcom.sun.management.jmxremote.local.only=false"
+applicationDefaultJvmArgs += "-Dcom.sun.management.jmxremote.authenticate=false"
+applicationDefaultJvmArgs += "-Dcom.sun.management.jmxremote.ssl=false"
 
 task de(type: OneJar) {
     mainClass = 'com.dailymotion.pixelle.deserver.StartServer'
