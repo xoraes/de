@@ -34,7 +34,17 @@ public class DeHelper {
             DynamicPropertyFactory.getInstance().getStringProperty("datadir", "/data/es");
     private static DynamicIntProperty dePort =
             DynamicPropertyFactory.getInstance().getIntProperty("port", 8080);
+    private static DynamicStringProperty privateIp =
+            DynamicPropertyFactory.getInstance().getStringProperty("privateIP", "127.0.0.1");
+    private static DynamicStringProperty rmiPort =
+            DynamicPropertyFactory.getInstance().getStringProperty("rmiPort", "8005");
 
+    public static String getRmiPort() {
+        return rmiPort.get();
+    }
+    public static String getIpAddr() {
+        return privateIp.get();
+    }
 
     public static String getCluster() {
         return clusterName.get();

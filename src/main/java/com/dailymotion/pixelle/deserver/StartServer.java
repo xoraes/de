@@ -23,6 +23,15 @@ public class StartServer {
             System.setProperty("archaius.deployment.environment", env);
         }
         ConfigurationManager.loadCascadedPropertiesFromResources("de");
+        System.setProperty("com.sun.management.jmxremote.local.only", "false");
+        System.setProperty("com.sun.management.jmxremote.authenticate","false");
+        System.setProperty("com.sun.management.jmxremote.ssl", "false");
+
+        System.setProperty("com.sun.management.jmxremote", DeHelper.getRmiPort());
+        System.setProperty("java.rmi.server.hostname",DeHelper.getIpAddr());
+
+
+
         HystrixPlugins.getInstance().registerMetricsPublisher(HystrixServoMetricsPublisher.getInstance());
         // Create the server.
         Server server = new Server(DeHelper.getPort());
