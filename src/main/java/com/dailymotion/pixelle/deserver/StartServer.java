@@ -30,8 +30,6 @@ public class StartServer {
         System.setProperty("com.sun.management.jmxremote", DeHelper.getRmiPort());
         System.setProperty("java.rmi.server.hostname",DeHelper.getIpAddr());
 
-
-
         HystrixPlugins.getInstance().registerMetricsPublisher(HystrixServoMetricsPublisher.getInstance());
         // Create the server.
         Server server = new Server(DeHelper.getPort());

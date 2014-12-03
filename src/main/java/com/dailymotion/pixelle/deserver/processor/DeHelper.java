@@ -35,7 +35,7 @@ public class DeHelper {
     private static DynamicIntProperty dePort =
             DynamicPropertyFactory.getInstance().getIntProperty("port", 8080);
     private static DynamicStringProperty privateIp =
-            DynamicPropertyFactory.getInstance().getStringProperty("privateIP", "127.0.0.1");
+            DynamicPropertyFactory.getInstance().getStringProperty("privateIP", "");
     private static DynamicStringProperty rmiPort =
             DynamicPropertyFactory.getInstance().getStringProperty("rmiPort", "8005");
 
