@@ -8,15 +8,26 @@ import com.netflix.hystrix.HystrixCommand;
 import com.netflix.hystrix.HystrixCommandGroupKey;
 import com.netflix.hystrix.HystrixCommandKey;
 import com.netflix.hystrix.HystrixCommandProperties;
+import com.netflix.servo.DefaultMonitorRegistry;
+import com.netflix.servo.annotations.Monitor;
+import com.netflix.servo.monitor.BasicCounter;
+import com.netflix.servo.monitor.Counter;
+import com.netflix.servo.monitor.MonitorConfig;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.atomic.AtomicInteger;
+import static com.netflix.servo.annotations.DataSourceType.COUNTER;
+import static com.netflix.servo.annotations.DataSourceType.GAUGE;
 
 /**
  * Created by n.dhupia on 12/1/14.
  */
 public class AdQueryCommand extends HystrixCommand<ItemsResponse> {
+    // JMX: com.netflix.servo.COUNTER.TotalAdsRequestsServed
+    private static Counter totalAdsRequestsServed = new BasicCounter(MonitorConfig
+            .builder("TotalAdsRequestsServed").build());
 
     private static DynamicIntProperty semaphoreCount =
             DynamicPropertyFactory.getInstance().getIntProperty("adquery.semaphoreCount", 10);
@@ -26,6 +37,10 @@ public class AdQueryCommand extends HystrixCommand<ItemsResponse> {
     private int position;
     private String allowedTypes;
     private DEProcessor processor;
+
+    static {
+        DefaultMonitorRegistry.getInstance().register(totalAdsRequestsServed);
+    }
 
     public AdQueryCommand(DEProcessor processor, SearchQueryRequest sq, int pos, String allowedTypes) {
 
@@ -53,6 +68,7 @@ public class AdQueryCommand extends HystrixCommand<ItemsResponse> {
             logger.info("No ads returned =======> " + sq.toString());
         } else {
             logger.info("Success =======> " + i.toString());
+            totalAdsRequestsServed.increment();
         }
         return i;
     }

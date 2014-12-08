@@ -312,10 +312,11 @@ public class DEProcessorImpl implements DEProcessor {
                 .addSort(UPDATED, SortOrder.DESC)
                 .addField(UPDATED);
         SearchResponse searchResponse = srb1.execute().actionGet();
-        for (SearchHit hit : searchResponse.getHits().getHits()) {
-            SearchHitField date = hit.field(UPDATED);
-            return date.getValue();
+
+        if (searchResponse != null && searchResponse.getHits() != null && searchResponse.getHits().getHits().length == 1) {
+            return searchResponse.getHits().getHits()[0].field(UPDATED).getValue();
         }
+
         return DeHelper.timeToISO8601String(DateTime.now(DateTimeZone.UTC).minusYears(10));
     }
 
