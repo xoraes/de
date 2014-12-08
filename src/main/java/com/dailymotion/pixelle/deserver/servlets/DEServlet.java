@@ -103,10 +103,7 @@ public class DEServlet {
     @Path("/upsert")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response update(AdUnit unit) throws DeException {
-        Boolean isCreated = new AdUpdateCommand(processor, unit).execute();
-        if (isCreated) { // this is going to be very rare unless es is buggy
-            throw new DeException(new Throwable("Error updating ad unit"), 500);
-        }
+        new AdUpdateCommand(processor, unit).execute();
         return Response.noContent().build();
     }
 
@@ -114,10 +111,7 @@ public class DEServlet {
     @Path("/upsert")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response insert(AdUnit unit) throws DeException {
-        Boolean isCreated = new AdInsertCommand(processor, unit).execute();
-        if (!isCreated) { // this is going to be very rare unless es is buggy
-            throw new DeException(new Throwable("Error creating ad unit"), 500);
-        }
+        new AdInsertCommand(processor, unit).execute();
         return Response.noContent().build();
     }
 }
