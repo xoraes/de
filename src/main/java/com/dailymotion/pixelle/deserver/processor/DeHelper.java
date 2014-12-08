@@ -10,7 +10,10 @@ import org.joda.time.LocalDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by n.dhupia on 11/6/14.
@@ -39,6 +42,7 @@ public class DeHelper {
     public static String getRmiPort() {
         return rmiPort.get();
     }
+
     public static String getIpAddr() {
         return privateIp.get();
     }
@@ -70,7 +74,6 @@ public class DeHelper {
         return dataDirectory.get();
     }
 
-
     public static List<AdUnitResponse> removeDuplicateCampaigns(int positions, List<AdUnitResponse> units) {
         int count = 1;
         Map<String, Integer> m = new HashMap<String, Integer>();
@@ -90,6 +93,9 @@ public class DeHelper {
     }
 
     public static List<String> stringListToLowerCase(List<String> listStr) {
+        if (listStr == null) {
+            return null;
+        }
         for (int i = 0; i < listStr.size(); i++) {
             listStr.set(i, listStr.get(i).toLowerCase());
         }
@@ -139,18 +145,18 @@ public class DeHelper {
     }
 
     public static String timeToISO8601String(DateTime dt) {
-        return dt.toString("yyyy-MM-dd'T'HH:mm:ssZ");
+        return dt.withZone(DateTimeZone.UTC).toString("yyyy-MM-dd'T'HH:mm:ssZZ");
     }
 
     public static int getPort() {
 
         return dePort.get();
     }
+
     public static List<String> toLowerCase(List<String> list) {
         for (int i = 0; i < list.size(); i++) {
-            list.set(i,list.get(i).toLowerCase());
+            list.set(i, list.get(i).toLowerCase());
         }
         return list;
-        }
+    }
 }
-

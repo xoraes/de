@@ -47,7 +47,7 @@ public class ESAdUnitsIntegrationTest {
     @AfterClass
     public static void tearDown() throws Exception {
         System.out.println("Deleting the index");
-        es.deleteIndex(DeHelper.getIndex());
+        es.deleteIndex();
         injector = null;
     }
 
@@ -69,6 +69,46 @@ public class ESAdUnitsIntegrationTest {
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getAdUnitResponse().size() == 3);
+        deleteByIds("1", "2", "3");
+    }
+
+    @Test
+    public void testGetLastUpdated() throws Exception {
+        Map m1 = createDefaultDataMap("1", "1");
+        Map m2 = createDefaultDataMap("2", "2");
+        Map m3 = createDefaultDataMap("3", "3");
+        Map m4 = createDefaultDataMap("4", "4");
+        Map m5 = createDefaultDataMap("5", "5");
+        Map m6 = createDefaultDataMap("6", "6");
+
+        m1.put("_updated", "2014-01-01T00:00:01Z");
+        m2.put("_updated", "2014-01-01T00:00:14Z");
+        m3.put("_updated", "2014-01-01T00:00:19Z");
+        m4.put("_updated", "2014-01-01T00:00:11Z");
+        m5.put("_updated", "2014-01-01T00:00:02Z");
+        m6.put("_updated", "2014-01-01T00:01:00Z");
+
+        Thread.sleep(2000);
+        String datetime = es.getLastUpdatedTimeStamp(DeHelper.getAdUnitsType());
+        Assert.assertNotNull(datetime);
+        System.out.println("DATETIME ====>:" + datetime);
+        loadDataMaps(m1, m2, m3, m4, m5, m6);
+
+        datetime = es.getLastUpdatedTimeStamp(DeHelper.getAdUnitsType());
+        System.out.println("DATETIME ====>:" + datetime);
+        Assert.assertNotNull(datetime);
+        Assert.assertEquals("2014-01-01T00:01:00Z", datetime);
+        deleteByIds("1", "2", "3", "4", "5", "6");
+    }
+
+    @Test
+    public void testGetAdUnitsByCampaign() throws Exception {
+        Map m1 = createDefaultDataMap("1", "1");
+        Map m2 = createDefaultDataMap("2", "1");
+        Map m3 = createDefaultDataMap("3", "1");
+
+        loadDataMaps(m1, m2, m3);
+        Assert.assertEquals(3, es.getAdUnitsByCampaign("1").size());
         deleteByIds("1", "2", "3");
     }
 
