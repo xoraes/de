@@ -82,7 +82,7 @@ public class AdUnit {
     private String created;
     @JsonProperty("delivery")
     private String delivery;
-    @JsonProperty("resizeable_thumbnail_url")
+    @JsonProperty("resizable_thumbnail_url")
     private String resizableThumbnailUrl;
     @JsonProperty("goal_reached")
     private Boolean goalReached;
