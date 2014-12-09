@@ -264,7 +264,7 @@ public class ESAdUnitsIntegrationTest {
         m.put("channel_url", "channel_url");
         m.put("start_date", "2014-11-01T00:00:00Z");
         m.put("end_date", "2114-11-01T00:00:00Z");
-        m.put("resizeable_thumbnail_url", "resizeable_thumbnail_url");
+        m.put("resizable_thumbnail_url", "resizable_thumbnail_url");
         m.put("thumbnail_url", "thumbnail_url");
         m.put("video_url", "video_url");
         m.put("video_id", "video_id");
