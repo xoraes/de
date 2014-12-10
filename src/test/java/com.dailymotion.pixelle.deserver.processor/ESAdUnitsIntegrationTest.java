@@ -217,6 +217,30 @@ public class ESAdUnitsIntegrationTest {
         Assert.assertTrue(i.getAdUnitResponse().size() == 0);
         deleteByIds("1");
     }
+    @Test
+    public void testLanguageTargetingNegative() throws Exception {
+        Map m1 = createDefaultDataMap("1", "1");
+        Map m2 = createDefaultDataMap("2", "2");
+        Map m3 = createDefaultDataMap("3", "3");
+        m1.put("languages", new ArrayList<String>(Arrays.asList("en")));
+        m2.put("languages", new ArrayList<String>(Arrays.asList("en")));
+        m3.put("languages", new ArrayList<String>(Arrays.asList("fr")));
+        loadDataMaps(m1,m2,m3);
+        SearchQueryRequest sq = new SearchQueryRequest();
+        sq.setTime("2014-12-31T15:00:00-0800");
+        sq.setCategories(new ArrayList(Arrays.asList("cat1")));
+        sq.setDevice("dev1");
+        sq.setFormat("fmt1");
+        sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
+        sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
+
+        System.out.println("Search Query ====>" + sq.toString());
+        ItemsResponse i = new AdQueryCommand(es, sq, 10, null).execute();
+        System.out.println("Response ====>:" + i.toString());
+        Assert.assertNotNull(i);
+        Assert.assertTrue(i.getAdUnitResponse().size() == 2);
+        deleteByIds("1","2","3");
+    }
 
     @Test
     public void testStatusInActive() throws Exception {
