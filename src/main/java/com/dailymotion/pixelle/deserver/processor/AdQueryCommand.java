@@ -64,7 +64,7 @@ public class AdQueryCommand extends HystrixCommand<ItemsResponse> {
         allowedTypes = allowedTypes == null || allowedTypes.trim() == "" ? "promoted" : allowedTypes;
         String[] at = StringUtils.split(allowedTypes);
         ItemsResponse i = processor.recommend(sq, position, at);
-        if (i == null) {
+        if (i == null || i.getAdUnitResponse() == null || i.getAdUnitResponse().size() < 1) {
             logger.info("No ads returned =======> " + sq.toString());
         } else {
             logger.info("Success =======> " + i.toString());
