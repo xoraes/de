@@ -327,9 +327,10 @@ public class DEProcessorImpl implements DEProcessor {
         }
         GetResponse response = client.prepareGet(DeHelper.getIndex(), DeHelper.getAdUnitsType(), id).execute().actionGet();
         AdUnit unit = null;
-        if (response != null) {
+        byte[] responseSourceAsBytes = response.getSourceAsBytes();
+        if (response != null && responseSourceAsBytes != null) {
             try {
-                unit = objectMapper.readValue(response.getSourceAsBytes(), AdUnit.class);
+                unit = objectMapper.readValue(responseSourceAsBytes, AdUnit.class);
             } catch (IOException e) {
                 logger.error("error parsing adunit", e);
                 throw new DeException(e,500);
