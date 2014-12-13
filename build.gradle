@@ -44,13 +44,13 @@ project.ext {
     deserver = '0.1.0'
 }
 dependencies {
-    compile 'org.elasticsearch:elasticsearch:1.4.0'
+    compile 'org.elasticsearch:elasticsearch:1.4.1'
     compile 'com.google.guava:guava:18.0'
-    compile 'org.eclipse.jetty:jetty-servlet:9.2.3.v20140905'
-    compile 'org.eclipse.jetty:jetty-server:9.2.3.v20140905'
+    compile 'org.eclipse.jetty:jetty-servlet:9.2.5.v20141112'
+    compile 'org.eclipse.jetty:jetty-server:9.2.5.v20141112'
     compile 'com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.4.3'
-    compile 'com.sun.jersey:jersey-server:1.18.2'
-    compile 'com.sun.jersey.contribs:jersey-guice:1.18.2'
+    compile 'com.sun.jersey:jersey-server:1.18.3'
+    compile 'com.sun.jersey.contribs:jersey-guice:1.18.3'
     compile 'org.slf4j:slf4j-api:1.7.7'
     compile 'joda-time:joda-time:2.5'
     compile 'org.apache.commons:commons-lang3:3.3.2'

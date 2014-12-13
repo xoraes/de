@@ -12,7 +12,7 @@
     </appender>
     <if condition='isDefined("logback.loggly.inputKey")'>
         <then>
-            <appender name="loggly" class="ch.qos.logback.ext.loggly.LogglyBatchAppender">
+            <appender name="loggly" class="ch.qos.logback.ext.loggly.LogglyAppender">
                 <inputKey>${logback.loggly.inputKey}</inputKey>
                 <debug>${logback.loggly.debug:-false}</debug>
                 <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
