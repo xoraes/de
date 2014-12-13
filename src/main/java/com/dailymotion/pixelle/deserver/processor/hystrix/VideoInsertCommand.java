@@ -1,6 +1,8 @@
-package com.dailymotion.pixelle.deserver.processor;
+package com.dailymotion.pixelle.deserver.processor.hystrix;
 
-import com.dailymotion.pixelle.deserver.model.AdUnit;
+import com.dailymotion.pixelle.deserver.model.Video;
+import com.dailymotion.pixelle.deserver.processor.DEProcessor;
+import com.dailymotion.pixelle.deserver.processor.DeException;
 import com.netflix.config.DynamicIntProperty;
 import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.hystrix.HystrixCommand;
@@ -10,41 +12,37 @@ import com.netflix.hystrix.HystrixCommandProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
-/**
- * Created by n.dhupia on 12/1/14.
- */
-public class AdInsertCommand extends HystrixCommand<Boolean> {
+public class VideoInsertCommand extends HystrixCommand<Boolean> {
 
     private static DynamicIntProperty semaphoreCount =
-            DynamicPropertyFactory.getInstance().getIntProperty("adinsert.semaphoreCount", 2);
+            DynamicPropertyFactory.getInstance().getIntProperty("videoinsert.semaphoreCount", 2);
 
-    private static Logger logger = LoggerFactory.getLogger(AdInsertCommand.class);
-    private AdUnit unit;
+    private static Logger logger = LoggerFactory.getLogger(VideoInsertCommand.class);
+    private Video video;
     private DEProcessor processor;
 
-    public AdInsertCommand(DEProcessor processor, AdUnit unit) {
+    public VideoInsertCommand(DEProcessor processor, Video video) {
 
         super(Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey("DecisioningEngine"))
-                .andCommandKey(HystrixCommandKey.Factory.asKey("AdInsert"))
+                .andCommandKey(HystrixCommandKey.Factory.asKey("VideoInsert"))
                 .andCommandPropertiesDefaults(HystrixCommandProperties.Setter()
                         .withExecutionIsolationStrategy(HystrixCommandProperties.ExecutionIsolationStrategy.SEMAPHORE)
                         .withExecutionIsolationSemaphoreMaxConcurrentRequests(semaphoreCount.get())));
 
-        this.unit = unit;
+        this.video = video;
         this.processor = processor;
 
     }
 
     @Override
     protected Boolean run() throws Exception {
-        Boolean isCreated = processor.insertAdUnit(unit);
+        Boolean isCreated = processor.insertVideo(video);
         return isCreated;
     }
 
     @Override
     protected Boolean getFallback() {
-        throw new DeException(new Throwable("Error inserting adunit"), 500);
+        throw new DeException(new Throwable("Error inserting video"), 500);
     }
 
 }

@@ -1,19 +1,18 @@
 package com.dailymotion.pixelle.deserver.processor;
 
 import com.dailymotion.pixelle.deserver.model.AdUnitResponse;
+import com.dailymotion.pixelle.deserver.model.SearchQueryRequest;
 import com.netflix.config.DynamicIntProperty;
 import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.config.DynamicStringProperty;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by n.dhupia on 11/6/14.
@@ -34,18 +33,8 @@ public class DeHelper {
             DynamicPropertyFactory.getInstance().getStringProperty("datadir", "/data/es");
     private static DynamicIntProperty dePort =
             DynamicPropertyFactory.getInstance().getIntProperty("port", 8080);
-    private static DynamicStringProperty privateIp =
-            DynamicPropertyFactory.getInstance().getStringProperty("privateIP", "");
-    private static DynamicStringProperty rmiPort =
-            DynamicPropertyFactory.getInstance().getStringProperty("rmiPort", "8005");
-
-    public static String getRmiPort() {
-        return rmiPort.get();
-    }
-
-    public static String getIpAddr() {
-        return privateIp.get();
-    }
+    private static DynamicStringProperty widgetPattern =
+            DynamicPropertyFactory.getInstance().getStringProperty("widget.pattern", "oop");
 
     public static String getCluster() {
         return clusterName.get();
@@ -72,6 +61,11 @@ public class DeHelper {
     public static String getDataDir() {
 
         return dataDirectory.get();
+    }
+
+    public static String getWidgetPattern() {
+
+        return widgetPattern.get();
     }
 
     public static List<AdUnitResponse> removeDuplicateCampaigns(int positions, List<AdUnitResponse> units) {
@@ -158,5 +152,29 @@ public class DeHelper {
             list.set(i, list.get(i).toLowerCase());
         }
         return list;
+    }
+
+    public static SearchQueryRequest modifySearchQueryReq(SearchQueryRequest sq) {
+        if (sq != null) {
+            if (DeHelper.isEmptyArray(sq.getCategories())) {
+                sq.setCategories(Arrays.asList("all"));
+            } else {
+                sq.getCategories().add("all");
+            }
+            if (DeHelper.isEmptyArray(sq.getLocations())) {
+                sq.setLocations(Arrays.asList("all"));
+            } else {
+                sq.getLocations().add("all");
+            }
+            if (DeHelper.isEmptyArray(sq.getLanguages())) {
+                sq.setLanguages(Arrays.asList("all"));
+            } else {
+                sq.getLanguages().add("all");
+            }
+            if (StringUtils.isBlank(sq.getTime())) {
+                sq.setTime(DeHelper.timeToISO8601String(DeHelper.currentUTCTime()));
+            }
+        }
+        return sq;
     }
 }

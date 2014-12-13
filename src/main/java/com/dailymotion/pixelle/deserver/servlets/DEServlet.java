@@ -5,7 +5,11 @@ package com.dailymotion.pixelle.deserver.servlets; /**
 import com.dailymotion.pixelle.deserver.model.AdUnit;
 import com.dailymotion.pixelle.deserver.model.ItemsResponse;
 import com.dailymotion.pixelle.deserver.model.SearchQueryRequest;
-import com.dailymotion.pixelle.deserver.processor.*;
+import com.dailymotion.pixelle.deserver.model.Video;
+import com.dailymotion.pixelle.deserver.processor.DEProcessor;
+import com.dailymotion.pixelle.deserver.processor.DeException;
+import com.dailymotion.pixelle.deserver.processor.DeHelper;
+import com.dailymotion.pixelle.deserver.processor.hystrix.*;
 import com.google.inject.Inject;
 import org.apache.commons.lang.StringUtils;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
@@ -20,19 +24,18 @@ import java.util.List;
 @Path("/")
 public class DEServlet {
     private static Logger logger = LoggerFactory.getLogger(DEServlet.class);
-    private DEProcessor processor;
-
+    private DEProcessor deProcessor;
 
     @Inject
-    public DEServlet(DEProcessor processor) {
-        this.processor = processor;
+    public DEServlet(DEProcessor deProcessor) {
+        this.deProcessor = deProcessor;
     }
 
     @GET
     @Path("/healthcheck")
     @Produces(MediaType.APPLICATION_JSON)
     public ClusterHealthResponse healthCheck() throws DeException {
-        return processor.getHealthCheck();
+        return deProcessor.getHealthCheck();
     }
 
     @GET
@@ -46,7 +49,7 @@ public class DEServlet {
     @Path("/adunit")
     @Produces(MediaType.APPLICATION_JSON)
     public AdUnit getAdUnitById(@QueryParam("id") String id) throws DeException {
-        return processor.getAdUnitById(id);
+        return deProcessor.getAdUnitById(id);
     }
 
     @GET
@@ -54,29 +57,29 @@ public class DEServlet {
     @Produces(MediaType.APPLICATION_JSON)
     public List<AdUnit> getAdUnitsByCampaign(@QueryParam("cid") String cid) throws DeException {
         if (StringUtils.isBlank(cid)) {
-            return processor.getAllAdUnits();
+            return deProcessor.getAllAdUnits();
         }
-        return processor.getAdUnitsByCampaign(cid);
+        return deProcessor.getAdUnitsByCampaign(cid);
     }
 
     @POST
     @Path("/index")
     public Response createAdIndexWithType() throws DeException {
-        processor.createAdIndexWithType();
+        deProcessor.createAdIndexWithType();
         return Response.noContent().build();
     }
 
     @DELETE
     @Path("/index")
     public Response deleteIndex() throws DeException {
-        processor.deleteIndex();
+        deProcessor.deleteIndex();
         return Response.noContent().build();
     }
 
     @DELETE
     @Path("/adunit")
     public Response deleteAdUnit(@QueryParam("id") String id) throws DeException {
-        if (processor.deleteById(DeHelper.getIndex(), DeHelper.getAdUnitsType(), id)) {
+        if (deProcessor.deleteById(DeHelper.getIndex(), DeHelper.getAdUnitsType(), id)) {
             return Response.noContent().build();
         } else {
             return Response.ok(id + " not found").build();
@@ -84,34 +87,74 @@ public class DEServlet {
     }
 
     @GET
-    @Path("/lastdatetime")
+    @Path("/video/lastdatetime")
     @Produces(MediaType.TEXT_PLAIN)
-    public String getLastTimeStamp(@QueryParam("type") String type) throws DeException {
-        return processor.getLastUpdatedTimeStamp(type);
+    public String getVideoLastTimeStamp(@QueryParam("type") String type) throws DeException {
+        return deProcessor.getLastUpdatedTimeStamp(DeHelper.getOrganicVideoType());
+    }
+
+    @GET
+    @Path("/adunits/lastdatetime")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String getAdLastTimeStamp(@QueryParam("type") String type) throws DeException {
+        return deProcessor.getLastUpdatedTimeStamp(DeHelper.getAdUnitsType());
     }
 
     @POST
     @Path("/query")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response query(SearchQueryRequest sq, @QueryParam("positions") int pos, @QueryParam("allowed_types") String allowedTypes) throws DeException {
-        ItemsResponse i = new AdQueryCommand(processor, sq, pos, allowedTypes).execute();
+    public Response query(SearchQueryRequest sq, @QueryParam("positions") int pos, @QueryParam("type") String allowedTypes) throws DeException {
+        ItemsResponse i = new QueryCommand(deProcessor, sq, pos, allowedTypes).execute();
         return Response.ok(i).build();
     }
 
     @PUT
-    @Path("/upsert")
+    @Path("/adunit")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response update(AdUnit unit) throws DeException {
-        new AdUpdateCommand(processor, unit).execute();
+        new AdUpdateCommand(deProcessor, unit).execute();
         return Response.noContent().build();
     }
 
     @POST
-    @Path("/upsert")
+    @Path("/adunit")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response insert(AdUnit unit) throws DeException {
-        new AdInsertCommand(processor, unit).execute();
+        new AdInsertCommand(deProcessor, unit).execute();
         return Response.noContent().build();
+    }
+
+    @PUT
+    @Path("/video")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response update(Video video) throws DeException {
+        new VideoUpdateCommand(deProcessor, video).execute();
+        return Response.noContent().build();
+    }
+
+    @POST
+    @Path("/video")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response insert(Video video) throws DeException {
+        new VideoInsertCommand(deProcessor, video).execute();
+        return Response.noContent().build();
+    }
+
+    @GET
+    @Path("/video")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Video getVideoById(@QueryParam("id") String id) throws DeException {
+        return deProcessor.getVideoById(id);
+    }
+
+    @DELETE
+    @Path("/video")
+    public Response deleteVideoById(@QueryParam("id") String id) throws DeException {
+        if (deProcessor.deleteById(DeHelper.getIndex(), DeHelper.getOrganicVideoType(), id)) {
+            return Response.noContent().build();
+        } else {
+            return Response.ok(id + " not found").build();
+        }
     }
 }

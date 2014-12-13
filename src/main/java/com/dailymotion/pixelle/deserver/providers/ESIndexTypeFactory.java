@@ -1,6 +1,7 @@
 package com.dailymotion.pixelle.deserver.providers;
 
 import com.dailymotion.pixelle.deserver.processor.DeException;
+import com.dailymotion.pixelle.deserver.processor.DeHelper;
 import com.google.inject.Injector;
 import com.google.inject.ProvisionException;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
@@ -41,7 +42,7 @@ public class ESIndexTypeFactory {
                         .actionGet().isExists()) {
 
                     ack = client.admin().indices()
-                            .putMapping(new PutMappingRequest(indexName).type(typeName).source(createAdUnitMapping(typeName)))
+                            .putMapping(new PutMappingRequest(indexName).type(typeName).source(createMapping(typeName)))
                             .actionGet().isAcknowledged();
 
                     if (ack) {
@@ -55,6 +56,14 @@ public class ESIndexTypeFactory {
             logger.error(e.getMessage());
             //TODO Use throwableProvider instead of this
             throw new ProvisionException("Could not create index", e);
+        }
+    }
+
+    private static XContentBuilder createMapping(String typeName) throws IOException {
+        if (typeName.equalsIgnoreCase(DeHelper.getAdUnitsType())) {
+            return createAdUnitMapping(typeName);
+        } else {
+            return createVideosMapping(typeName);
         }
     }
 
@@ -100,6 +109,33 @@ public class ESIndexTypeFactory {
 
         builder.startObject("goal_reached").field("type", "boolean").field("index", "not_analyzed").endObject();
         builder.startObject("paused").field("type", "boolean").field("index", "not_analyzed").endObject();
+
+        builder.endObject().endObject().endObject();
+
+
+        return builder;
+    }
+
+    private static XContentBuilder createVideosMapping(String typeName) throws IOException {
+        XContentBuilder builder = XContentFactory.jsonBuilder().startObject().startObject(typeName).startObject("properties");
+        builder.startObject("_created").field("type", "date").field("format", "date_time_no_millis").field("index", "not_analyzed").endObject();
+        builder.startObject("_updated").field("type", "date").field("format", "date_time_no_millis").field("index", "not_analyzed").endObject();
+        builder.startObject("_id").field("type", "string").field("index", "not_analyzed").endObject();
+        builder.startObject("video_id").field("type", "string").field("index", "not_analyzed").endObject();
+        builder.startObject("languages").field("type", "string").field("index", "not_analyzed").endObject();
+        builder.startObject("categories").field("type", "string").field("index", "not_analyzed").endObject();
+        builder.startObject("tags").field("type", "string").field("index", "not_analyzed").endObject();
+
+        builder.startObject("status").field("type", "string").field("index", "not_analyzed").endObject();
+        builder.startObject("title").field("type", "string").field("index", "no").endObject();
+        builder.startObject("description").field("type", "string").field("index", "no").endObject();
+        builder.startObject("thumbnail_url").field("type", "string").field("index", "no").endObject();
+        builder.startObject("resizable_thumbnail_url").field("type", "string").field("index", "no").endObject();
+        builder.startObject("channel").field("type", "string").field("index", "no").endObject();
+        builder.startObject("channel_id").field("type", "string").field("index", "no").endObject();
+        builder.startObject("channel_tier").field("type", "string").field("index", "no").endObject();
+
+        builder.startObject("duration").field("type", "integer").field("index", "no").endObject();
 
         builder.endObject().endObject().endObject();
 

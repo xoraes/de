@@ -1,6 +1,5 @@
 package com.dailymotion.pixelle.deserver.model;
 
-
 import com.dailymotion.pixelle.deserver.processor.DeException;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -10,25 +9,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Created by n.dhupia on 10/30/14.
+ * Created by n.dhupia on 12/10/14.
  */
-@JsonInclude(JsonInclude.Include.NON_EMPTY) //this will ensure only non-null values are included in the serialized json
-public class AdUnitResponse extends ItemsResponse {
-    private static Logger logger = LoggerFactory.getLogger(AdUnitResponse.class);
-    @JsonProperty("ad")
-    private String ad;
-    @JsonProperty("campaign")
-    private String campaignId;
-    @JsonProperty("tactic")
-    private String tacticId;
-    @JsonProperty("channel")
-    private String channelId;
-    @JsonProperty("account")
-    private String accountId;
-    @JsonProperty("video_url")
-    private String videoUrl;
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public class VideoResponse extends ItemsResponse {
+    private static Logger logger = LoggerFactory.getLogger(VideoResponse.class);
     @JsonProperty("video_id")
-    private String videoId;
+    private String id;
+    @JsonProperty("channel")
+    private String channelName;
+    @JsonProperty("channel_id")
+    private String channelId;
+    @JsonProperty("channel_tier")
+    private String channelTier;
     @JsonProperty("thumbnail_url")
     private String thumbnailUrl;
     @JsonProperty("description")
@@ -37,43 +30,26 @@ public class AdUnitResponse extends ItemsResponse {
     private String title;
     @JsonProperty("duration")
     private Integer duration;
-    @JsonProperty("cpc")
-    private Long cpc;
     @JsonProperty("resizable_thumbnail_url")
     private String resizableThumbnailUrl;
     @JsonProperty("type")
-    private String contentType = "promoted";
+    private String contentType = "organic";
 
-    public String getVideoId() {
-        return videoId;
+
+    public String getId() {
+        return id;
     }
 
-    public void setVideoId(String videoId) {
-        this.videoId = videoId;
+    public void setId(String id) {
+        this.id = id;
     }
 
-    public String getAd() {
-        return ad;
+    public String getChannelName() {
+        return channelName;
     }
 
-    public void setAd(String ad) {
-        this.ad = ad;
-    }
-
-    public String getCampaignId() {
-        return campaignId;
-    }
-
-    public void setCampaignId(String campaignId) {
-        this.campaignId = campaignId;
-    }
-
-    public String getTacticId() {
-        return tacticId;
-    }
-
-    public void setTacticId(String tacticId) {
-        this.tacticId = tacticId;
+    public void setChannelName(String channelName) {
+        this.channelName = channelName;
     }
 
     public String getChannelId() {
@@ -84,20 +60,12 @@ public class AdUnitResponse extends ItemsResponse {
         this.channelId = channelId;
     }
 
-    public String getAccountId() {
-        return accountId;
+    public String getChannelTier() {
+        return channelTier;
     }
 
-    public void setAccountId(String accountId) {
-        this.accountId = accountId;
-    }
-
-    public String getVideoUrl() {
-        return videoUrl;
-    }
-
-    public void setVideoUrl(String videoUrl) {
-        this.videoUrl = videoUrl;
+    public void setChannelTier(String channelTier) {
+        this.channelTier = channelTier;
     }
 
     public String getThumbnailUrl() {
@@ -132,14 +100,6 @@ public class AdUnitResponse extends ItemsResponse {
         this.duration = duration;
     }
 
-    public Long getCpc() {
-        return cpc;
-    }
-
-    public void setCpc(Long cpc) {
-        this.cpc = cpc;
-    }
-
     public String getResizableThumbnailUrl() {
         return resizableThumbnailUrl;
     }
@@ -166,4 +126,5 @@ public class AdUnitResponse extends ItemsResponse {
             throw new DeException(e, 500);
         }
     }
+
 }

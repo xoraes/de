@@ -1,272 +1,132 @@
 package com.dailymotion.pixelle.deserver.processor;
 
-import com.dailymotion.pixelle.deserver.model.AdUnit;
-import com.dailymotion.pixelle.deserver.model.AdUnitResponse;
-import com.dailymotion.pixelle.deserver.model.ItemsResponse;
-import com.dailymotion.pixelle.deserver.model.SearchQueryRequest;
+import com.dailymotion.pixelle.deserver.model.*;
+import com.dailymotion.pixelle.deserver.processor.hystrix.AdQueryCommand;
+import com.dailymotion.pixelle.deserver.processor.hystrix.VideoQueryCommand;
 import com.dailymotion.pixelle.deserver.providers.ESIndexTypeFactory;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.action.ActionFuture;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequestBuilder;
-import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.settings.ImmutableSettings;
-import org.elasticsearch.index.query.BoolFilterBuilder;
-import org.elasticsearch.index.query.FilterBuilders;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders;
-import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.SearchHitField;
 import org.elasticsearch.search.sort.SortOrder;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
- * Created by n.dhupia on 11/3/14.
+ * Created by n.dhupia on 12/10/14.
  */
 public class DEProcessorImpl implements DEProcessor {
-
-    private static final ObjectMapper objectMapper = new ObjectMapper();
-
-    static {
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    }
-
+    private static final String ZEROTIME = "0001-01-01T00:00:00Z";
     private static Logger logger = LoggerFactory.getLogger(DEProcessorImpl.class);
-
     private static Client client;
+    private static AdUnitProcessor adUnitProcessor;
+    private static VideoProcessor videoProcessor;
 
     @Inject
-    public DEProcessorImpl(Client esClient) {
+    public DEProcessorImpl(Client esClient, AdUnitProcessor adUnitProcessor, VideoProcessor videoProcessor) {
         this.client = esClient;
+        this.adUnitProcessor = adUnitProcessor;
+        this.videoProcessor = videoProcessor;
     }
 
     @Override
-    public ClusterHealthResponse getHealthCheck() {
-        ActionFuture<ClusterHealthResponse> resp = client.admin().cluster().health(new ClusterHealthRequest(DeHelper.getIndex()));
-        return resp.actionGet();
-    }
+    public ItemsResponse recommend(SearchQueryRequest sq, Integer positions, String allowedTypes) throws DeException {
+        List<VideoResponse> videos = null;
+        List<AdUnitResponse> ads = null;
+        List<? extends ItemsResponse> mergedList = null;
+        ItemsResponse itemsResponse = new ItemsResponse();
+        String[] at = StringUtils.split(allowedTypes, ",", 2);
+        sq = DeHelper.modifySearchQueryReq(sq);
+        if (at == null || at.length == 0) {
+            ads = new AdQueryCommand(adUnitProcessor, sq, positions).execute();
+            itemsResponse.setResponse(ads);
+            return itemsResponse;
 
-    @Override
-    public ItemsResponse recommend(SearchQueryRequest sq, Integer positions, String[] allowedTypes) throws DeException {
-        if (positions == null || sq == null) {
-            throw new DeException(new Throwable("no positions/searchquery provided in request body"), 400);
         }
 
-        ItemsResponse itemsResponse = new ItemsResponse();
-        if (sq != null) {
-            if (DeHelper.isEmptyArray(sq.getCategories())) {
-                sq.setCategories(Arrays.asList("all"));
-            } else {
-                sq.getCategories().add("all");
-            }
-            if (DeHelper.isEmptyArray(sq.getLocations())) {
-                sq.setLocations(Arrays.asList("all"));
-            } else {
-                sq.getLocations().add("all");
-            }
-            if (DeHelper.isEmptyArray(sq.getLanguages())) {
-                sq.setLanguages(Arrays.asList("all"));
-            } else {
-                sq.getLanguages().add("all");
-            }
-            if (StringUtils.isBlank(sq.getTime())) {
-                sq.setTime(DeHelper.timeToISO8601String(DeHelper.currentUTCTime()));
-            }
+        if (at.length == 1 && StringUtils.containsIgnoreCase(at[0], "promoted")) {
+            ads = new AdQueryCommand(adUnitProcessor, sq, positions).execute();
+            itemsResponse.setResponse(ads);
+            return itemsResponse;
 
-            DateTimeFormatter df = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ssZ");
-            //If withOffsetParsed() is not used then everything is converted to local time
-            //resulting in dayOfWeek and HourOfDay to be incorrect
-            DateTime dt = df.withOffsetParsed().parseDateTime(sq.getTime());
-            String timetable = dt.dayOfWeek().getAsText().toLowerCase() + ":" + dt.getHourOfDay() + ":" + "true";
+        }
 
-            BoolFilterBuilder fb = FilterBuilders.boolFilter();
-            fb.must(FilterBuilders.termFilter("status", "active"));
-            fb.must(FilterBuilders.termFilter("timetable", timetable));
-            fb.must(FilterBuilders.termsFilter("categories", DeHelper.toLowerCase(sq.getCategories())));
-            fb.must(FilterBuilders.termsFilter("languages", DeHelper.toLowerCase(sq.getLanguages())));
-            fb.must(FilterBuilders.termsFilter("locations", DeHelper.toLowerCase(sq.getLocations())));
-            fb.mustNot(FilterBuilders.termFilter("goal_reached", true));
-            fb.mustNot(FilterBuilders.termFilter("paused", true));
-            fb.must(FilterBuilders.rangeFilter("start_date").lte(sq.getTime()));
-            fb.must(FilterBuilders.rangeFilter("end_date").gte(sq.getTime()));
+        if (at.length == 1 && StringUtils.containsIgnoreCase(at[0], "organic")) {
+            videos = new VideoQueryCommand(videoProcessor, sq, positions).execute();
+            mergedList = mergeAndFillList(null, videos, positions);
+            itemsResponse.setResponse(mergedList);
+            return itemsResponse;
+        }
 
-            if (sq.getDevice() != null) {
-                fb.must(FilterBuilders.termsFilter("devices", "all", sq.getDevice().toLowerCase()));
-            } else {
-                fb.must(FilterBuilders.termsFilter("devices", "all"));
-            }
-            if (sq.getFormat() != null) {
-                fb.must(FilterBuilders.termsFilter("formats", "all", sq.getFormat().toLowerCase()));
-            } else {
-                fb.must(FilterBuilders.termsFilter("formats", "all"));
-            }
-            if (sq.getLocations() != null && sq.getLocations().size() > 0) {
-                fb.mustNot(FilterBuilders.termsFilter("excluded_locations", DeHelper.toLowerCase(sq.getLocations())));
-            }
+        if (at.length == 2
+                && StringUtils.containsIgnoreCase(allowedTypes, "promoted")
+                && StringUtils.containsIgnoreCase(allowedTypes, "organic")) {
 
-            if (sq.getCategories() != null && sq.getCategories().size() > 0) {
-                fb.mustNot(FilterBuilders.termsFilter("excluded_categories", DeHelper.toLowerCase(sq.getCategories())));
-            }
-
-            QueryBuilder qb = QueryBuilders.functionScoreQuery(fb)
-                    .add(ScoreFunctionBuilders.randomFunction((int) (Math.random() * 100)));
-
-            SearchRequestBuilder srb1 = client.prepareSearch(DeHelper.getIndex())
-                    .setTypes(DeHelper.getAdUnitsType())
-                    .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
-                    .setQuery(qb)
-                    .setSize(positions * 4);
-
-
-            logger.info(srb1.toString());
-
-            SearchResponse searchResponse = srb1.execute().actionGet();
-            List<AdUnitResponse> adUnitResponses = new ArrayList<AdUnitResponse>();
-
-            for (SearchHit hit : searchResponse.getHits().getHits()) {
-                AdUnitResponse unit;
-                try {
-                    unit = objectMapper.readValue(hit.getSourceAsString(), AdUnitResponse.class);
-                } catch (IOException e) {
-                    throw new DeException(e.getCause(), 500);
-                }
-                adUnitResponses.add(unit);
-            }
-            logger.info("Num responses:" + adUnitResponses.size());
-            adUnitResponses = DeHelper.removeDuplicateCampaigns(positions, adUnitResponses);
-            itemsResponse.setAdUnitResponse(adUnitResponses);
+            ads = new AdQueryCommand(adUnitProcessor, sq, positions).execute();
+            videos = new VideoQueryCommand(videoProcessor, sq, positions).execute();
+            mergedList = mergeAndFillList(ads, videos, positions);
+            itemsResponse.setResponse(mergedList);
+            return itemsResponse;
         }
         return itemsResponse;
     }
 
     @Override
     public List<AdUnit> getAdUnitsByCampaign(String cid) {
-        if (StringUtils.isBlank(cid)) {
-            throw new DeException(new Throwable("no cid provided"), 400);
-        }
-
-
-        BoolFilterBuilder fb = FilterBuilders.boolFilter().must(FilterBuilders.termFilter("campaign", cid));
-        QueryBuilder qb = QueryBuilders.filteredQuery(null, fb);
-        SearchRequestBuilder srb1 = client.prepareSearch(DeHelper.getIndex())
-                .setTypes(DeHelper.getAdUnitsType())
-                .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
-                .setQuery(qb);
-        SearchResponse searchResponse = srb1.execute().actionGet();
-        List<AdUnit> adUnits = new ArrayList<AdUnit>();
-        for (SearchHit hit : searchResponse.getHits().getHits()) {
-            AdUnit unit;
-            try {
-                unit = objectMapper.readValue(hit.getSourceAsString(), AdUnit.class);
-            } catch (IOException e) {
-                throw new DeException(e.getCause(), 500);
-            }
-            adUnits.add(unit);
-        }
-        if (adUnits.size() == 0) {
-            return null;
-        }
-        return adUnits;
+        return adUnitProcessor.getAdUnitsByCampaign(cid);
     }
-
 
     @Override
     public boolean insertAdUnit(AdUnit unit) throws DeException {
-        if (unit == null) {
-            throw new DeException(new Throwable("no adunit found in request body"), 400);
-        }
-
-
-        if (unit.getLocations() == null || unit.getLocations().size() <= 0) {
-            unit.setLocations(Arrays.asList("all"));
-        }
-
-        if (unit.getLanguages() == null || unit.getLanguages().size() <= 0) {
-            unit.setLanguages(Arrays.asList("all"));
-        }
-
-        if (unit.getDevices() == null || unit.getDevices().size() <= 0) {
-            unit.setDevices(Arrays.asList("all"));
-        }
-        if (unit.getCategories() == null || unit.getCategories().size() <= 0) {
-            unit.setCategories(Arrays.asList("all"));
-        }
-        if (unit.getFormats() == null || unit.getFormats().size() <= 0) {
-            unit.setFormats(Arrays.asList("all"));
-        }
-
-        List<String> sch = DeHelper.convertSchedulesToTimeTable(unit.getSchedules());
-
-        if (DeHelper.isEmptyArray(sch)) {
-            unit.setTimetable(new ArrayList<String>(Arrays.asList("all")));
-        }
-        unit.setTimetable(DeHelper.convertSchedulesToTimeTable(unit.getSchedules()));
-        unit.setSchedules(null);
-        if (unit.getCpc() == null || unit.getCpc() == 0) {
-            unit.setCpc(0L);
-        }
-        if (StringUtils.isBlank(unit.getStartDate())) {
-            unit.setStartDate(DeHelper.timeToISO8601String(DeHelper.currentUTCTime()));
-        }
-        if (StringUtils.isBlank(unit.getEndDate())) {
-            unit.setEndDate(DeHelper.timeToISO8601String(DeHelper.currentUTCTime().plusYears(100)));
-        }
-
-        unit.setCategories(DeHelper.stringListToLowerCase(unit.getCategories()));
-        unit.setDevices(DeHelper.stringListToLowerCase(unit.getDevices()));
-        unit.setExcludedCategories(DeHelper.stringListToLowerCase(unit.getExcludedCategories()));
-        unit.setExcludedLocations(DeHelper.stringListToLowerCase(unit.getExcludedLocations()));
-        unit.setFormats(DeHelper.stringListToLowerCase(unit.getFormats()));
-        unit.setLanguages(DeHelper.stringListToLowerCase(unit.getLanguages()));
-        unit.setLocations(DeHelper.stringListToLowerCase(unit.getLocations()));
-
-        unit.setStatus(StringUtils.lowerCase(unit.getStatus()));
-
-        return updateAdUnit(unit);
+        return adUnitProcessor.insertAdUnit(unit);
     }
-
 
     @Override
     public boolean updateAdUnit(AdUnit unit) throws DeException {
-        if (unit == null) {
-            throw new DeException(new Throwable("no adunit found in request body"), 400);
-        }
+        return adUnitProcessor.updateAdUnit(unit);
+    }
 
-        boolean result = false;
-        try {
-            result = client.prepareUpdate(DeHelper.getIndex(), DeHelper.getAdUnitsType(), unit.getId())
-                    .setDoc(objectMapper.writeValueAsString(unit))
-                    .setDocAsUpsert(true)
-                    .execute()
-                    .actionGet()
-                    .isCreated();
+    @Override
+    public AdUnit getAdUnitById(String id) {
+        return adUnitProcessor.getAdUnitById(id);
+    }
 
-        } catch (JsonProcessingException e) {
-            logger.error("Error converting adunit to string", e);
-            throw new DeException(e, 500);
-        }
-        return result;
+    @Override
+    public Video getVideoById(String id) throws DeException {
+        return videoProcessor.getVideoById(id);
+    }
+
+    @Override
+    public List<AdUnit> getAllAdUnits() {
+        return adUnitProcessor.getAllAdUnits();
+    }
+
+    @Override
+    public boolean insertVideo(Video video) throws DeException {
+        return videoProcessor.insertVideo(video);
+    }
+
+    @Override
+    public boolean updateVideo(Video video) throws DeException {
+        return videoProcessor.updateVideo(video);
+    }
+
+    @Override
+    public ClusterHealthResponse getHealthCheck() {
+        ActionFuture<ClusterHealthResponse> resp = client.admin().cluster().health(new ClusterHealthRequest(DeHelper.getIndex()));
+        return resp.actionGet();
     }
 
     @Override
@@ -283,7 +143,7 @@ public class DEProcessorImpl implements DEProcessor {
 
     @Override
     public boolean deleteIndex() throws DeException {
-          return client.admin().indices().delete(new DeleteIndexRequestBuilder(client.admin().indices(), DeHelper.getIndex())
+        return client.admin().indices().delete(new DeleteIndexRequestBuilder(client.admin().indices(), DeHelper.getIndex())
                 .request()).actionGet().isAcknowledged();
     }
 
@@ -317,53 +177,57 @@ public class DEProcessorImpl implements DEProcessor {
             return searchResponse.getHits().getHits()[0].field(UPDATED).getValue();
         }
 
-        return DeHelper.timeToISO8601String(DateTime.now(DateTimeZone.UTC).minusYears(10));
+        return ZEROTIME;
     }
 
-    @Override
-    public AdUnit getAdUnitById(String id) throws DeException{
-        if (StringUtils.isBlank(id)) {
-            throw new DeException(new Throwable("id canot be blank"), 400);
+    public List<? extends ItemsResponse> mergeAndFillList(final List<AdUnitResponse> ads, final List<VideoResponse> targetedVideos, final Integer positions) {
+
+        if (ads == null && targetedVideos.size() == positions) {
+            return targetedVideos;
         }
-        GetResponse response = client.prepareGet(DeHelper.getIndex(), DeHelper.getAdUnitsType(), id).execute().actionGet();
-        AdUnit unit = null;
-        byte[] responseSourceAsBytes = response.getSourceAsBytes();
-        if (response != null && responseSourceAsBytes != null) {
-            try {
-                unit = objectMapper.readValue(responseSourceAsBytes, AdUnit.class);
-            } catch (IOException e) {
-                logger.error("error parsing adunit", e);
-                throw new DeException(e,500);
+        String pattern = DeHelper.getWidgetPattern();
+        int len = pattern.length();
+
+        List<ItemsResponse> items = new ArrayList<ItemsResponse>();
+        List<VideoResponse> untargetedVideos = new ArrayList<VideoResponse>();
+        int adIter = 0;
+        int videoIter = 0;
+        int patternIter = 0;
+        int positionsFilled = 0;
+        boolean skip = false;
+
+        while (positionsFilled < positions) {
+            if (ads != null && ads.size() > adIter && (pattern.charAt(patternIter % len) == 'P' || pattern.charAt(patternIter % len) == 'p')) {
+                items.add(ads.get(adIter++));
+                patternIter++;
+                positionsFilled++;
+            } else if (targetedVideos != null && targetedVideos.size() > videoIter && (pattern.charAt(patternIter % len) == 'O' || pattern.charAt(patternIter % len) == 'o')) {
+                items.add(targetedVideos.get(videoIter++));
+                patternIter++;
+                positionsFilled++;
+            } else if (targetedVideos != null && targetedVideos.size() > videoIter) { // not enough ads, so fill with all available targeted videos
+                items.add(targetedVideos.get(videoIter++));
+                patternIter++;
+                positionsFilled++;
+            } else if (!skip && (targetedVideos == null || targetedVideos.size() == videoIter)) { //not enough targeted videos, so fill it with un-targeted videos
+                VideoResponse untargetedVideo = videoProcessor.getDistinctUntargetedVideo(targetedVideos, untargetedVideos);
+                if (untargetedVideo != null) {
+                    untargetedVideos.add(untargetedVideo);
+                    items.add(untargetedVideo);
+                    patternIter++;
+                    positionsFilled++;
+                } else {
+                    skip = true;
+                }
+            } else if (ads != null && ads.size() > adIter) { //not enough targeted videos, so fill with targeted ads - rare case
+                items.add(ads.get(adIter++));
+                patternIter++;
+                positionsFilled++;
+            } else { // don't bother filling with un-targeted ads
+                break;
             }
         }
-        return unit;
-    }
 
-    @Override
-    public List<AdUnit> getAllAdUnits() {
-        QueryBuilder qb = QueryBuilders.matchAllQuery();
-
-        //TODO fix this later - we should do paging instead of getting all docs
-        SearchRequestBuilder srb1 = client.prepareSearch(DeHelper.getIndex())
-                .setTypes(DeHelper.getAdUnitsType())
-                .setQuery(qb)
-                .setSize(1000000);
-
-
-        SearchResponse searchResponse = srb1.execute().actionGet();
-        List<AdUnit> adUnits = new ArrayList<AdUnit>();
-        for (SearchHit hit : searchResponse.getHits().getHits()) {
-            AdUnit unit;
-            try {
-                unit = objectMapper.readValue(hit.getSourceAsString(), AdUnit.class);
-            } catch (IOException e) {
-                throw new DeException(e.getCause(), 500);
-            }
-            adUnits.add(unit);
-        }
-        if (adUnits.size() == 0) {
-            return null;
-        }
-        return adUnits;
+        return items;
     }
 }

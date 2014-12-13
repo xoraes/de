@@ -3,8 +3,10 @@ package com.dailymotion.pixelle.deserver; /**
  */
 
 
+import com.dailymotion.pixelle.deserver.processor.AdUnitProcessor;
 import com.dailymotion.pixelle.deserver.processor.DEProcessor;
 import com.dailymotion.pixelle.deserver.processor.DEProcessorImpl;
+import com.dailymotion.pixelle.deserver.processor.VideoProcessor;
 import com.dailymotion.pixelle.deserver.providers.ESNodeClientProvider;
 import com.dailymotion.pixelle.deserver.servlets.DEServlet;
 import com.google.inject.Guice;
@@ -24,6 +26,8 @@ public class DEServerContextListener extends GuiceServletContextListener {
                 // Must configure at least one JAX-RS resource or the
                 // server will fail to start.
                 bind(Client.class).toProvider(ESNodeClientProvider.class).asEagerSingleton();
+                bind(AdUnitProcessor.class).asEagerSingleton();
+                bind(VideoProcessor.class).asEagerSingleton();
                 bind(DEProcessor.class).to(DEProcessorImpl.class).asEagerSingleton();
                 bind(DEServlet.class).asEagerSingleton();
                 bind(HystrixMetricsStreamServlet.class).asEagerSingleton();

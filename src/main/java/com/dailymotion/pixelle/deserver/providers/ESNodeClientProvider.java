@@ -29,7 +29,7 @@ public class ESNodeClientProvider implements Provider<Client> {
 
         //createIndex accepts multiple types name delimited by ,
         //creates index only if it does not exist
-        ESIndexTypeFactory.createIndex(client, DeHelper.getIndex(), elasticsearchSettings.build(), DeHelper.getAdUnitsType());
+        ESIndexTypeFactory.createIndex(client, DeHelper.getIndex(), elasticsearchSettings.build(), DeHelper.getAdUnitsType(), DeHelper.getOrganicVideoType());
         return client;
     }
 }

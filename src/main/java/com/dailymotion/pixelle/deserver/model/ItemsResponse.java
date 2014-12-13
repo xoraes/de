@@ -16,15 +16,16 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_EMPTY) //this will ensure only non-null values are included in the serialized json
 public class ItemsResponse {
     private static Logger logger = LoggerFactory.getLogger(ItemsResponse.class);
-    @JsonProperty("_items")
-    private List<AdUnitResponse> adUnitResponse;
 
-    public List<AdUnitResponse> getAdUnitResponse() {
-        return adUnitResponse;
+    @JsonProperty("_items")
+    private List<? extends ItemsResponse> response;
+
+    public List<? extends ItemsResponse> getResponse() {
+        return response;
     }
 
-    public void setAdUnitResponse(List<AdUnitResponse> adUnitResponse) {
-        this.adUnitResponse = adUnitResponse;
+    public void setResponse(List<? extends ItemsResponse> response) {
+        this.response = response;
     }
 
     public String toString() {
