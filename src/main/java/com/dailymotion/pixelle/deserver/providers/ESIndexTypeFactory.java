@@ -6,6 +6,7 @@ import com.google.inject.Injector;
 import com.google.inject.ProvisionException;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
+import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequestBuilder;
 import org.elasticsearch.action.admin.indices.exists.types.TypesExistsRequest;
 import org.elasticsearch.action.admin.indices.mapping.put.PutMappingRequest;
 import org.elasticsearch.client.Client;
@@ -29,8 +30,13 @@ public class ESIndexTypeFactory {
         try {
             // create the index if it does not already exist. If it exists don't do anything.
 
-            if (!client.admin().indices().exists(new IndicesExistsRequest(indexName)).actionGet().isExists()) {
-                ack = client.admin().indices().create(new CreateIndexRequest(indexName, settings)).actionGet().isAcknowledged();
+            if (!client.admin().indices().prepareExists(indexName).execute().actionGet().isExists()) {
+                ack = client.admin().indices()
+                        .prepareCreate(indexName)
+                        .setSettings(settings)
+                        .execute()
+                        .actionGet()
+                        .isAcknowledged();
                 if (ack == true) {
                     logger.info("Index creation succeeded");
                 } else {
@@ -38,18 +44,27 @@ public class ESIndexTypeFactory {
                 }
             }
             for (String typeName : types) {
-                if (!client.admin().indices().typesExists(new TypesExistsRequest(new String[]{indexName}, typeName))
-                        .actionGet().isExists()) {
+                if (!client.admin().indices()
+                        .prepareTypesExists(indexName)
+                        .setTypes(typeName)
+                        .execute()
+                        .actionGet()
+                        .isExists()) {
 
-                    ack = client.admin().indices()
-                            .putMapping(new PutMappingRequest(indexName).type(typeName).source(createMapping(typeName)))
-                            .actionGet().isAcknowledged();
+                    ack = client.admin()
+                            .indices()
+                            .preparePutMapping(indexName)
+                            .setType(typeName)
+                            .setSource(createMapping(typeName))
+                            .execute()
+                            .actionGet()
+                            .isAcknowledged();
 
                     if (ack) {
                         logger.info("type creation succeeded");
-                    } else {
-                        logger.info("type already exists ! Not re-creating");
                     }
+                } else {
+                    logger.info("type adready exists");
                 }
             }
         } catch (IOException e) {
