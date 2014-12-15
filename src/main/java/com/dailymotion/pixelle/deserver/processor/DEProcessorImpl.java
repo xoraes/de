@@ -43,7 +43,7 @@ public class DEProcessorImpl implements DEProcessor {
 
     @Override
     public ItemsResponse recommend(SearchQueryRequest sq, Integer positions, String allowedTypes) throws DeException {
-        List<VideoResponse> videos = null;
+        List<VideoResponse> targetedVideos = null;
         List<AdUnitResponse> ads = null;
         List<? extends ItemsResponse> mergedList = null;
         ItemsResponse itemsResponse = new ItemsResponse();
@@ -64,10 +64,16 @@ public class DEProcessorImpl implements DEProcessor {
         }
 
         if (at.length == 1 && StringUtils.containsIgnoreCase(at[0], "organic")) {
-            videos = new VideoQueryCommand(videoProcessor, sq, positions).execute();
-            mergedList = mergeAndFillList(null, videos, positions);
-            itemsResponse.setResponse(mergedList);
-            return itemsResponse;
+            targetedVideos = new VideoQueryCommand(videoProcessor, sq, positions).execute();
+            if (targetedVideos.size() >= positions) {
+                itemsResponse.setResponse(targetedVideos);
+                return itemsResponse;
+            } else {
+                List<VideoResponse> untargetedVideos = videoProcessor.getDistinctUntargetedVideo(targetedVideos, positions);
+                mergedList = mergeAndFillList(null, targetedVideos, untargetedVideos, positions);
+                itemsResponse.setResponse(mergedList);
+                return itemsResponse;
+            }
         }
 
         if (at.length == 2
@@ -75,8 +81,20 @@ public class DEProcessorImpl implements DEProcessor {
                 && StringUtils.containsIgnoreCase(allowedTypes, "organic")) {
 
             ads = new AdQueryCommand(adUnitProcessor, sq, positions).execute();
-            videos = new VideoQueryCommand(videoProcessor, sq, positions).execute();
-            mergedList = mergeAndFillList(ads, videos, positions);
+            targetedVideos = new VideoQueryCommand(videoProcessor, sq, positions).execute();
+
+            if (DeHelper.isEmptyArray(ads) && targetedVideos.size() == positions) {
+                itemsResponse.setResponse(targetedVideos);
+                return itemsResponse;
+            }
+            if (!DeHelper.isEmptyArray(ads) && !DeHelper.isEmptyArray(targetedVideos) && ads.size() + targetedVideos.size() >= positions) {
+                mergedList = mergeAndFillList(ads, targetedVideos, null, positions);
+            } else {
+                List<VideoResponse> untargetedVideos = videoProcessor.getDistinctUntargetedVideo(targetedVideos, positions);
+                mergedList = mergeAndFillList(ads, targetedVideos, untargetedVideos, positions);
+            }
+
+
             itemsResponse.setResponse(mergedList);
             return itemsResponse;
         }
@@ -180,49 +198,25 @@ public class DEProcessorImpl implements DEProcessor {
         return ZEROTIME;
     }
 
-    public List<? extends ItemsResponse> mergeAndFillList(final List<AdUnitResponse> ads, final List<VideoResponse> targetedVideos, final Integer positions) {
+    public List<? extends ItemsResponse> mergeAndFillList(final List<AdUnitResponse> ads, final List<VideoResponse> targetedVideos, final List<VideoResponse> untargetedVideos, final Integer positions) {
 
-        if (ads == null && targetedVideos.size() == positions) {
-            return targetedVideos;
-        }
         String pattern = DeHelper.getWidgetPattern();
         int len = pattern.length();
 
         List<ItemsResponse> items = new ArrayList<ItemsResponse>();
-        List<VideoResponse> untargetedVideos = new ArrayList<VideoResponse>();
-        int adIter = 0;
-        int videoIter = 0;
-        int patternIter = 0;
-        int positionsFilled = 0;
-        boolean skip = false;
+        int adIter = 0, videoIter = 0, untargetedVideoIter = 0, patternIter = 0;
 
-        while (positionsFilled < positions) {
+        for (int positionsFilled = 0; positionsFilled < positions; patternIter++,positionsFilled++) {
             if (ads != null && ads.size() > adIter && (pattern.charAt(patternIter % len) == 'P' || pattern.charAt(patternIter % len) == 'p')) {
                 items.add(ads.get(adIter++));
-                patternIter++;
-                positionsFilled++;
             } else if (targetedVideos != null && targetedVideos.size() > videoIter && (pattern.charAt(patternIter % len) == 'O' || pattern.charAt(patternIter % len) == 'o')) {
                 items.add(targetedVideos.get(videoIter++));
-                patternIter++;
-                positionsFilled++;
             } else if (targetedVideos != null && targetedVideos.size() > videoIter) { // not enough ads, so fill with all available targeted videos
                 items.add(targetedVideos.get(videoIter++));
-                patternIter++;
-                positionsFilled++;
-            } else if (!skip && (targetedVideos == null || targetedVideos.size() == videoIter)) { //not enough targeted videos, so fill it with un-targeted videos
-                VideoResponse untargetedVideo = videoProcessor.getDistinctUntargetedVideo(targetedVideos, untargetedVideos);
-                if (untargetedVideo != null) {
-                    untargetedVideos.add(untargetedVideo);
-                    items.add(untargetedVideo);
-                    patternIter++;
-                    positionsFilled++;
-                } else {
-                    skip = true;
-                }
+            } else if (untargetedVideos != null && untargetedVideos.size() > untargetedVideoIter) { //not enough targeted videos, so fill it with un-targeted videos
+                items.add(untargetedVideos.get(untargetedVideoIter++));
             } else if (ads != null && ads.size() > adIter) { //not enough targeted videos, so fill with targeted ads - rare case
                 items.add(ads.get(adIter++));
-                patternIter++;
-                positionsFilled++;
             } else { // don't bother filling with un-targeted ads
                 break;
             }

@@ -124,7 +124,7 @@ public class DeHelper {
     }
 
     public static Boolean isEmptyArray(List<? extends Object> cList) {
-        if (cList == null || cList.size() == 0) {
+        if (cList == null || cList.isEmpty()) {
             return true;
         }
         return false;

@@ -150,21 +150,12 @@ public class VideoProcessor {
         return videoResponses;
     }
 
-    public VideoResponse getDistinctUntargetedVideo(List<VideoResponse> targetedVideo, List<VideoResponse> untargetedVideo) {
-
+    public List<VideoResponse> getDistinctUntargetedVideo(List<VideoResponse> targetedVideo, int positions) {
         List<String> excludedIds = new ArrayList<String>();
         for (VideoResponse v : targetedVideo) {
             excludedIds.add(v.getId());
         }
-        for (VideoResponse v : untargetedVideo) {
-            excludedIds.add(v.getId());
-        }
-
-        List<VideoResponse> video = recommend(null, 1, excludedIds);
-        if (video != null && video.size() > 0) {
-            return video.get(0);
-        }
-        return null;
+        return recommend(null, positions, excludedIds);
     }
 
 }
