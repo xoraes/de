@@ -34,11 +34,12 @@ public class ESNodeClientProvider implements Provider<Client> {
                 .node()
                 .client();
 
-        if (resetIndex.get()) {
-            if (client.admin().indices().prepareDelete(DeHelper.getIndex()).execute().actionGet().isAcknowledged()) {
+        if (resetIndex.get()
+                && client.admin().indices().prepareExists(DeHelper.getIndex()).execute().actionGet().isExists()
+                && client.admin().indices().prepareDelete(DeHelper.getIndex()).execute().actionGet().isAcknowledged()) {
                 logger.info("successfully deleted index: " + DeHelper.getIndex());
-            }
         }
+
         //createIndex accepts multiple types name delimited by ,
         //creates index only if it does not exist
         ESIndexTypeFactory.createIndex(client, DeHelper.getIndex(), elasticsearchSettings.build(), DeHelper.getAdUnitsType(), DeHelper.getOrganicVideoType());
