@@ -37,7 +37,7 @@ public class ESNodeClientProvider implements Provider<Client> {
         if (resetIndex.get()
                 && client.admin().indices().prepareExists(DeHelper.getIndex()).execute().actionGet().isExists()
                 && client.admin().indices().prepareDelete(DeHelper.getIndex()).execute().actionGet().isAcknowledged()) {
-                logger.info("successfully deleted index: " + DeHelper.getIndex());
+            logger.info("successfully deleted index: " + DeHelper.getIndex());
         }
 
         //createIndex accepts multiple types name delimited by ,

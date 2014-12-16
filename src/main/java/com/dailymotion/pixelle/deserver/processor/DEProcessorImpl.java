@@ -6,8 +6,6 @@ import com.dailymotion.pixelle.deserver.processor.hystrix.VideoQueryCommand;
 import com.dailymotion.pixelle.deserver.providers.ESIndexTypeFactory;
 import com.google.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
-import org.elasticsearch.action.ActionFuture;
-import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequestBuilder;
 import org.elasticsearch.action.search.SearchRequestBuilder;
@@ -142,9 +140,37 @@ public class DEProcessorImpl implements DEProcessor {
     }
 
     @Override
-    public ClusterHealthResponse getHealthCheck() {
-        ActionFuture<ClusterHealthResponse> resp = client.admin().cluster().health(new ClusterHealthRequest(DeHelper.getIndex()));
-        return resp.actionGet();
+    public ClusterHealthResponse getHealthCheck() throws DeException {
+        boolean indexExists = client.admin()
+                .indices()
+                .prepareExists(DeHelper.getIndex())
+                .execute()
+                .actionGet()
+                .isExists();
+        boolean adUnitTypeExists = client.admin()
+                .indices()
+                .prepareTypesExists(DeHelper.getIndex())
+                .setTypes(DeHelper.getAdUnitsType())
+                .execute()
+                .actionGet()
+                .isExists();
+        boolean videoTypeExists = client.admin()
+                .indices()
+                .prepareTypesExists(DeHelper.getIndex())
+                .setTypes(DeHelper.getOrganicVideoType())
+                .execute()
+                .actionGet()
+                .isExists();
+
+        if (indexExists && adUnitTypeExists && videoTypeExists) {
+            return client.admin()
+                    .cluster()
+                    .prepareHealth(DeHelper.getIndex())
+                    .execute()
+                    .actionGet();
+        } else {
+            throw new DeException(new Throwable("index or type does not exist"), 500);
+        }
     }
 
     @Override
