@@ -22,7 +22,13 @@ public class AdUnitResponse extends ItemsResponse {
     @JsonProperty("tactic")
     private String tacticId;
     @JsonProperty("channel")
+    private String channel;
+    @JsonProperty("channel_name")
+    private String channelName;
+    @JsonProperty("channel_id")
     private String channelId;
+    @JsonProperty("channel_url")
+    private String channelUrl;
     @JsonProperty("account")
     private String accountId;
     @JsonProperty("video_id")
@@ -42,13 +48,6 @@ public class AdUnitResponse extends ItemsResponse {
     @JsonProperty("type")
     private String contentType = "promoted";
 
-    public String getVideoId() {
-        return videoId;
-    }
-
-    public void setVideoId(String videoId) {
-        this.videoId = videoId;
-    }
 
     public String getAd() {
         return ad;
@@ -74,6 +73,22 @@ public class AdUnitResponse extends ItemsResponse {
         this.tacticId = tacticId;
     }
 
+    public String getChannel() {
+        return channel;
+    }
+
+    public void setChannel(String channel) {
+        this.channel = channel;
+    }
+
+    public String getChannelName() {
+        return channelName;
+    }
+
+    public void setChannelName(String channelName) {
+        this.channelName = channelName;
+    }
+
     public String getChannelId() {
         return channelId;
     }
@@ -82,12 +97,28 @@ public class AdUnitResponse extends ItemsResponse {
         this.channelId = channelId;
     }
 
+    public String getChannelUrl() {
+        return channelUrl;
+    }
+
+    public void setChannelUrl(String channelUrl) {
+        this.channelUrl = channelUrl;
+    }
+
     public String getAccountId() {
         return accountId;
     }
 
     public void setAccountId(String accountId) {
         this.accountId = accountId;
+    }
+
+    public String getVideoId() {
+        return videoId;
+    }
+
+    public void setVideoId(String videoId) {
+        this.videoId = videoId;
     }
 
     public String getThumbnailUrl() {

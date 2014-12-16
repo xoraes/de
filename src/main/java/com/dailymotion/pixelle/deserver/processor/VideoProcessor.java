@@ -118,7 +118,7 @@ public class VideoProcessor {
             fb.must(FilterBuilders.termsFilter("languages", DeHelper.toLowerCase(sq.getLanguages())));
         } else if (!DeHelper.isEmptyArray(excludedIds)) {
             for (String id : excludedIds) {
-                fb.mustNot(FilterBuilders.termsFilter("_id", id));
+                fb.mustNot(FilterBuilders.termsFilter("video_id", id));
             }
         }
         QueryBuilder qb = QueryBuilders.functionScoreQuery(fb)
@@ -153,7 +153,7 @@ public class VideoProcessor {
     public List<VideoResponse> getDistinctUntargetedVideo(List<VideoResponse> targetedVideo, int positions) {
         List<String> excludedIds = new ArrayList<String>();
         for (VideoResponse v : targetedVideo) {
-            excludedIds.add(v.getId());
+            excludedIds.add(v.getVideoId());
         }
         return recommend(null, positions, excludedIds);
     }

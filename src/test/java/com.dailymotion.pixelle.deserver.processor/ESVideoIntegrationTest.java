@@ -3,6 +3,7 @@ package com.dailymotion.pixelle.deserver.processor;
 import com.dailymotion.pixelle.deserver.model.ItemsResponse;
 import com.dailymotion.pixelle.deserver.model.SearchQueryRequest;
 import com.dailymotion.pixelle.deserver.model.Video;
+import com.dailymotion.pixelle.deserver.model.VideoResponse;
 import com.dailymotion.pixelle.deserver.processor.hystrix.QueryCommand;
 import com.dailymotion.pixelle.deserver.processor.hystrix.VideoInsertCommand;
 import com.dailymotion.pixelle.deserver.providers.ESTestNodeClientProvider;
@@ -97,8 +98,10 @@ public class ESVideoIntegrationTest {
         m.put("title", "title");
         m.put("description", "description");
         m.put("channel", "channel");
-        m.put("channel_tier", "channel_tier");
+        m.put("channel_url", "channel_url");
+        m.put("channel_name", "channel_name");
         m.put("channel_id", "channel_id");
+        m.put("channel_tier", "channel_tier");
         m.put("resizable_thumbnail_url", "resizable_thumbnail_url");
         m.put("thumbnail_url", "thumbnail_url");
         m.put("status", "active");
@@ -212,7 +215,58 @@ public class ESVideoIntegrationTest {
         Assert.assertTrue(i.getResponse().size() == 3);
         deleteVideosByIds("1", "2", "3");
         ESAdUnitsIntegrationTest.deleteAdUnitsByIds(es, "1");
+    }
 
+    @Test
+    public void testCheckAllVideoFields() throws Exception {
+        Map m1 = createVideoDataMap("1");
+        loadVideoMaps(m1);
+        SearchQueryRequest sq = new SearchQueryRequest();
+        sq.setCategories(new ArrayList(Arrays.asList("cat1")));
+        sq.setDevice("dev1");
+        sq.setFormat("fmt1");
+        sq.setTime("2014-11-21T01:00:00Z");
+        sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
+        sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
+
+        ItemsResponse i = new QueryCommand(es, sq, 1, "organic").execute();
+        Assert.assertNotNull(i);
+        Assert.assertTrue(i.getResponse().size() == 1);
+        VideoResponse video = (VideoResponse) i.getResponse().get(0);
+        Assert.assertTrue(video.getVideoId().equalsIgnoreCase("1"));
+        Assert.assertTrue(video.getChannelTier().equalsIgnoreCase("channel_tier"));
+        Assert.assertTrue(video.getChannel().equals("channel"));
+        Assert.assertTrue(video.getChannelId().equals("channel_id"));
+        Assert.assertTrue(video.getChannelName().equals("channel_name"));
+        Assert.assertTrue(video.getChannelUrl().equals("channel_url"));
+        Assert.assertTrue(video.getContentType().equals("organic"));
+        Assert.assertTrue(video.getDescription().equals("description"));
+        Assert.assertTrue(video.getTitle().equals("title"));
+        Assert.assertTrue(video.getDuration() == 123);
+        Assert.assertTrue(video.getThumbnailUrl().equals("thumbnail_url"));
+        Assert.assertTrue(video.getResizableThumbnailUrl().equals("resizable_thumbnail_url"));
+        deleteVideosByIds("1");
+    }
+
+    @Test
+    public void testNullField() throws Exception {
+        Map m1 = createVideoDataMap("1");
+        m1.put("channel_url", null);
+        loadVideoMaps(m1);
+        SearchQueryRequest sq = new SearchQueryRequest();
+        sq.setCategories(new ArrayList(Arrays.asList("cat1")));
+        sq.setDevice("dev1");
+        sq.setFormat("fmt1");
+        sq.setTime("2014-11-21T01:00:00Z");
+        sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
+        sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
+
+        ItemsResponse i = new QueryCommand(es, sq, 1, "organic").execute();
+        Assert.assertNotNull(i);
+        Assert.assertTrue(i.getResponse().size() == 1);
+        VideoResponse video = (VideoResponse) i.getResponse().get(0);
+        Assert.assertNull(video.getChannelUrl());
+        deleteVideosByIds("1");
     }
 
     @Test

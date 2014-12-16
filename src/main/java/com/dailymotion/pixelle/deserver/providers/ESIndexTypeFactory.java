@@ -107,6 +107,8 @@ public class ESIndexTypeFactory {
         builder.startObject("video_url").field("type", "string").field("index", "no").endObject();
         builder.startObject("video_id").field("type", "string").field("index", "no").endObject();
         builder.startObject("channel").field("type", "string").field("index", "no").endObject();
+        builder.startObject("channel_id").field("type", "string").field("index", "no").endObject();
+        builder.startObject("channel_name").field("type", "string").field("index", "no").endObject();
         builder.startObject("channel_url").field("type", "string").field("index", "no").endObject();
         builder.startObject("goal_period").field("type", "string").field("index", "no").endObject();
         builder.startObject("account").field("type", "string").field("index", "no").endObject();
@@ -145,6 +147,8 @@ public class ESIndexTypeFactory {
         builder.startObject("channel").field("type", "string").field("index", "no").endObject();
         builder.startObject("channel_id").field("type", "string").field("index", "no").endObject();
         builder.startObject("channel_tier").field("type", "string").field("index", "no").endObject();
+        builder.startObject("channel_name").field("type", "string").field("index", "no").endObject();
+        builder.startObject("channel_url").field("type", "string").field("index", "no").endObject();
 
         builder.startObject("duration").field("type", "integer").field("index", "no").endObject();
 

@@ -2,6 +2,7 @@ package com.dailymotion.pixelle.deserver.processor;
 
 
 import com.dailymotion.pixelle.deserver.model.AdUnit;
+import com.dailymotion.pixelle.deserver.model.AdUnitResponse;
 import com.dailymotion.pixelle.deserver.model.ItemsResponse;
 import com.dailymotion.pixelle.deserver.model.SearchQueryRequest;
 import com.dailymotion.pixelle.deserver.processor.hystrix.AdInsertCommand;
@@ -84,6 +85,8 @@ public class ESAdUnitsIntegrationTest {
         m.put("description", "description");
         m.put("channel", "channel");
         m.put("channel_url", "channel_url");
+        m.put("channel_name", "channel_name");
+        m.put("channel_id", "channel_id");
         m.put("start_date", "2014-11-01T00:00:00Z");
         m.put("end_date", "2114-11-01T00:00:00Z");
         m.put("resizable_thumbnail_url", "resizable_thumbnail_url");
@@ -136,11 +139,47 @@ public class ESAdUnitsIntegrationTest {
     }
 
     @Test
+    public void testCheckAllFields() throws Exception {
+        Map m1 = createAdUnitDataMap("1", "1");
+        loadAdUnitMaps(m1);
+        SearchQueryRequest sq = new SearchQueryRequest();
+        sq.setCategories(new ArrayList(Arrays.asList("cat1")));
+        sq.setDevice("dev1");
+        sq.setFormat("fmt1");
+        sq.setTime("2014-11-21T01:00:00Z");
+        sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
+        sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
+
+        ItemsResponse i = new QueryCommand(es, sq, 1, "promoted").execute();
+        Assert.assertNotNull(i);
+        Assert.assertTrue(i.getResponse().size() == 1);
+        AdUnitResponse adunit = (AdUnitResponse) i.getResponse().get(0);
+        Assert.assertTrue(adunit.getAd().equals("1"));
+        Assert.assertTrue(adunit.getChannel().equals("channel"));
+        Assert.assertTrue(adunit.getChannelId().equals("channel_id"));
+        Assert.assertTrue(adunit.getChannelName().equals("channel_name"));
+        Assert.assertTrue(adunit.getChannelUrl().equals("channel_url"));
+        Assert.assertTrue(adunit.getAccountId().equals("1"));
+        Assert.assertTrue(adunit.getVideoId().equals("video_id"));
+        Assert.assertTrue(adunit.getCampaignId().equals("1"));
+        Assert.assertTrue(adunit.getContentType().equals("promoted"));
+        Assert.assertTrue(adunit.getCpc() == 10);
+        Assert.assertTrue(adunit.getDescription().equals("description"));
+        Assert.assertTrue(adunit.getTitle().equals("title"));
+        Assert.assertTrue(adunit.getDuration() == 123);
+        Assert.assertTrue(adunit.getThumbnailUrl().equals("thumbnail_url"));
+        Assert.assertTrue(adunit.getResizableThumbnailUrl().equals("resizable_thumbnail_url"));
+        Assert.assertTrue(adunit.getTacticId().equals("1"));
+
+        deleteAdUnitsByIds("1");
+    }
+
+    @Test
     public void testMultipleInsertAdUnit() throws Exception {
-        Map m1 = ESAdUnitsIntegrationTest.createAdUnitDataMap("1", "1");
-        Map m2 = ESAdUnitsIntegrationTest.createAdUnitDataMap("2", "2");
-        Map m3 = ESAdUnitsIntegrationTest.createAdUnitDataMap("3", "3");
-        ESAdUnitsIntegrationTest.loadAdUnitMaps(m1, m2, m3);
+        Map m1 = createAdUnitDataMap("1", "1");
+        Map m2 = createAdUnitDataMap("2", "2");
+        Map m3 = createAdUnitDataMap("3", "3");
+        loadAdUnitMaps(m1, m2, m3);
         SearchQueryRequest sq = new SearchQueryRequest();
         sq.setTime("2014-11-21T01:00:00Z");
         sq.setCategories(new ArrayList(Arrays.asList("cat1")));
@@ -153,17 +192,17 @@ public class ESAdUnitsIntegrationTest {
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 3);
-        ESAdUnitsIntegrationTest.deleteAdUnitsByIds("1", "2", "3");
+        deleteAdUnitsByIds("1", "2", "3");
     }
 
     @Test
     public void testGetLastUpdated() throws Exception {
-        Map m1 = ESAdUnitsIntegrationTest.createAdUnitDataMap("1", "1");
-        Map m2 = ESAdUnitsIntegrationTest.createAdUnitDataMap("2", "2");
-        Map m3 = ESAdUnitsIntegrationTest.createAdUnitDataMap("3", "3");
-        Map m4 = ESAdUnitsIntegrationTest.createAdUnitDataMap("4", "4");
-        Map m5 = ESAdUnitsIntegrationTest.createAdUnitDataMap("5", "5");
-        Map m6 = ESAdUnitsIntegrationTest.createAdUnitDataMap("6", "6");
+        Map m1 = createAdUnitDataMap("1", "1");
+        Map m2 = createAdUnitDataMap("2", "2");
+        Map m3 = createAdUnitDataMap("3", "3");
+        Map m4 = createAdUnitDataMap("4", "4");
+        Map m5 = createAdUnitDataMap("5", "5");
+        Map m6 = createAdUnitDataMap("6", "6");
 
         m1.put("_updated", "2014-01-01T00:00:01Z");
         m2.put("_updated", "2014-01-01T00:00:14Z");
@@ -176,31 +215,31 @@ public class ESAdUnitsIntegrationTest {
         String datetime = es.getLastUpdatedTimeStamp(DeHelper.getAdUnitsType());
         Assert.assertNotNull(datetime);
         System.out.println("DATETIME ====>:" + datetime);
-        ESAdUnitsIntegrationTest.loadAdUnitMaps(m1, m2, m3, m4, m5, m6);
+        loadAdUnitMaps(m1, m2, m3, m4, m5, m6);
 
         datetime = es.getLastUpdatedTimeStamp(DeHelper.getAdUnitsType());
         System.out.println("DATETIME ====>:" + datetime);
         Assert.assertNotNull(datetime);
         Assert.assertEquals("2014-01-01T00:01:00Z", datetime);
-        ESAdUnitsIntegrationTest.deleteAdUnitsByIds("1", "2", "3", "4", "5", "6");
+        deleteAdUnitsByIds("1", "2", "3", "4", "5", "6");
     }
 
     @Test
     public void testGetAdUnitsByCampaign() throws Exception {
-        Map m1 = ESAdUnitsIntegrationTest.createAdUnitDataMap("1", "1");
-        Map m2 = ESAdUnitsIntegrationTest.createAdUnitDataMap("2", "1");
-        Map m3 = ESAdUnitsIntegrationTest.createAdUnitDataMap("3", "1");
+        Map m1 = createAdUnitDataMap("1", "1");
+        Map m2 = createAdUnitDataMap("2", "1");
+        Map m3 = createAdUnitDataMap("3", "1");
 
-        ESAdUnitsIntegrationTest.loadAdUnitMaps(m1, m2, m3);
+        loadAdUnitMaps(m1, m2, m3);
         Assert.assertEquals(3, es.getAdUnitsByCampaign("1").size());
-        ESAdUnitsIntegrationTest.deleteAdUnitsByIds("1", "2", "3");
+        deleteAdUnitsByIds("1", "2", "3");
     }
 
     @Test
     public void testRemoveDupCampaignFromAdUnit() throws Exception {
-        Map m1 = ESAdUnitsIntegrationTest.createAdUnitDataMap("1", "1");
-        Map m2 = ESAdUnitsIntegrationTest.createAdUnitDataMap("2", "1");
-        ESAdUnitsIntegrationTest.loadAdUnitMaps(m1, m2);
+        Map m1 = createAdUnitDataMap("1", "1");
+        Map m2 = createAdUnitDataMap("2", "1");
+        loadAdUnitMaps(m1, m2);
         SearchQueryRequest sq = new SearchQueryRequest();
         sq.setTime("2014-11-21T01:00:00Z");
         sq.setCategories(new ArrayList(Arrays.asList("cat1")));
@@ -213,14 +252,14 @@ public class ESAdUnitsIntegrationTest {
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 1);
-        ESAdUnitsIntegrationTest.deleteAdUnitsByIds("1", "2");
+        deleteAdUnitsByIds("1", "2");
     }
 
     @Test
     public void testScheduleTargeting() throws Exception {
-        Map m1 = ESAdUnitsIntegrationTest.createAdUnitDataMap("1", "1");
+        Map m1 = createAdUnitDataMap("1", "1");
         m1.put("schedules", new ArrayList<Integer>(Arrays.asList(0, 0, 0, 0, 0, 16777215, 0)));
-        ESAdUnitsIntegrationTest.loadAdUnitMaps(m1);
+        loadAdUnitMaps(m1);
         SearchQueryRequest sq = new SearchQueryRequest();
         sq.setTime("2014-11-21T01:00:00Z"); //2014-11-21 is a friday
         sq.setCategories(new ArrayList(Arrays.asList("cat1")));
@@ -234,15 +273,15 @@ public class ESAdUnitsIntegrationTest {
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 1);
-        ESAdUnitsIntegrationTest.deleteAdUnitsByIds("1");
+        deleteAdUnitsByIds("1");
     }
 
     @Test
     public void testTimeTargeting() throws Exception {
-        Map m1 = ESAdUnitsIntegrationTest.createAdUnitDataMap("1", "1");
+        Map m1 = createAdUnitDataMap("1", "1");
         m1.put("start_date", "2014-11-01T00:00:00Z");
         m1.put("end_date", "2114-11-01T00:00:00Z");
-        ESAdUnitsIntegrationTest.loadAdUnitMaps(m1);
+        loadAdUnitMaps(m1);
         SearchQueryRequest sq = new SearchQueryRequest();
         sq.setTime("2014-10-31T23:00:00-0800");
         sq.setCategories(new ArrayList(Arrays.asList("cat1")));
@@ -256,15 +295,15 @@ public class ESAdUnitsIntegrationTest {
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 1);
-        ESAdUnitsIntegrationTest.deleteAdUnitsByIds("1");
+        deleteAdUnitsByIds("1");
     }
 
     @Test
     public void testTimeTargetingNegative() throws Exception {
-        Map m1 = ESAdUnitsIntegrationTest.createAdUnitDataMap("1", "1");
+        Map m1 = createAdUnitDataMap("1", "1");
         m1.put("start_date", "2014-11-01T00:00:00Z");
         m1.put("end_date", "2114-11-01T00:00:00Z");
-        ESAdUnitsIntegrationTest.loadAdUnitMaps(m1);
+        loadAdUnitMaps(m1);
         SearchQueryRequest sq = new SearchQueryRequest();
         sq.setTime("2014-10-31T15:00:00-0800");
         sq.setCategories(new ArrayList(Arrays.asList("cat1")));
@@ -278,14 +317,14 @@ public class ESAdUnitsIntegrationTest {
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 0);
-        ESAdUnitsIntegrationTest.deleteAdUnitsByIds("1");
+        deleteAdUnitsByIds("1");
     }
 
     @Test
     public void testGoalReached() throws Exception {
-        Map m1 = ESAdUnitsIntegrationTest.createAdUnitDataMap("1", "1");
+        Map m1 = createAdUnitDataMap("1", "1");
         m1.put("goal_reached", true);
-        ESAdUnitsIntegrationTest.loadAdUnitMaps(m1);
+        loadAdUnitMaps(m1);
         SearchQueryRequest sq = new SearchQueryRequest();
         sq.setTime("2014-12-31T15:00:00-0800");
         sq.setCategories(new ArrayList(Arrays.asList("cat1")));
@@ -299,18 +338,18 @@ public class ESAdUnitsIntegrationTest {
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 0);
-        ESAdUnitsIntegrationTest.deleteAdUnitsByIds("1");
+        deleteAdUnitsByIds("1");
     }
 
     @Test
     public void testLanguageTargetingNegative() throws Exception {
-        Map m1 = ESAdUnitsIntegrationTest.createAdUnitDataMap("1", "1");
-        Map m2 = ESAdUnitsIntegrationTest.createAdUnitDataMap("2", "2");
-        Map m3 = ESAdUnitsIntegrationTest.createAdUnitDataMap("3", "3");
+        Map m1 = createAdUnitDataMap("1", "1");
+        Map m2 = createAdUnitDataMap("2", "2");
+        Map m3 = createAdUnitDataMap("3", "3");
         m1.put("languages", new ArrayList<String>(Arrays.asList("en")));
         m2.put("languages", new ArrayList<String>(Arrays.asList("en")));
         m3.put("languages", new ArrayList<String>(Arrays.asList("fr")));
-        ESAdUnitsIntegrationTest.loadAdUnitMaps(m1, m2, m3);
+        loadAdUnitMaps(m1, m2, m3);
         SearchQueryRequest sq = new SearchQueryRequest();
         sq.setTime("2014-12-31T15:00:00-0800");
         sq.setCategories(new ArrayList(Arrays.asList("cat1")));
@@ -324,14 +363,14 @@ public class ESAdUnitsIntegrationTest {
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 2);
-        ESAdUnitsIntegrationTest.deleteAdUnitsByIds("1", "2", "3");
+        deleteAdUnitsByIds("1", "2", "3");
     }
 
     @Test
     public void testStatusInActive() throws Exception {
-        Map m1 = ESAdUnitsIntegrationTest.createAdUnitDataMap("1", "1");
+        Map m1 = createAdUnitDataMap("1", "1");
         m1.put("status", "inactive");
-        ESAdUnitsIntegrationTest.loadAdUnitMaps(m1);
+        loadAdUnitMaps(m1);
         SearchQueryRequest sq = new SearchQueryRequest();
         sq.setTime("2014-12-31T15:00:00-0800");
         sq.setCategories(new ArrayList(Arrays.asList("cat1")));
@@ -345,7 +384,7 @@ public class ESAdUnitsIntegrationTest {
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 0);
-        ESAdUnitsIntegrationTest.deleteAdUnitsByIds("1");
+        deleteAdUnitsByIds("1");
     }
 }
 

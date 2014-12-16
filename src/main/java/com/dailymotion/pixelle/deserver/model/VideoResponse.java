@@ -15,11 +15,15 @@ import org.slf4j.LoggerFactory;
 public class VideoResponse extends ItemsResponse {
     private static Logger logger = LoggerFactory.getLogger(VideoResponse.class);
     @JsonProperty("video_id")
-    private String id;
+    private String videoId;
     @JsonProperty("channel")
+    private String channel;
+    @JsonProperty("channel_name")
     private String channelName;
     @JsonProperty("channel_id")
     private String channelId;
+    @JsonProperty("channel_url")
+    private String channelUrl;
     @JsonProperty("channel_tier")
     private String channelTier;
     @JsonProperty("thumbnail_url")
@@ -35,13 +39,20 @@ public class VideoResponse extends ItemsResponse {
     @JsonProperty("type")
     private String contentType = "organic";
 
-
-    public String getId() {
-        return id;
+    public String getVideoId() {
+        return videoId;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void setVideoId(String videoId) {
+        this.videoId = videoId;
+    }
+
+    public String getChannel() {
+        return channel;
+    }
+
+    public void setChannel(String channel) {
+        this.channel = channel;
     }
 
     public String getChannelName() {
@@ -58,6 +69,14 @@ public class VideoResponse extends ItemsResponse {
 
     public void setChannelId(String channelId) {
         this.channelId = channelId;
+    }
+
+    public String getChannelUrl() {
+        return channelUrl;
+    }
+
+    public void setChannelUrl(String channelUrl) {
+        this.channelUrl = channelUrl;
     }
 
     public String getChannelTier() {

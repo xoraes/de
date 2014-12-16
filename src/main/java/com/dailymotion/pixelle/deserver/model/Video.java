@@ -20,9 +20,13 @@ public class Video {
     @JsonProperty("video_id")
     private String videoId;
     @JsonProperty("channel")
+    private String channel;
+    @JsonProperty("channel_name")
     private String channelName;
     @JsonProperty("channel_id")
     private String channelId;
+    @JsonProperty("channel_url")
+    private String channelUrl;
     @JsonProperty("channel_tier")
     private String channelTier;
     @JsonProperty("tags")
@@ -58,6 +62,22 @@ public class Video {
         this.id = id;
     }
 
+    public String getVideoId() {
+        return videoId;
+    }
+
+    public void setVideoId(String videoId) {
+        this.videoId = videoId;
+    }
+
+    public String getChannel() {
+        return channel;
+    }
+
+    public void setChannel(String channel) {
+        this.channel = channel;
+    }
+
     public String getChannelName() {
         return channelName;
     }
@@ -72,6 +92,14 @@ public class Video {
 
     public void setChannelId(String channelId) {
         this.channelId = channelId;
+    }
+
+    public String getChannelUrl() {
+        return channelUrl;
+    }
+
+    public void setChannelUrl(String channelUrl) {
+        this.channelUrl = channelUrl;
     }
 
     public String getChannelTier() {
@@ -176,14 +204,6 @@ public class Video {
 
     public void setResizableThumbnailUrl(String resizableThumbnailUrl) {
         this.resizableThumbnailUrl = resizableThumbnailUrl;
-    }
-
-    public String getVideoId() {
-        return videoId;
-    }
-
-    public void setVideoId(String videoId) {
-        this.videoId = videoId;
     }
 
     public String toString() {

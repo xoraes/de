@@ -27,7 +27,13 @@ public class AdUnit {
     @JsonProperty("tactic")
     private String tacticId;
     @JsonProperty("channel")
+    private String channel;
+    @JsonProperty("channel_name")
+    private String channelName;
+    @JsonProperty("channel_id")
     private String channelId;
+    @JsonProperty("channel_url")
+    private String channelUrl;
     @JsonProperty("account")
     private String accountId;
     @JsonProperty("languages")
@@ -46,8 +52,6 @@ public class AdUnit {
     private String description;
     @JsonProperty("title")
     private String title;
-    @JsonProperty("channel_url")
-    private String channelUrl;
     @JsonProperty("status")
     private String status;
     @JsonProperty("goal_period")
@@ -121,12 +125,36 @@ public class AdUnit {
         this.tacticId = tacticId;
     }
 
+    public String getChannel() {
+        return channel;
+    }
+
+    public void setChannel(String channel) {
+        this.channel = channel;
+    }
+
+    public String getChannelName() {
+        return channelName;
+    }
+
+    public void setChannelName(String channelName) {
+        this.channelName = channelName;
+    }
+
     public String getChannelId() {
         return channelId;
     }
 
     public void setChannelId(String channelId) {
         this.channelId = channelId;
+    }
+
+    public String getChannelUrl() {
+        return channelUrl;
+    }
+
+    public void setChannelUrl(String channelUrl) {
+        this.channelUrl = channelUrl;
     }
 
     public String getAccountId() {
@@ -199,14 +227,6 @@ public class AdUnit {
 
     public void setTitle(String title) {
         this.title = title;
-    }
-
-    public String getChannelUrl() {
-        return channelUrl;
-    }
-
-    public void setChannelUrl(String channelUrl) {
-        this.channelUrl = channelUrl;
     }
 
     public String getStatus() {
