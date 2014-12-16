@@ -2,6 +2,7 @@ package com.dailymotion.pixelle.deserver.model;
 
 
 import com.dailymotion.pixelle.deserver.processor.DeException;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -25,8 +26,6 @@ public class AdUnitResponse extends ItemsResponse {
     private String channelId;
     @JsonProperty("account")
     private String accountId;
-    @JsonProperty("video_url")
-    private String videoUrl;
     @JsonProperty("video_id")
     private String videoId;
     @JsonProperty("thumbnail_url")
@@ -90,14 +89,6 @@ public class AdUnitResponse extends ItemsResponse {
 
     public void setAccountId(String accountId) {
         this.accountId = accountId;
-    }
-
-    public String getVideoUrl() {
-        return videoUrl;
-    }
-
-    public void setVideoUrl(String videoUrl) {
-        this.videoUrl = videoUrl;
     }
 
     public String getThumbnailUrl() {

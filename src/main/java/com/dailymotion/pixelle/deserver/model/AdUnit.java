@@ -1,6 +1,7 @@
 package com.dailymotion.pixelle.deserver.model;
 
 import com.dailymotion.pixelle.deserver.processor.DeException;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -13,6 +14,7 @@ import java.util.List;
 /**
  * Created by n.dhupia on 11/5/14.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class AdUnit {
     private static Logger logger = LoggerFactory.getLogger(AdUnit.class);
@@ -36,8 +38,6 @@ public class AdUnit {
     private List<String> excludedLocations;
     @JsonProperty("formats")
     private List<String> formats;
-    @JsonProperty("video_url")
-    private String videoUrl;
     @JsonProperty("video_id")
     private String videoId;
     @JsonProperty("thumbnail_url")
@@ -167,14 +167,6 @@ public class AdUnit {
 
     public void setFormats(List<String> formats) {
         this.formats = formats;
-    }
-
-    public String getVideoUrl() {
-        return videoUrl;
-    }
-
-    public void setVideoUrl(String videoUrl) {
-        this.videoUrl = videoUrl;
     }
 
     public String getVideoId() {
