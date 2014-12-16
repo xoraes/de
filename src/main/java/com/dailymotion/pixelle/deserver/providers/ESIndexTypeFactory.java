@@ -21,6 +21,7 @@ public class ESIndexTypeFactory {
     private static Injector injector;
 
     public static void createIndex(Client client, String indexName, Settings settings, String... types) throws DeException {
+
         boolean ack = false;
         try {
             // create the index if it does not already exist. If it exists don't do anything.

@@ -206,7 +206,7 @@ public class DEProcessorImpl implements DEProcessor {
         List<ItemsResponse> items = new ArrayList<ItemsResponse>();
         int adIter = 0, videoIter = 0, untargetedVideoIter = 0, patternIter = 0;
 
-        for (int positionsFilled = 0; positionsFilled < positions; patternIter++,positionsFilled++) {
+        for (int positionsFilled = 0; positionsFilled < positions; patternIter++, positionsFilled++) {
             if (ads != null && ads.size() > adIter && (pattern.charAt(patternIter % len) == 'P' || pattern.charAt(patternIter % len) == 'p')) {
                 items.add(ads.get(adIter++));
             } else if (targetedVideos != null && targetedVideos.size() > videoIter && (pattern.charAt(patternIter % len) == 'O' || pattern.charAt(patternIter % len) == 'o')) {

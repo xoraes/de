@@ -2,7 +2,6 @@ package com.dailymotion.pixelle.deserver.model;
 
 
 import com.dailymotion.pixelle.deserver.processor.DeException;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;

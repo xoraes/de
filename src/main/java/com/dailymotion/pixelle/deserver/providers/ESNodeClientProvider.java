@@ -2,8 +2,12 @@ package com.dailymotion.pixelle.deserver.providers;
 
 import com.dailymotion.pixelle.deserver.processor.DeHelper;
 import com.google.inject.Provider;
+import com.netflix.config.DynamicBooleanProperty;
+import com.netflix.config.DynamicPropertyFactory;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.settings.ImmutableSettings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
 
@@ -11,6 +15,9 @@ import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
  * Created by n.dhupia on 10/29/14.
  */
 public class ESNodeClientProvider implements Provider<Client> {
+    private static DynamicBooleanProperty resetIndex =
+            DynamicPropertyFactory.getInstance().getBooleanProperty("index.pixelle.reset", false);
+    private static Logger logger = LoggerFactory.getLogger(ESNodeClientProvider.class);
 
     public Client get() {
         ImmutableSettings.Builder elasticsearchSettings = ImmutableSettings.settingsBuilder()
@@ -27,6 +34,11 @@ public class ESNodeClientProvider implements Provider<Client> {
                 .node()
                 .client();
 
+        if (resetIndex.get()) {
+            if (client.admin().indices().prepareDelete(DeHelper.getIndex()).execute().actionGet().isAcknowledged()) {
+                logger.info("successfully deleted index: " + DeHelper.getIndex());
+            }
+        }
         //createIndex accepts multiple types name delimited by ,
         //creates index only if it does not exist
         ESIndexTypeFactory.createIndex(client, DeHelper.getIndex(), elasticsearchSettings.build(), DeHelper.getAdUnitsType(), DeHelper.getOrganicVideoType());
