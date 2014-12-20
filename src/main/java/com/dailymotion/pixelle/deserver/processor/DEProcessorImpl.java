@@ -67,7 +67,7 @@ public class DEProcessorImpl implements DEProcessor {
                 itemsResponse.setResponse(targetedVideos);
                 return itemsResponse;
             } else {
-                List<VideoResponse> untargetedVideos = videoProcessor.getDistinctUntargetedVideo(targetedVideos, positions);
+                List<VideoResponse> untargetedVideos = videoProcessor.getUntargetedVideos(targetedVideos, positions, sq.getLanguages());
                 mergedList = mergeAndFillList(null, targetedVideos, untargetedVideos, positions);
                 itemsResponse.setResponse(mergedList);
                 return itemsResponse;
@@ -80,21 +80,20 @@ public class DEProcessorImpl implements DEProcessor {
 
             ads = new AdQueryCommand(adUnitProcessor, sq, positions).execute();
             targetedVideos = new VideoQueryCommand(videoProcessor, sq, positions).execute();
-
-            if (DeHelper.isEmptyArray(ads) && targetedVideos.size() == positions) {
+            //if we have enough ads and videos, merge and send
+            if (!DeHelper.isEmptyList(ads) && !DeHelper.isEmptyList(targetedVideos) && ads.size() + targetedVideos.size() >= positions) {
+                mergedList = mergeAndFillList(ads, targetedVideos, null, positions);
+                itemsResponse.setResponse(mergedList);
+                return itemsResponse;
+            } else if (DeHelper.isEmptyList(ads) && targetedVideos.size() >= positions) { //ads empty, enough videos
                 itemsResponse.setResponse(targetedVideos);
                 return itemsResponse;
-            }
-            if (!DeHelper.isEmptyArray(ads) && !DeHelper.isEmptyArray(targetedVideos) && ads.size() + targetedVideos.size() >= positions) {
-                mergedList = mergeAndFillList(ads, targetedVideos, null, positions);
-            } else {
-                List<VideoResponse> untargetedVideos = videoProcessor.getDistinctUntargetedVideo(targetedVideos, positions);
+            } else { //fill with untargetged videos
+                List<VideoResponse> untargetedVideos = videoProcessor.getUntargetedVideos(targetedVideos, positions, sq.getLanguages());
                 mergedList = mergeAndFillList(ads, targetedVideos, untargetedVideos, positions);
+                itemsResponse.setResponse(mergedList);
+                return itemsResponse;
             }
-
-
-            itemsResponse.setResponse(mergedList);
-            return itemsResponse;
         }
         return itemsResponse;
     }
@@ -247,7 +246,6 @@ public class DEProcessorImpl implements DEProcessor {
                 break;
             }
         }
-
         return items;
     }
 }

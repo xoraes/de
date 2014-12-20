@@ -114,9 +114,14 @@ public class VideoProcessor {
         BoolFilterBuilder fb = FilterBuilders.boolFilter();
         fb.must(FilterBuilders.termFilter("status", "active"));
         if (sq != null) {
-            fb.must(FilterBuilders.termsFilter("categories", DeHelper.toLowerCase(sq.getCategories())));
-            fb.must(FilterBuilders.termsFilter("languages", DeHelper.toLowerCase(sq.getLanguages())));
-        } else if (!DeHelper.isEmptyArray(excludedIds)) {
+            if (!DeHelper.isEmptyList(sq.getCategories())) {
+                fb.must(FilterBuilders.termsFilter("categories", DeHelper.toLowerCase(sq.getCategories())));
+            }
+            if (!DeHelper.isEmptyList(sq.getLanguages())) {
+                fb.must(FilterBuilders.termsFilter("languages", DeHelper.toLowerCase(sq.getLanguages())));
+            }
+        }
+        if (!DeHelper.isEmptyList(excludedIds)) {
             for (String id : excludedIds) {
                 fb.mustNot(FilterBuilders.termsFilter("video_id", id));
             }
@@ -146,17 +151,54 @@ public class VideoProcessor {
         }
         logger.info("Num video responses:" + videoResponses.size());
 
-
         return videoResponses;
     }
 
-    public List<VideoResponse> getDistinctUntargetedVideo(List<VideoResponse> targetedVideo, int positions) {
+    public List<VideoResponse> getUntargetedVideos(List<VideoResponse> targetedVideo, int positions, List<String> languages) {
+        if (DeHelper.isEmptyList(languages)) {
+            languages = Arrays.asList("en"); // default language if none provided
+        }
+        //exclude the videos we already got
         List<String> excludedIds = new ArrayList<String>();
         for (VideoResponse v : targetedVideo) {
             excludedIds.add(v.getVideoId());
         }
-        return recommend(null, positions, excludedIds);
-    }
 
+        SearchQueryRequest sq = new SearchQueryRequest();
+        sq.setLanguages(languages);
+
+        List<VideoResponse> unTargetedVideos = recommend(sq, positions, excludedIds);
+        int sizeUnTargeted = 0;
+        if (!DeHelper.isEmptyList(unTargetedVideos)) {
+            sizeUnTargeted = unTargetedVideos.size();
+        }
+        if (sizeUnTargeted >= positions) {
+            return unTargetedVideos;
+        }
+
+        //if we didn't get enough videos for a target lang, we fill it with en lang videos
+        if (sizeUnTargeted < positions && !languages.contains("en")) {
+            sq.setLanguages(Arrays.asList("en"));
+
+            //make sure to exclude any videos we have in the list already
+            for (VideoResponse v : unTargetedVideos) {
+                excludedIds.add(v.getVideoId());
+            }
+            // try to backfill with en videos
+            List<VideoResponse> englishTargetsedVideos = recommend(sq, positions - sizeUnTargeted, excludedIds);
+            int sizeEnglishLangVideo = 0;
+            if (!DeHelper.isEmptyList(englishTargetsedVideos)) {
+                sizeEnglishLangVideo = englishTargetsedVideos.size();
+            }
+
+            if ((sizeUnTargeted > 0) && (sizeEnglishLangVideo > 0)) {
+                unTargetedVideos.addAll(englishTargetsedVideos);
+                return unTargetedVideos;
+            } else if (sizeEnglishLangVideo > 0) {
+                return englishTargetsedVideos;
+            }
+        }
+        return unTargetedVideos;
+    }
 }
 

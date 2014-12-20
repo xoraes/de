@@ -187,7 +187,7 @@ public class AdUnitProcessor {
 
         List<String> sch = DeHelper.convertSchedulesToTimeTable(unit.getSchedules());
 
-        if (DeHelper.isEmptyArray(sch)) {
+        if (DeHelper.isEmptyList(sch)) {
             unit.setTimetable(new ArrayList<String>(Arrays.asList("all")));
         }
         unit.setTimetable(DeHelper.convertSchedulesToTimeTable(unit.getSchedules()));

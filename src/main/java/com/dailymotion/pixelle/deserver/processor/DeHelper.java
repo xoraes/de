@@ -124,7 +124,7 @@ public class DeHelper {
         return timeTable;
     }
 
-    public static Boolean isEmptyArray(List<? extends Object> cList) {
+    public static Boolean isEmptyList(List<? extends Object> cList) {
         if (cList == null || cList.isEmpty()) {
             return true;
         }
@@ -157,17 +157,17 @@ public class DeHelper {
 
     public static SearchQueryRequest modifySearchQueryReq(SearchQueryRequest sq) {
         if (sq != null) {
-            if (DeHelper.isEmptyArray(sq.getCategories())) {
+            if (DeHelper.isEmptyList(sq.getCategories())) {
                 sq.setCategories(Arrays.asList("all"));
             } else {
                 sq.getCategories().add("all");
             }
-            if (DeHelper.isEmptyArray(sq.getLocations())) {
+            if (DeHelper.isEmptyList(sq.getLocations())) {
                 sq.setLocations(Arrays.asList("all"));
             } else {
                 sq.getLocations().add("all");
             }
-            if (DeHelper.isEmptyArray(sq.getLanguages())) {
+            if (DeHelper.isEmptyList(sq.getLanguages())) {
                 sq.setLanguages(Arrays.asList("all"));
             } else {
                 sq.getLanguages().add("all");

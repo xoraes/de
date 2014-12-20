@@ -205,8 +205,8 @@ public class ESVideoIntegrationTest {
         sq.setCategories(new ArrayList(Arrays.asList("ttt")));
         sq.setDevice("ved");
         sq.setFormat("ved");
-        sq.setLanguages(new ArrayList<String>(Arrays.asList("oo")));
-        sq.setLocations(new ArrayList<String>(Arrays.asList("oo")));
+        sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
+        sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
 
         System.out.println("Search Query ====>" + sq.toString());
         ItemsResponse i = new QueryCommand(es, sq, 6, "promoted,organic").execute();
@@ -311,5 +311,60 @@ public class ESVideoIntegrationTest {
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 0);
         deleteVideosByIds("1");
+    }
+
+    @Test
+    public void testCategoryTargetingNegativeWithFallback() throws Exception {
+        Map m1 = createVideoDataMap("1");
+        Map m2 = createVideoDataMap("2");
+        Map m3 = createVideoDataMap("3");
+        m1.put("languages", new ArrayList<String>(Arrays.asList("en")));
+        m2.put("languages", new ArrayList<String>(Arrays.asList("en")));
+        m3.put("languages", new ArrayList<String>(Arrays.asList("fr")));
+        loadVideoMaps(m1, m2, m3);
+        SearchQueryRequest sq = new SearchQueryRequest();
+        sq.setTime("2014-12-31T15:00:00-0800");
+        sq.setCategories(new ArrayList(Arrays.asList("ZZZZ")));
+        sq.setDevice("dev1");
+        sq.setFormat("fmt1");
+        sq.setLanguages(new ArrayList<String>(Arrays.asList("fr")));
+        sq.setLocations(new ArrayList<String>(Arrays.asList("fr")));
+
+        System.out.println("Search Query ====>" + sq.toString());
+        ItemsResponse i = new QueryCommand(es, sq, 10, "organic").execute();
+        System.out.println("Language Response ====>:" + i.toString());
+        Assert.assertNotNull(i);
+        Assert.assertTrue(i.getResponse().size() == 3);
+        deleteVideosByIds("1", "2", "3");
+    }
+
+    //fallback on english
+    @Test
+    public void testFallbackToEnglish() throws Exception {
+        Map m1 = createVideoDataMap("1");
+        Map m2 = createVideoDataMap("2");
+        Map m3 = createVideoDataMap("3");
+        m1.put("categories", new ArrayList<String>(Arrays.asList("assd")));
+        m2.put("categories", new ArrayList<String>(Arrays.asList("asd")));
+        m3.put("categories", new ArrayList<String>(Arrays.asList("asd")));
+        m1.put("languages", new ArrayList<String>(Arrays.asList("en")));
+        m2.put("languages", new ArrayList<String>(Arrays.asList("en")));
+        m3.put("languages", new ArrayList<String>(Arrays.asList("hi")));
+
+        loadVideoMaps(m1, m2, m3);
+        SearchQueryRequest sq = new SearchQueryRequest();
+        sq.setTime("2014-12-31T15:00:00-0800");
+        sq.setCategories(new ArrayList(Arrays.asList("cat1")));
+        sq.setDevice("dev1");
+        sq.setFormat("fmt1");
+        sq.setLanguages(new ArrayList<String>(Arrays.asList("fr")));
+        sq.setLocations(new ArrayList<String>(Arrays.asList("fr")));
+
+        System.out.println("Search Query ====>" + sq.toString());
+        ItemsResponse i = new QueryCommand(es, sq, 10, "organic").execute();
+        System.out.println("Language Response ====>:" + i.toString());
+        Assert.assertNotNull(i);
+        Assert.assertTrue(i.getResponse().size() == 2);
+        deleteVideosByIds("1", "2", "3");
     }
 }
