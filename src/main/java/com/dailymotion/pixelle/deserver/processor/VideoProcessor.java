@@ -191,7 +191,7 @@ public class VideoProcessor {
                 sizeEnglishLangVideo = englishTargetsedVideos.size();
             }
 
-            if ((sizeUnTargeted > 0) && (sizeEnglishLangVideo > 0)) {
+            if (sizeUnTargeted > 0 && sizeEnglishLangVideo > 0) {
                 unTargetedVideos.addAll(englishTargetsedVideos);
                 return unTargetedVideos;
             } else if (sizeEnglishLangVideo > 0) {
