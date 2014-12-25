@@ -130,7 +130,7 @@ public class VideoProcessor {
                 .add(ScoreFunctionBuilders.randomFunction((int) (Math.random() * 100)));
         SearchRequestBuilder srb1 = client.prepareSearch(DeHelper.getIndex())
                 .setTypes(DeHelper.getOrganicVideoType())
-                .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
+                .setSearchType(SearchType.DFS_QUERY_AND_FETCH)
                 .setQuery(qb)
                 .setSize(positions);
 

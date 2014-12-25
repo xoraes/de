@@ -100,7 +100,7 @@ public class AdUnitProcessor {
 
             SearchRequestBuilder srb1 = client.prepareSearch(DeHelper.getIndex())
                     .setTypes(DeHelper.getAdUnitsType())
-                    .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
+                    .setSearchType(SearchType.DFS_QUERY_AND_FETCH)
                     .setQuery(qb)
                     .setSize(positions * 4);
 
@@ -142,7 +142,7 @@ public class AdUnitProcessor {
         QueryBuilder qb = QueryBuilders.filteredQuery(null, fb);
         SearchRequestBuilder srb1 = client.prepareSearch(DeHelper.getIndex())
                 .setTypes(DeHelper.getAdUnitsType())
-                .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
+                .setSearchType(SearchType.QUERY_AND_FETCH)
                 .setQuery(qb);
         SearchResponse searchResponse = srb1.execute().actionGet();
         List<AdUnit> adUnits = new ArrayList<AdUnit>();

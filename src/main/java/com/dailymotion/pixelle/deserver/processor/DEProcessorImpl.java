@@ -209,7 +209,7 @@ public class DEProcessorImpl implements DEProcessor {
 
         SearchRequestBuilder srb1 = client.prepareSearch(DeHelper.getIndex())
                 .setTypes(type)
-                .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
+                .setSearchType(SearchType.QUERY_AND_FETCH)
                 .setQuery(qb)
                 .setSize(1)
                 .addSort(UPDATED, SortOrder.DESC)
