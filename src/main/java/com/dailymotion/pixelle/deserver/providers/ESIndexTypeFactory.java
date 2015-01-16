@@ -139,6 +139,10 @@ public class ESIndexTypeFactory {
         builder.startObject("categories").field("type", "string").field("index", "not_analyzed").endObject();
         builder.startObject("tags").field("type", "string").field("index", "not_analyzed").endObject();
 
+        builder.startObject("clicks").field("type", "float").field("index", "no").endObject();
+        builder.startObject("views").field("type", "float").field("index", "no").endObject();
+        builder.startObject("impressions").field("type", "float").field("index", "no").endObject();
+
         builder.startObject("status").field("type", "string").field("index", "not_analyzed").endObject();
         builder.startObject("title").field("type", "string").field("index", "no").endObject();
         builder.startObject("description").field("type", "string").field("index", "no").endObject();
