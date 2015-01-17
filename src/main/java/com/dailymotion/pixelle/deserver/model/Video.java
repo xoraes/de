@@ -53,6 +53,10 @@ public class Video {
     private String created;
     @JsonProperty("resizable_thumbnail_url")
     private String resizableThumbnailUrl;
+    @JsonProperty("clicks")
+    private Integer clicks;
+    @JsonProperty("views")
+    private Integer views;
 
     public String getId() {
         return id;
@@ -204,6 +208,22 @@ public class Video {
 
     public void setResizableThumbnailUrl(String resizableThumbnailUrl) {
         this.resizableThumbnailUrl = resizableThumbnailUrl;
+    }
+
+    public Integer getClicks() {
+        return clicks;
+    }
+
+    public void setClicks(Integer clicks) {
+        this.clicks = clicks;
+    }
+
+    public Integer getViews() {
+        return views;
+    }
+
+    public void setViews(Integer views) {
+        this.views = views;
     }
 
     public String toString() {
