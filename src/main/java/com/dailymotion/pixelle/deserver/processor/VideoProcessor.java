@@ -7,6 +7,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
+import com.netflix.config.DynamicDoubleProperty;
+import com.netflix.config.DynamicFloatProperty;
+import com.netflix.config.DynamicPropertyFactory;
+import com.netflix.config.DynamicStringProperty;
 import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
@@ -17,6 +21,7 @@ import org.elasticsearch.index.query.BoolFilterBuilder;
 import org.elasticsearch.index.query.FilterBuilders;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilder;
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.slf4j.Logger;
@@ -37,9 +42,25 @@ public class VideoProcessor {
     static {
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
-
     private static Logger logger = LoggerFactory.getLogger(VideoProcessor.class);
     private static Client client;
+    private static DynamicFloatProperty goldPartnerWeight =
+            DynamicPropertyFactory.getInstance().getFloatProperty("goldPartner.weightPercent", 1.5f);
+
+    private static DynamicFloatProperty silverPartnerWeight =
+            DynamicPropertyFactory.getInstance().getFloatProperty("silverPartner.weightPercent", 1.25f);
+
+    private static DynamicFloatProperty bronzePartnerWeight =
+            DynamicPropertyFactory.getInstance().getFloatProperty("bronzePartner.weightPercent", 1.0f);
+
+    private static DynamicDoubleProperty pubDateDecay =
+            DynamicPropertyFactory.getInstance().getDoubleProperty("publicationDate.decay", 0.25d);
+
+    private static DynamicStringProperty pubDateScale =
+            DynamicPropertyFactory.getInstance().getStringProperty("publicationDate.scale", "180d");
+
+    private static DynamicStringProperty pubDateOffset =
+            DynamicPropertyFactory.getInstance().getStringProperty("publicationDate.offset", "5d");
 
     @Inject
     public VideoProcessor(Client esClient) {
@@ -126,14 +147,28 @@ public class VideoProcessor {
                 fb.mustNot(FilterBuilders.termsFilter("video_id", id));
             }
         }
+
+        // origin is current date by default
+        ScoreFunctionBuilder pubDateScoreBuilder = ScoreFunctionBuilders
+                .exponentialDecayFunction("publication_date", pubDateScale.getValue())
+                .setDecay(pubDateDecay.getValue())
+                .setOffset(pubDateOffset.getValue());
+
         QueryBuilder qb = QueryBuilders.functionScoreQuery(fb)
-                .add(ScoreFunctionBuilders.randomFunction((int) (Math.random() * 100)));
+                .add(pubDateScoreBuilder)
+                .add(ScoreFunctionBuilders.fieldValueFactorFunction("ctr"))
+                .add(FilterBuilders.termFilter("channel_tier", "gold"), ScoreFunctionBuilders.weightFactorFunction(goldPartnerWeight.getValue()))
+                .add(FilterBuilders.termFilter("channel_tier", "silver"), ScoreFunctionBuilders.weightFactorFunction(silverPartnerWeight.getValue()))
+                .add(FilterBuilders.termFilter("channel_tier", "bronze"), ScoreFunctionBuilders.weightFactorFunction(bronzePartnerWeight.getValue()));
+
+
+
         SearchRequestBuilder srb1 = client.prepareSearch(DeHelper.getIndex())
                 .setTypes(DeHelper.getOrganicVideoType())
                 .setSearchType(SearchType.DFS_QUERY_AND_FETCH)
                 .setQuery(qb)
+                .setExplain(true)
                 .setSize(positions);
-
 
         logger.info(srb1.toString());
 
@@ -143,7 +178,11 @@ public class VideoProcessor {
         for (SearchHit hit : searchResponse.getHits().getHits()) {
             VideoResponse video;
             try {
+                logger.info(hit.getExplanation().toString());
                 video = objectMapper.readValue(hit.getSourceAsString(), VideoResponse.class);
+                if (sq.getDebugEnabled() == Boolean.TRUE) {
+                    video.setDebugInfo(hit.getExplanation().toHtml());
+                }
             } catch (IOException e) {
                 throw new DeException(e.getCause(), 500);
             }

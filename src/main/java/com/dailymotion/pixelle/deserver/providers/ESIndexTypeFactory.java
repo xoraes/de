@@ -133,15 +133,21 @@ public class ESIndexTypeFactory {
         XContentBuilder builder = XContentFactory.jsonBuilder().startObject().startObject(typeName).startObject("properties");
         builder.startObject("_created").field("type", "date").field("format", "date_time_no_millis").field("index", "not_analyzed").endObject();
         builder.startObject("_updated").field("type", "date").field("format", "date_time_no_millis").field("index", "not_analyzed").endObject();
+        builder.startObject("publication_date").field("type", "date").field("format", "date_time_no_millis").field("index", "not_analyzed").endObject();
+
         builder.startObject("_id").field("type", "string").field("index", "not_analyzed").endObject();
         builder.startObject("video_id").field("type", "string").field("index", "not_analyzed").endObject();
         builder.startObject("languages").field("type", "string").field("index", "not_analyzed").endObject();
         builder.startObject("categories").field("type", "string").field("index", "not_analyzed").endObject();
         builder.startObject("tags").field("type", "string").field("index", "not_analyzed").endObject();
+        builder.startObject("channel_tier").field("type", "string").field("index", "not_analyzed").endObject();
 
         builder.startObject("clicks").field("type", "float").field("index", "no").endObject();
         builder.startObject("views").field("type", "float").field("index", "no").endObject();
         builder.startObject("impressions").field("type", "float").field("index", "no").endObject();
+
+        builder.startObject("ctr").field("type", "float").endObject();
+
 
         builder.startObject("status").field("type", "string").field("index", "not_analyzed").endObject();
         builder.startObject("title").field("type", "string").field("index", "no").endObject();
@@ -150,7 +156,7 @@ public class ESIndexTypeFactory {
         builder.startObject("resizable_thumbnail_url").field("type", "string").field("index", "no").endObject();
         builder.startObject("channel").field("type", "string").field("index", "no").endObject();
         builder.startObject("channel_id").field("type", "string").field("index", "no").endObject();
-        builder.startObject("channel_tier").field("type", "string").field("index", "no").endObject();
+
         builder.startObject("channel_name").field("type", "string").field("index", "no").endObject();
         builder.startObject("channel_url").field("type", "string").field("index", "no").endObject();
 

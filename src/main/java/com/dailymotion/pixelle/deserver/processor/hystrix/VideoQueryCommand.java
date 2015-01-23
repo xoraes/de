@@ -24,11 +24,10 @@ public class VideoQueryCommand extends HystrixCommand<List<VideoResponse>> {
 
     private static Logger logger = LoggerFactory.getLogger(AdQueryCommand.class);
     private SearchQueryRequest sq;
-    private int position;
     private VideoProcessor processor;
+    private Integer positions;
 
-
-    public VideoQueryCommand(VideoProcessor processor, SearchQueryRequest sq, int pos) {
+    public VideoQueryCommand(VideoProcessor processor, SearchQueryRequest sq, Integer positions) {
         super(Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey("DecisioningEngine"))
                 .andCommandKey(HystrixCommandKey.Factory.asKey("VideoQuery"))
                 .andCommandPropertiesDefaults(HystrixCommandProperties.Setter()
@@ -36,14 +35,13 @@ public class VideoQueryCommand extends HystrixCommand<List<VideoResponse>> {
                         .withExecutionIsolationSemaphoreMaxConcurrentRequests(semaphoreCount.get())));
 
         this.sq = sq;
-        this.position = pos;
         this.processor = processor;
-
+        this.positions = positions;
     }
 
     @Override
     protected List<VideoResponse> run() throws Exception {
-        return processor.recommend(sq, position, null);
+        return processor.recommend(sq, positions, null);
     }
 
     @Override

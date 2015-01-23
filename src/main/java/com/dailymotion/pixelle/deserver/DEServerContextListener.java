@@ -5,7 +5,6 @@ package com.dailymotion.pixelle.deserver; /**
 
 import com.dailymotion.pixelle.deserver.processor.AdUnitProcessor;
 import com.dailymotion.pixelle.deserver.processor.DEProcessor;
-import com.dailymotion.pixelle.deserver.processor.DEProcessorImpl;
 import com.dailymotion.pixelle.deserver.processor.VideoProcessor;
 import com.dailymotion.pixelle.deserver.providers.ESNodeClientProvider;
 import com.dailymotion.pixelle.deserver.servlets.DEServlet;
@@ -28,7 +27,7 @@ public class DEServerContextListener extends GuiceServletContextListener {
                 bind(Client.class).toProvider(ESNodeClientProvider.class).asEagerSingleton();
                 bind(AdUnitProcessor.class).asEagerSingleton();
                 bind(VideoProcessor.class).asEagerSingleton();
-                bind(DEProcessor.class).to(DEProcessorImpl.class).asEagerSingleton();
+                bind(DEProcessor.class).asEagerSingleton();
                 bind(DEServlet.class).asEagerSingleton();
                 bind(HystrixMetricsStreamServlet.class).asEagerSingleton();
                 serve("/hystrix.stream").with(HystrixMetricsStreamServlet.class);

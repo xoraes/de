@@ -38,6 +38,17 @@ public class VideoResponse extends ItemsResponse {
     private String resizableThumbnailUrl;
     @JsonProperty("type")
     private String contentType = "organic";
+    @JsonProperty("debug")
+    private String debugInfo;
+
+
+    public String getDebugInfo() {
+        return debugInfo;
+    }
+
+    public void setDebugInfo(String debugInfo) {
+        this.debugInfo = debugInfo;
+    }
 
     public String getVideoId() {
         return videoId;

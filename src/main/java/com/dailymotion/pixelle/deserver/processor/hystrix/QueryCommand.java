@@ -18,9 +18,9 @@ public class QueryCommand extends HystrixCommand<ItemsResponse> {
     private static DynamicIntProperty semaphoreCount =
             DynamicPropertyFactory.getInstance().getIntProperty("query.semaphoreCount", 10);
     private SearchQueryRequest sq;
-    private int position;
     private String allowedTypes;
     private DEProcessor processor;
+
 
     protected QueryCommand(HystrixCommandGroupKey group) {
         super(group);
@@ -30,7 +30,7 @@ public class QueryCommand extends HystrixCommand<ItemsResponse> {
         super(setter);
     }
 
-    public QueryCommand(DEProcessor processor, SearchQueryRequest sq, int pos, String allowedTypes) {
+    public QueryCommand(DEProcessor processor, SearchQueryRequest sq, String allowedTypes) {
 
         super(Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey("DecisioningEngine"))
                 .andCommandKey(HystrixCommandKey.Factory.asKey("Query"))
@@ -39,13 +39,12 @@ public class QueryCommand extends HystrixCommand<ItemsResponse> {
                         .withExecutionIsolationSemaphoreMaxConcurrentRequests(semaphoreCount.get())));
 
         this.sq = sq;
-        this.position = pos;
         this.allowedTypes = allowedTypes;
         this.processor = processor;
     }
 
     @Override
     protected ItemsResponse run() throws Exception {
-        return processor.recommend(sq, position, allowedTypes);
+        return processor.recommend(sq, allowedTypes);
     }
 }

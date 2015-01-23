@@ -43,7 +43,7 @@ public class ESAdUnitsIntegrationTest {
                 bind(Client.class).toProvider(ESTestNodeClientProvider.class).asEagerSingleton();
                 bind(AdUnitProcessor.class).asEagerSingleton();
                 bind(VideoProcessor.class).asEagerSingleton();
-                bind(DEProcessor.class).to(DEProcessorImpl.class).asEagerSingleton();
+                bind(DEProcessor.class).asEagerSingleton();
             }
         });
         es = injector.getInstance(DEProcessor.class);
@@ -149,8 +149,8 @@ public class ESAdUnitsIntegrationTest {
         sq.setTime("2014-11-21T01:00:00Z");
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
-
-        ItemsResponse i = new QueryCommand(es, sq, 1, "promoted").execute();
+        sq.setPositions(1);
+        ItemsResponse i = new QueryCommand(es, sq, "promoted").execute();
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 1);
         AdUnitResponse adunit = (AdUnitResponse) i.getResponse().get(0);
@@ -187,8 +187,8 @@ public class ESAdUnitsIntegrationTest {
         sq.setFormat("fmt1");
         sq.setLanguages(new ArrayList<String>(Arrays.asList("EN")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("US")));
-
-        ItemsResponse i = new QueryCommand(es, sq, 3, "promoted").execute();
+        sq.setPositions(3);
+        ItemsResponse i = new QueryCommand(es, sq, "promoted").execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 3);
@@ -247,8 +247,8 @@ public class ESAdUnitsIntegrationTest {
         sq.setFormat("fmt1");
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
-
-        ItemsResponse i = new QueryCommand(es, sq, 10, null).execute();
+        sq.setPositions(10);
+        ItemsResponse i = new QueryCommand(es, sq, null).execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 1);
@@ -267,9 +267,9 @@ public class ESAdUnitsIntegrationTest {
         sq.setFormat("fmt1");
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
-
+        sq.setPositions(10);
         System.out.println("Search Query ====>" + sq.toString());
-        ItemsResponse i = new QueryCommand(es, sq, 10, null).execute();
+        ItemsResponse i = new QueryCommand(es, sq, null).execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 1);
@@ -289,9 +289,9 @@ public class ESAdUnitsIntegrationTest {
         sq.setFormat("fmt1");
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
-
+        sq.setPositions(10);
         System.out.println("Search Query ====>" + sq.toString());
-        ItemsResponse i = new QueryCommand(es, sq, 10, null).execute();
+        ItemsResponse i = new QueryCommand(es, sq, null).execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 1);
@@ -311,9 +311,10 @@ public class ESAdUnitsIntegrationTest {
         sq.setFormat("fmt1");
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
+        sq.setPositions(10);
 
         System.out.println("Search Query ====>" + sq.toString());
-        ItemsResponse i = new QueryCommand(es, sq, 10, null).execute();
+        ItemsResponse i = new QueryCommand(es, sq, null).execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 0);
@@ -332,9 +333,10 @@ public class ESAdUnitsIntegrationTest {
         sq.setFormat("fmt1");
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
+        sq.setPositions(10);
 
         System.out.println("Search Query ====>" + sq.toString());
-        ItemsResponse i = new QueryCommand(es, sq, 10, null).execute();
+        ItemsResponse i = new QueryCommand(es, sq, null).execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 0);
@@ -357,9 +359,10 @@ public class ESAdUnitsIntegrationTest {
         sq.setFormat("fmt1");
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
+        sq.setPositions(10);
 
         System.out.println("Search Query ====>" + sq.toString());
-        ItemsResponse i = new QueryCommand(es, sq, 10, null).execute();
+        ItemsResponse i = new QueryCommand(es, sq, null).execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 2);
@@ -378,9 +381,10 @@ public class ESAdUnitsIntegrationTest {
         sq.setFormat("fmt1");
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
+        sq.setPositions(10);
 
         System.out.println("Search Query ====>" + sq.toString());
-        ItemsResponse i = new QueryCommand(es, sq, 10, null).execute();
+        ItemsResponse i = new QueryCommand(es, sq, null).execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 0);

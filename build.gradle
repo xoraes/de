@@ -44,7 +44,7 @@ project.ext {
     deserver = '0.1.0'
 }
 dependencies {
-    compile 'org.elasticsearch:elasticsearch:1.4.1'
+    compile 'org.elasticsearch:elasticsearch:1.4.2'
     compile 'com.google.guava:guava:18.0'
     compile 'org.eclipse.jetty:jetty-servlet:9.2.5.v20141112'
     compile 'org.eclipse.jetty:jetty-server:9.2.5.v20141112'

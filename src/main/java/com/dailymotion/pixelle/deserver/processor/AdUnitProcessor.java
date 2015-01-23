@@ -56,8 +56,6 @@ public class AdUnitProcessor {
     }
 
     public List<AdUnitResponse> recommend(SearchQueryRequest sq, Integer positions) throws DeException {
-        positions = positions == null ? 1 : positions;
-
         List<AdUnitResponse> adUnitResponses = null;
         if (sq != null) {
             DateTimeFormatter df = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ssZ");

@@ -24,7 +24,7 @@ public class AdQueryCommand extends HystrixCommand<List<AdUnitResponse>> {
 
     private static Logger logger = LoggerFactory.getLogger(AdQueryCommand.class);
     private SearchQueryRequest sq;
-    private int position;
+    private int positions;
     private AdUnitProcessor processor;
 
 
@@ -37,14 +37,14 @@ public class AdQueryCommand extends HystrixCommand<List<AdUnitResponse>> {
                         .withExecutionIsolationSemaphoreMaxConcurrentRequests(semaphoreCount.get())));
 
         this.sq = sq;
-        this.position = pos;
+        this.positions = pos;
         this.processor = processor;
 
     }
 
     @Override
     protected List<AdUnitResponse> run() throws Exception {
-        return processor.recommend(sq, position);
+        return processor.recommend(sq, positions);
     }
 
     @Override

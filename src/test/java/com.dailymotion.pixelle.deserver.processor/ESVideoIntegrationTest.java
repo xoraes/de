@@ -44,7 +44,7 @@ public class ESVideoIntegrationTest {
                 bind(Client.class).toProvider(ESTestNodeClientProvider.class).asEagerSingleton();
                 bind(AdUnitProcessor.class).asEagerSingleton();
                 bind(VideoProcessor.class).asEagerSingleton();
-                bind(DEProcessor.class).to(DEProcessorImpl.class).asEagerSingleton();
+                bind(DEProcessor.class).asEagerSingleton();
             }
         });
         es = injector.getInstance(DEProcessor.class);
@@ -129,27 +129,29 @@ public class ESVideoIntegrationTest {
         sq.setFormat("fmt1");
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
+        sq.setPositions(6);
 
         System.out.println("Search Query ====>" + sq.toString());
-        ItemsResponse i = new QueryCommand(es, sq, 6, "promoted,organic").execute();
+        ItemsResponse i = new QueryCommand(es, sq, "promoted,organic").execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 6);
 
         System.out.println("Search Query ====>" + sq.toString());
-        i = new QueryCommand(es, sq, 6, "promoted").execute();
+        i = new QueryCommand(es, sq, "promoted").execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 3);
 
         System.out.println("Search Query ====>" + sq.toString());
-        i = new QueryCommand(es, sq, 6, "organic").execute();
+        i = new QueryCommand(es, sq, "organic").execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 3);
 
+        sq.setPositions(3);
         System.out.println("Search Query ====>" + sq.toString());
-        i = new QueryCommand(es, sq, 3, "promoted,organic").execute();
+        i = new QueryCommand(es, sq, "promoted,organic").execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         System.out.println(i.getResponse().get(2).getClass().getName());
@@ -178,9 +180,9 @@ public class ESVideoIntegrationTest {
         sq.setFormat("fmt1");
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
-
+        sq.setPositions(5);
         System.out.println("Search Query ====>" + sq.toString());
-        ItemsResponse i = new QueryCommand(es, sq, 5, "promoted,organic").execute();
+        ItemsResponse i = new QueryCommand(es, sq, "promoted,organic").execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 5);
@@ -207,9 +209,9 @@ public class ESVideoIntegrationTest {
         sq.setFormat("ved");
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
-
+        sq.setPositions(6);
         System.out.println("Search Query ====>" + sq.toString());
-        ItemsResponse i = new QueryCommand(es, sq, 6, "promoted,organic").execute();
+        ItemsResponse i = new QueryCommand(es, sq, "promoted,organic").execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 3);
@@ -228,8 +230,8 @@ public class ESVideoIntegrationTest {
         sq.setTime("2014-11-21T01:00:00Z");
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
-
-        ItemsResponse i = new QueryCommand(es, sq, 1, "organic").execute();
+        sq.setPositions(1);
+        ItemsResponse i = new QueryCommand(es, sq, "organic").execute();
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 1);
         VideoResponse video = (VideoResponse) i.getResponse().get(0);
@@ -260,8 +262,8 @@ public class ESVideoIntegrationTest {
         sq.setTime("2014-11-21T01:00:00Z");
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
-
-        ItemsResponse i = new QueryCommand(es, sq, 1, "organic").execute();
+        sq.setPositions(1);
+        ItemsResponse i = new QueryCommand(es, sq, "organic").execute();
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 1);
         VideoResponse video = (VideoResponse) i.getResponse().get(0);
@@ -283,9 +285,9 @@ public class ESVideoIntegrationTest {
         sq.setFormat("fmt1");
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
-
+        sq.setPositions(10);
         System.out.println("Search Query ====>" + sq.toString());
-        ItemsResponse i = new QueryCommand(es, sq, 10, "organic").execute();
+        ItemsResponse i = new QueryCommand(es, sq, "organic").execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 3);
@@ -304,9 +306,9 @@ public class ESVideoIntegrationTest {
         sq.setFormat("fmt1");
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
-
+        sq.setPositions(10);
         System.out.println("Search Query ====>" + sq.toString());
-        ItemsResponse i = new QueryCommand(es, sq, 10, "organic").execute();
+        ItemsResponse i = new QueryCommand(es, sq, "organic").execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 0);
@@ -329,9 +331,9 @@ public class ESVideoIntegrationTest {
         sq.setFormat("fmt1");
         sq.setLanguages(new ArrayList<String>(Arrays.asList("fr")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("fr")));
-
+        sq.setPositions(10);
         System.out.println("Search Query ====>" + sq.toString());
-        ItemsResponse i = new QueryCommand(es, sq, 10, "organic").execute();
+        ItemsResponse i = new QueryCommand(es, sq, "organic").execute();
         System.out.println("Language Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 3);
@@ -359,9 +361,9 @@ public class ESVideoIntegrationTest {
         sq.setFormat("fmt1");
         sq.setLanguages(new ArrayList<String>(Arrays.asList("fr")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("fr")));
-
+        sq.setPositions(10);
         System.out.println("Search Query ====>" + sq.toString());
-        ItemsResponse i = new QueryCommand(es, sq, 10, "organic").execute();
+        ItemsResponse i = new QueryCommand(es, sq, "organic").execute();
         System.out.println("Language Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 2);

@@ -36,9 +36,10 @@ public class SearchQueryRequest {
     private String browser;
     @JsonIgnore
     private String timeTable;
-
-    public SearchQueryRequest() {
-    }
+    @JsonIgnore
+    private Boolean debugEnabled;
+    @JsonIgnore
+    private Integer positions;
 
     public List<String> getLanguages() {
         return languages;
@@ -88,6 +89,14 @@ public class SearchQueryRequest {
         this.time = time;
     }
 
+    public String getBrowser() {
+        return browser;
+    }
+
+    public void setBrowser(String browser) {
+        this.browser = browser;
+    }
+
     public String getTimeTable() {
         return timeTable;
     }
@@ -96,12 +105,20 @@ public class SearchQueryRequest {
         this.timeTable = timeTable;
     }
 
-    public String getBrowser() {
-        return browser;
+    public Boolean getDebugEnabled() {
+        return debugEnabled;
     }
 
-    public void setBrowser(String browser) {
-        this.browser = browser;
+    public void setDebugEnabled(Boolean debugEnabled) {
+        this.debugEnabled = debugEnabled;
+    }
+
+    public Integer getPositions() {
+        return positions;
+    }
+
+    public void setPositions(Integer positions) {
+        this.positions = positions;
     }
 
     public String toString() {
