@@ -12,6 +12,7 @@ import com.netflix.config.DynamicFloatProperty;
 import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.config.DynamicStringProperty;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.lucene.search.Explanation;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
@@ -181,7 +182,11 @@ public class VideoProcessor {
                 logger.info(hit.getExplanation().toString());
                 video = objectMapper.readValue(hit.getSourceAsString(), VideoResponse.class);
                 if (sq.getDebugEnabled() == Boolean.TRUE) {
-                    video.setDebugInfo(hit.getExplanation().toHtml());
+                    Explanation ex = new Explanation();
+                    ex.setValue(hit.getScore());
+                    ex.setDescription(hit.getSourceAsString());
+                    ex.addDetail(hit.explanation());
+                    video.setDebugInfo(ex.toHtml().replace("\n", ""));
                 }
             } catch (IOException e) {
                 throw new DeException(e.getCause(), 500);
