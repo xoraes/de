@@ -43,16 +43,20 @@ public class VideoProcessor {
     static {
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
+
     private static Logger logger = LoggerFactory.getLogger(VideoProcessor.class);
     private static Client client;
     private static DynamicFloatProperty goldPartnerWeight =
-            DynamicPropertyFactory.getInstance().getFloatProperty("goldPartner.weightPercent", 1.5f);
+            DynamicPropertyFactory.getInstance().getFloatProperty("goldPartner.weightPercent", 0.5f);
 
     private static DynamicFloatProperty silverPartnerWeight =
-            DynamicPropertyFactory.getInstance().getFloatProperty("silverPartner.weightPercent", 1.25f);
+            DynamicPropertyFactory.getInstance().getFloatProperty("silverPartner.weightPercent", 0.25f);
+
+    private static DynamicFloatProperty maxBoost =
+            DynamicPropertyFactory.getInstance().getFloatProperty("maxboost", 100.0f);
 
     private static DynamicFloatProperty bronzePartnerWeight =
-            DynamicPropertyFactory.getInstance().getFloatProperty("bronzePartner.weightPercent", 1.0f);
+            DynamicPropertyFactory.getInstance().getFloatProperty("bronzePartner.weightPercent", 0.01f);
 
     private static DynamicDoubleProperty pubDateDecay =
             DynamicPropertyFactory.getInstance().getDoubleProperty("publicationDate.decay", 0.25d);
@@ -62,6 +66,18 @@ public class VideoProcessor {
 
     private static DynamicStringProperty pubDateOffset =
             DynamicPropertyFactory.getInstance().getStringProperty("publicationDate.offset", "5d");
+
+    private static DynamicStringProperty scoreMode =
+            DynamicPropertyFactory.getInstance().getStringProperty("score.mode", "multiply");
+
+    private static DynamicStringProperty boostMode =
+            DynamicPropertyFactory.getInstance().getStringProperty("boost.mode", "replace");
+
+    private static DynamicStringProperty ctrScriptFunction =
+            DynamicPropertyFactory.getInstance().getStringProperty("ctr.script.code", "if ((int)Math.round((doc['ctr'].value)) == 0) return _score * 0.01; else return _score * doc['ctr'].value;");
+
+    private static DynamicStringProperty ctrScriptLang =
+            DynamicPropertyFactory.getInstance().getStringProperty("ctr.script.lang", "groovy");
 
     @Inject
     public VideoProcessor(Client esClient) {
@@ -132,6 +148,11 @@ public class VideoProcessor {
     }
 
     public List<VideoResponse> recommend(@Nullable SearchQueryRequest sq, Integer positions, @Nullable List<String> excludedIds) {
+        final String CHANNEL_TIER = "channel_tier";
+        final String GOLD = "gold";
+        final String BRONZE = "bronze";
+        final String SILVER = "silver";
+
         List<VideoResponse> videoResponses = null;
         BoolFilterBuilder fb = FilterBuilders.boolFilter();
         fb.must(FilterBuilders.termFilter("status", "active"));
@@ -157,19 +178,22 @@ public class VideoProcessor {
 
         QueryBuilder qb = QueryBuilders.functionScoreQuery(fb)
                 .add(pubDateScoreBuilder)
-                .add(ScoreFunctionBuilders.fieldValueFactorFunction("ctr"))
-                .add(FilterBuilders.termFilter("channel_tier", "gold"), ScoreFunctionBuilders.weightFactorFunction(goldPartnerWeight.getValue()))
-                .add(FilterBuilders.termFilter("channel_tier", "silver"), ScoreFunctionBuilders.weightFactorFunction(silverPartnerWeight.getValue()))
-                .add(FilterBuilders.termFilter("channel_tier", "bronze"), ScoreFunctionBuilders.weightFactorFunction(bronzePartnerWeight.getValue()));
-
+                .add(ScoreFunctionBuilders.scriptFunction(ctrScriptFunction.getValue()).lang(ctrScriptLang.getValue()))
+                .add(FilterBuilders.termFilter(CHANNEL_TIER, GOLD), ScoreFunctionBuilders.weightFactorFunction(goldPartnerWeight.getValue()))
+                .add(FilterBuilders.termFilter(CHANNEL_TIER, SILVER), ScoreFunctionBuilders.weightFactorFunction(silverPartnerWeight.getValue()))
+                .add(FilterBuilders.termFilter(CHANNEL_TIER, BRONZE), ScoreFunctionBuilders.weightFactorFunction(bronzePartnerWeight.getValue()))
+                .boostMode(boostMode.getValue())
+                .maxBoost(maxBoost.getValue())
+                .scoreMode(scoreMode.getValue());
 
 
         SearchRequestBuilder srb1 = client.prepareSearch(DeHelper.getIndex())
                 .setTypes(DeHelper.getOrganicVideoType())
                 .setSearchType(SearchType.DFS_QUERY_AND_FETCH)
                 .setQuery(qb)
-                .setExplain(true)
+                .setExplain(sq.getDebugEnabled())
                 .setSize(positions);
+
 
         logger.info(srb1.toString());
 
@@ -177,16 +201,16 @@ public class VideoProcessor {
         videoResponses = new ArrayList<VideoResponse>();
 
         for (SearchHit hit : searchResponse.getHits().getHits()) {
-            VideoResponse video;
+            VideoResponse video = null;
             try {
-                logger.info(hit.getExplanation().toString());
                 video = objectMapper.readValue(hit.getSourceAsString(), VideoResponse.class);
                 if (sq.getDebugEnabled() == Boolean.TRUE) {
                     Explanation ex = new Explanation();
                     ex.setValue(hit.getScore());
-                    ex.setDescription(hit.getSourceAsString());
+                    ex.setDescription("Source ====>" + hit.getSourceAsString());
                     ex.addDetail(hit.explanation());
                     video.setDebugInfo(ex.toHtml().replace("\n", ""));
+                    logger.info(ex.toString());
                 }
             } catch (IOException e) {
                 throw new DeException(e.getCause(), 500);
@@ -198,7 +222,9 @@ public class VideoProcessor {
         return videoResponses;
     }
 
-    public List<VideoResponse> getUntargetedVideos(List<VideoResponse> targetedVideo, int positions, List<String> languages) {
+    public List<VideoResponse> getUntargetedVideos(List<VideoResponse> targetedVideo, int positions, SearchQueryRequest sq) {
+
+        List<String> languages = sq.getLanguages();
         if (DeHelper.isEmptyList(languages)) {
             languages = Arrays.asList("en"); // default language if none provided
         }
@@ -208,10 +234,11 @@ public class VideoProcessor {
             excludedIds.add(v.getVideoId());
         }
 
-        SearchQueryRequest sq = new SearchQueryRequest();
-        sq.setLanguages(languages);
+        SearchQueryRequest sq1 = new SearchQueryRequest();
+        sq1.setLanguages(languages);
+        sq1.setDebugEnabled(sq.getDebugEnabled());
 
-        List<VideoResponse> unTargetedVideos = recommend(sq, positions, excludedIds);
+        List<VideoResponse> unTargetedVideos = recommend(sq1, positions, excludedIds);
         int sizeUnTargeted = 0;
         if (!DeHelper.isEmptyList(unTargetedVideos)) {
             sizeUnTargeted = unTargetedVideos.size();

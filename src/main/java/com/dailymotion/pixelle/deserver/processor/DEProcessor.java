@@ -72,7 +72,7 @@ public class DEProcessor {
                 itemsResponse.setResponse(targetedVideos);
                 return itemsResponse;
             } else {
-                List<VideoResponse> untargetedVideos = videoProcessor.getUntargetedVideos(targetedVideos, positions, sq.getLanguages());
+                List<VideoResponse> untargetedVideos = videoProcessor.getUntargetedVideos(targetedVideos, positions, sq);
                 mergedList = mergeAndFillList(null, targetedVideos, untargetedVideos, positions);
                 itemsResponse.setResponse(mergedList);
                 return itemsResponse;
@@ -94,7 +94,7 @@ public class DEProcessor {
                 itemsResponse.setResponse(targetedVideos);
                 return itemsResponse;
             } else { //fill with untargetged videos
-                List<VideoResponse> untargetedVideos = videoProcessor.getUntargetedVideos(targetedVideos, positions, sq.getLanguages());
+                List<VideoResponse> untargetedVideos = videoProcessor.getUntargetedVideos(targetedVideos, positions, sq);
                 mergedList = mergeAndFillList(ads, targetedVideos, untargetedVideos, positions);
                 itemsResponse.setResponse(mergedList);
                 return itemsResponse;
