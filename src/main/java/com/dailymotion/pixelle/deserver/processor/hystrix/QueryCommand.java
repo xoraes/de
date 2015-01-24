@@ -20,7 +20,7 @@ public class QueryCommand extends HystrixCommand<ItemsResponse> {
     private SearchQueryRequest sq;
     private String allowedTypes;
     private DEProcessor processor;
-
+    private Integer positions;
 
     protected QueryCommand(HystrixCommandGroupKey group) {
         super(group);
@@ -30,7 +30,7 @@ public class QueryCommand extends HystrixCommand<ItemsResponse> {
         super(setter);
     }
 
-    public QueryCommand(DEProcessor processor, SearchQueryRequest sq, String allowedTypes) {
+    public QueryCommand(DEProcessor processor, SearchQueryRequest sq, Integer positions, String allowedTypes) {
 
         super(Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey("DecisioningEngine"))
                 .andCommandKey(HystrixCommandKey.Factory.asKey("Query"))
@@ -41,10 +41,11 @@ public class QueryCommand extends HystrixCommand<ItemsResponse> {
         this.sq = sq;
         this.allowedTypes = allowedTypes;
         this.processor = processor;
+        this.positions = positions;
     }
 
     @Override
     protected ItemsResponse run() throws Exception {
-        return processor.recommend(sq, allowedTypes);
+        return processor.recommend(sq, positions, allowedTypes);
     }
 }

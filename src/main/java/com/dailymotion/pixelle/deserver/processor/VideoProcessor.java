@@ -238,7 +238,11 @@ public class VideoProcessor {
         sq1.setLanguages(languages);
         sq1.setDebugEnabled(sq.getDebugEnabled());
 
-        List<VideoResponse> unTargetedVideos = recommend(sq1, positions, excludedIds);
+        int reqVideosSize = positions;
+        if (!DeHelper.isEmptyList(targetedVideo)) {
+            reqVideosSize = positions - targetedVideo.size();
+        }
+        List<VideoResponse> unTargetedVideos = recommend(sq1, reqVideosSize, excludedIds);
         int sizeUnTargeted = 0;
         if (!DeHelper.isEmptyList(unTargetedVideos)) {
             sizeUnTargeted = unTargetedVideos.size();
@@ -248,25 +252,25 @@ public class VideoProcessor {
         }
 
         //if we didn't get enough videos for a target lang, we fill it with en lang videos
-        if (sizeUnTargeted < positions && !languages.contains("en")) {
-            sq.setLanguages(Arrays.asList("en"));
+        if ((sizeUnTargeted < reqVideosSize) && !languages.contains("en")) {
+            sq1.setLanguages(Arrays.asList("en"));
 
             //make sure to exclude any videos we have in the list already
             for (VideoResponse v : unTargetedVideos) {
                 excludedIds.add(v.getVideoId());
             }
             // try to backfill with en videos
-            List<VideoResponse> englishTargetsedVideos = recommend(sq, positions - sizeUnTargeted, excludedIds);
-            int sizeEnglishLangVideo = 0;
-            if (!DeHelper.isEmptyList(englishTargetsedVideos)) {
-                sizeEnglishLangVideo = englishTargetsedVideos.size();
+            List<VideoResponse> englishTargetedVideos = recommend(sq1, reqVideosSize - sizeUnTargeted, excludedIds);
+            int sizeEnglishLangVideos = 0;
+            if (!DeHelper.isEmptyList(englishTargetedVideos)) {
+                sizeEnglishLangVideos = englishTargetedVideos.size();
             }
 
-            if (sizeUnTargeted > 0 && sizeEnglishLangVideo > 0) {
-                unTargetedVideos.addAll(englishTargetsedVideos);
+            if (sizeUnTargeted > 0 && sizeEnglishLangVideos > 0) {
+                unTargetedVideos.addAll(englishTargetedVideos);
                 return unTargetedVideos;
-            } else if (sizeEnglishLangVideo > 0) {
-                return englishTargetsedVideos;
+            } else if (sizeEnglishLangVideos > 0) {
+                return englishTargetedVideos;
             }
         }
         return unTargetedVideos;

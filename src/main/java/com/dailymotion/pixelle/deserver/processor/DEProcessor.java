@@ -40,7 +40,7 @@ public class DEProcessor {
     }
 
 
-    public ItemsResponse recommend(SearchQueryRequest sq, String allowedTypes) throws DeException {
+    public ItemsResponse recommend(SearchQueryRequest sq, Integer positions, String allowedTypes) throws DeException {
         List<VideoResponse> targetedVideos = null;
         List<AdUnitResponse> ads = null;
         List<? extends ItemsResponse> mergedList = null;
@@ -48,10 +48,6 @@ public class DEProcessor {
         String[] at = StringUtils.split(allowedTypes, ",", 2);
         sq = DeHelper.modifySearchQueryReq(sq);
 
-        Integer positions = sq.getPositions();
-        if (positions == null || positions <= 0) {
-            positions = 1;
-        }
         if (at == null || at.length == 0) {
             ads = new AdQueryCommand(adUnitProcessor, sq, positions).execute();
             itemsResponse.setResponse(ads);
@@ -68,7 +64,8 @@ public class DEProcessor {
 
         if (at.length == 1 && StringUtils.containsIgnoreCase(at[0], "organic")) {
             targetedVideos = new VideoQueryCommand(videoProcessor, sq, positions).execute();
-            if (targetedVideos.size() >= positions) {
+            if (targetedVideos != null && targetedVideos.size() >= positions) {
+
                 itemsResponse.setResponse(targetedVideos);
                 return itemsResponse;
             } else {

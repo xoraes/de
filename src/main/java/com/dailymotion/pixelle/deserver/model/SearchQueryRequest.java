@@ -19,7 +19,6 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_EMPTY) //this will ensure only non-null values are included in the serialized json
 public class SearchQueryRequest {
     private static Logger logger = LoggerFactory.getLogger(SearchQueryRequest.class);
-
     @JsonProperty("languages")
     private List<String> languages;
     @JsonProperty("locations")
@@ -38,8 +37,9 @@ public class SearchQueryRequest {
     private String timeTable;
     @JsonIgnore
     private Boolean debugEnabled;
-    @JsonIgnore
-    private Integer positions;
+    public SearchQueryRequest() {
+        setDebugEnabled(false);
+    }
 
     public List<String> getLanguages() {
         return languages;
@@ -113,13 +113,6 @@ public class SearchQueryRequest {
         this.debugEnabled = debugEnabled;
     }
 
-    public Integer getPositions() {
-        return positions;
-    }
-
-    public void setPositions(Integer positions) {
-        this.positions = positions;
-    }
 
     public String toString() {
         ObjectMapper mapper = new ObjectMapper();
