@@ -252,7 +252,7 @@ public class VideoProcessor {
         }
 
         //if we didn't get enough videos for a target lang, we fill it with en lang videos
-        if ((sizeUnTargeted < reqVideosSize) && !languages.contains("en")) {
+        if (sizeUnTargeted < reqVideosSize && !languages.contains("en")) {
             sq1.setLanguages(Arrays.asList("en"));
 
             //make sure to exclude any videos we have in the list already
