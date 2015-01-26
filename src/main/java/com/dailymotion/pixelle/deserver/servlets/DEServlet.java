@@ -105,6 +105,7 @@ public class DEServlet {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response query(SearchQueryRequest sq, @QueryParam("positions") Integer pos, @QueryParam("type") String allowedTypes, @QueryParam("debug") Boolean isDebugEnabled) throws DeException {
+        sq.setDebugEnabled(isDebugEnabled);
         ItemsResponse i = new QueryCommand(deProcessor, sq, pos, allowedTypes).execute();
         return Response.ok(i).build();
     }
