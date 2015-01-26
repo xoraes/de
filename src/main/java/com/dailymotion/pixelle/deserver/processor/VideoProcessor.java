@@ -194,7 +194,14 @@ public class VideoProcessor {
                 .setExplain(sq.getDebugEnabled())
                 .setSize(positions);
 
-
+        logger.info(ctrScriptFunction.getName() + " : " + ctrScriptFunction.getValue());
+        logger.info(ctrScriptLang.getName() + " : " + ctrScriptLang.getValue());
+        logger.info(goldPartnerWeight.getName() + " : " + goldPartnerWeight.getValue());
+        logger.info(silverPartnerWeight.getName() + " : " + silverPartnerWeight.getValue());
+        logger.info(bronzePartnerWeight.getName() + " : " + bronzePartnerWeight.getValue());
+        logger.info(boostMode.getName() + " : " + boostMode.getValue());
+        logger.info(scoreMode.getName() + " : " + scoreMode.getValue());
+        logger.info(maxBoost.getName() + " : " + maxBoost.getValue());
         logger.info(srb1.toString());
 
         SearchResponse searchResponse = srb1.execute().actionGet();
