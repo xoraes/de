@@ -72,6 +72,8 @@ public class AdUnit {
     private List<String> categories;
     @JsonProperty("cpc")
     private Long cpc;
+    @JsonProperty("cpv")
+    private Long cpv;
     @JsonProperty("schedules")
     private Integer[] schedules;
     @JsonProperty("timetable")
@@ -387,6 +389,14 @@ public class AdUnit {
 
     public void setPaused(Boolean paused) {
         this.paused = paused;
+    }
+
+    public Long getCpv() {
+        return cpv;
+    }
+
+    public void setCpv(Long cpv) {
+        this.cpv = cpv;
     }
 
     public String toString() {

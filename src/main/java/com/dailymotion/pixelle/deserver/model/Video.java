@@ -57,8 +57,8 @@ public class Video {
     private Integer clicks;
     @JsonProperty("views")
     private Integer views;
-    @JsonProperty("ctr")
-    private float ctr;
+    @JsonProperty("impressions")
+    private float impressions;
 
     public String getId() {
         return id;
@@ -228,12 +228,12 @@ public class Video {
         this.views = views;
     }
 
-    public float getCtr() {
-        return ctr;
+    public float getImpressions() {
+        return impressions;
     }
 
-    public void setCtr(float ctr) {
-        this.ctr = ctr;
+    public void setImpressions(float impressions) {
+        this.impressions = impressions;
     }
 
 

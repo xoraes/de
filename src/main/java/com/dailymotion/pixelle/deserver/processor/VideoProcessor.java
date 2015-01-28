@@ -74,8 +74,7 @@ public class VideoProcessor {
             DynamicPropertyFactory.getInstance().getStringProperty("boost.mode", "replace");
 
     private static DynamicStringProperty ctrScriptFunction =
-            DynamicPropertyFactory.getInstance().getStringProperty("ctr.script.code", "if ((int)Math.round((doc['ctr'].value)) == 0) return _score * 0.01; else return _score * doc['ctr'].value;");
-
+            DynamicPropertyFactory.getInstance().getStringProperty("ctr.script.code", "");
     private static DynamicStringProperty ctrScriptLang =
             DynamicPropertyFactory.getInstance().getStringProperty("ctr.script.lang", "groovy");
 
@@ -172,7 +171,7 @@ public class VideoProcessor {
 
         // origin is current date by default
         ScoreFunctionBuilder pubDateScoreBuilder = ScoreFunctionBuilders
-                .exponentialDecayFunction("publication_date", pubDateScale.getValue())
+                .gaussDecayFunction("publication_date", pubDateScale.getValue())
                 .setDecay(pubDateDecay.getValue())
                 .setOffset(pubDateOffset.getValue());
 

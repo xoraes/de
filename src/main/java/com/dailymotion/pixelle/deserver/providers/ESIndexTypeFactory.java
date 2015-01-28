@@ -99,6 +99,9 @@ public class ESIndexTypeFactory {
         builder.startObject("status").field("type", "string").field("index", "not_analyzed").endObject();
         builder.startObject("formats").field("type", "string").field("index", "not_analyzed").endObject();
 
+        builder.startObject("cpc").field("type", "integer").endObject();
+        builder.startObject("cpv").field("type", "integer").endObject();
+
         builder.startObject("tactic").field("type", "string").field("index", "no").endObject();
         builder.startObject("title").field("type", "string").field("index", "no").endObject();
         builder.startObject("description").field("type", "string").field("index", "no").endObject();
@@ -113,6 +116,7 @@ public class ESIndexTypeFactory {
         builder.startObject("goal_period").field("type", "string").field("index", "no").endObject();
         builder.startObject("account").field("type", "string").field("index", "no").endObject();
         builder.startObject("delivery").field("type", "string").field("index", "no").endObject();
+
 
         builder.startObject("duration").field("type", "integer").field("index", "no").endObject();
 
@@ -142,12 +146,9 @@ public class ESIndexTypeFactory {
         builder.startObject("tags").field("type", "string").field("index", "not_analyzed").endObject();
         builder.startObject("channel_tier").field("type", "string").field("index", "not_analyzed").endObject();
 
-        builder.startObject("clicks").field("type", "float").field("index", "no").endObject();
-        builder.startObject("views").field("type", "float").field("index", "no").endObject();
-        builder.startObject("impressions").field("type", "float").field("index", "no").endObject();
-
-        builder.startObject("ctr").field("type", "float").endObject();
-
+        builder.startObject("clicks").field("type", "float").endObject();
+        builder.startObject("views").field("type", "float").endObject();
+        builder.startObject("impressions").field("type", "float").endObject();
 
         builder.startObject("status").field("type", "string").field("index", "not_analyzed").endObject();
         builder.startObject("title").field("type", "string").field("index", "no").endObject();

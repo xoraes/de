@@ -43,6 +43,8 @@ public class AdUnitResponse extends ItemsResponse {
     private Integer duration;
     @JsonProperty("cpc")
     private Long cpc;
+    @JsonProperty("cpv")
+    private Long cpv;
     @JsonProperty("resizable_thumbnail_url")
     private String resizableThumbnailUrl;
     @JsonProperty("type")
@@ -175,6 +177,14 @@ public class AdUnitResponse extends ItemsResponse {
 
     public void setContentType(String contentType) {
         this.contentType = contentType;
+    }
+
+    public Long getCpv() {
+        return cpv;
+    }
+
+    public void setCpv(Long cpv) {
+        this.cpv = cpv;
     }
 
     public String toString() {
