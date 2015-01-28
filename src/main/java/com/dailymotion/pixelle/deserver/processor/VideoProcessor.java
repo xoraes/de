@@ -177,7 +177,7 @@ public class VideoProcessor {
 
         QueryBuilder qb = QueryBuilders.functionScoreQuery(fb)
                 .add(pubDateScoreBuilder)
-                .add(ScoreFunctionBuilders.scriptFunction(ctrScriptFunction.getValue()).lang(ctrScriptLang.getValue()))
+                .add(FilterBuilders.andFilter(FilterBuilders.rangeFilter("clicks").from(0),FilterBuilders.rangeFilter("impressions").from(0)), ScoreFunctionBuilders.scriptFunction(ctrScriptFunction.getValue()).lang(ctrScriptLang.getValue()))
                 .add(FilterBuilders.termFilter(CHANNEL_TIER, GOLD), ScoreFunctionBuilders.weightFactorFunction(goldPartnerWeight.getValue()))
                 .add(FilterBuilders.termFilter(CHANNEL_TIER, SILVER), ScoreFunctionBuilders.weightFactorFunction(silverPartnerWeight.getValue()))
                 .add(FilterBuilders.termFilter(CHANNEL_TIER, BRONZE), ScoreFunctionBuilders.weightFactorFunction(bronzePartnerWeight.getValue()))
