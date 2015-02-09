@@ -12,10 +12,15 @@ import com.netflix.servo.monitor.BasicCounter;
 import com.netflix.servo.monitor.Counter;
 import com.netflix.servo.monitor.MonitorConfig;
 import org.apache.commons.lang3.StringUtils;
+import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.action.bulk.BulkItemResponse;
+import org.elasticsearch.action.bulk.BulkRequestBuilder;
+import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
+import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.BoolFilterBuilder;
 import org.elasticsearch.index.query.FilterBuilders;
@@ -93,8 +98,11 @@ public class AdUnitProcessor {
                 fb.mustNot(FilterBuilders.termsFilter("excluded_categories", DeHelper.toLowerCase(sq.getCategories())));
             }
 
+            fb.must(FilterBuilders.scriptFilter("doc['goal_views'].value == null || doc['views'].value == null || doc['views'].value < doc['goal_views'].value"));
+
             QueryBuilder qb = QueryBuilders.functionScoreQuery(fb)
                     .add(ScoreFunctionBuilders.randomFunction((int) (Math.random() * 100)));
+
 
             SearchRequestBuilder srb1 = client.prepareSearch(DeHelper.getIndex())
                     .setTypes(DeHelper.getAdUnitsType())
@@ -159,12 +167,14 @@ public class AdUnitProcessor {
         return adUnits;
     }
 
-    public boolean insertAdUnit(AdUnit unit) throws DeException {
+    public void insertAdUnit(AdUnit unit) throws DeException {
         if (unit == null) {
             throw new DeException(new Throwable("no adunit found in request body"), 400);
         }
+        updateAdUnit(modifyAdUnitForInsert(unit));
+    }
 
-
+    private AdUnit modifyAdUnitForInsert(AdUnit unit) {
         if (unit.getLocations() == null || unit.getLocations().size() <= 0) {
             unit.setLocations(Arrays.asList("all"));
         }
@@ -209,29 +219,66 @@ public class AdUnitProcessor {
         unit.setLocations(DeHelper.stringListToLowerCase(unit.getLocations()));
 
         unit.setStatus(StringUtils.lowerCase(unit.getStatus()));
-
-        return updateAdUnit(unit);
+        return unit;
     }
 
-    public boolean updateAdUnit(AdUnit unit) throws DeException {
+    public void updateAdUnit(AdUnit unit) throws DeException {
         if (unit == null) {
             throw new DeException(new Throwable("no adunit found in request body"), 400);
         }
-
-        boolean result = false;
+        UpdateResponse response;
         try {
-            result = client.prepareUpdate(DeHelper.getIndex(), DeHelper.getAdUnitsType(), unit.getId())
+            response = client.prepareUpdate(DeHelper.getIndex(), DeHelper.getAdUnitsType(), unit.getId())
                     .setDoc(objectMapper.writeValueAsString(unit))
                     .setDocAsUpsert(true)
                     .execute()
-                    .actionGet()
-                    .isCreated();
-
+                    .actionGet();
         } catch (JsonProcessingException e) {
-            logger.error("Error converting adunit to string", e);
+            throw new DeException(e, 500);
+        } catch (ElasticsearchException e) {
             throw new DeException(e, 500);
         }
-        return result;
+    }
+
+    public void insertAdUnitsInBulk(List<AdUnit> adUnits) throws DeException {
+        if (DeHelper.isEmptyList(adUnits)) {
+            return;
+        }
+        BulkRequestBuilder bulkRequest = client.prepareBulk();
+
+        logger.info("Bulk loading:" + adUnits.size() + " videos");
+        for (AdUnit adUnit : adUnits) {
+
+            adUnit = modifyAdUnitForInsert(adUnit);
+
+            try {
+                bulkRequest.add(client.prepareUpdate(DeHelper.getIndex(), DeHelper.getAdUnitsType(), adUnit.getId())
+                        .setDoc(objectMapper.writeValueAsString(adUnit))
+                        .setDocAsUpsert(true));
+            } catch (JsonProcessingException e) {
+                logger.error("Error converting adunit to string", e);
+                throw new DeException(e, 500);
+            }
+        }
+
+        BulkResponse bulkResponse;
+        try {
+            bulkResponse = bulkRequest.execute().actionGet();
+        } catch (ElasticsearchException e) {
+            throw new DeException(e, 500);
+        }
+        if (bulkResponse != null && bulkResponse.hasFailures()) {
+            logger.error("Error Bulk loading:" + adUnits.size() + " adUnits");
+            while (bulkResponse.iterator().hasNext()) {
+                BulkItemResponse br = bulkResponse.iterator().next();
+                if (br.isFailed()) {
+                    logger.error(br.getFailureMessage());
+                }
+
+            }
+            // process failures by iterating through each bulk response item
+            throw new DeException(new Throwable("Error inserting adunits in Bulk"), 500);
+        }
     }
 
     public AdUnit getAdUnitById(String id) throws DeException {

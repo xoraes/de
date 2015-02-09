@@ -1,7 +1,6 @@
 package com.dailymotion.pixelle.deserver.processor.hystrix;
 
-
-import com.dailymotion.pixelle.deserver.model.Video;
+import com.dailymotion.pixelle.deserver.model.AdUnit;
 import com.dailymotion.pixelle.deserver.processor.DEProcessor;
 import com.dailymotion.pixelle.deserver.processor.DeException;
 import com.netflix.config.DynamicIntProperty;
@@ -13,37 +12,38 @@ import com.netflix.hystrix.HystrixCommandProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 
 /**
- * Created by n.dhupia on 12/1/14.
+ * Created by n.dhupia on 2/6/15.
  */
-public class VideoUpdateCommand extends HystrixCommand<Void> {
+public class AdUnitBulkInsertCommand extends HystrixCommand<Void> {
+    private static Logger logger = LoggerFactory.getLogger(AdUnitBulkInsertCommand.class);
 
     private static DynamicIntProperty semaphoreCount =
-            DynamicPropertyFactory.getInstance().getIntProperty("videoupdate.semaphoreCount", 10);
-    private static Logger logger = LoggerFactory.getLogger(VideoUpdateCommand.class);
-    private Video video;
+            DynamicPropertyFactory.getInstance().getIntProperty("adUnitBulkInsert.semaphoreCount", 10);
+
+    private List<AdUnit> adUnits;
     private DEProcessor processor;
 
-    public VideoUpdateCommand(DEProcessor processor, Video video) {
-
-        super(Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey("DecisioningEngine"))
-                .andCommandKey(HystrixCommandKey.Factory.asKey("VideoUpdate"))
+    public AdUnitBulkInsertCommand(DEProcessor deProcessor, List<AdUnit> adUnits) {
+        super(HystrixCommand.Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey("DecisioningEngine"))
+                .andCommandKey(HystrixCommandKey.Factory.asKey("AdUnitBulkInsert"))
                 .andCommandPropertiesDefaults(HystrixCommandProperties.Setter()
                         .withExecutionIsolationStrategy(HystrixCommandProperties.ExecutionIsolationStrategy.SEMAPHORE)
                         .withExecutionIsolationSemaphoreMaxConcurrentRequests(semaphoreCount.get())));
-        this.video = video;
-        this.processor = processor;
+        this.adUnits = adUnits;
+        this.processor = deProcessor;
     }
 
     @Override
-    protected Void run() throws Exception {
-        processor.updateVideo(video);
+    protected Void run() throws DeException {
+        processor.insertAdUnitsInBulk(adUnits);
         return null;
     }
 
     @Override
     protected Void getFallback() throws DeException {
-        throw new DeException(new Throwable("Error updating video"), 500);
+        throw new DeException(new Throwable("Error Inserting adunits"), 500);
     }
 }

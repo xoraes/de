@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Created by n.dhupia on 12/1/14.
  */
-public class AdUpdateCommand extends HystrixCommand<Boolean> {
+public class AdUpdateCommand extends HystrixCommand<Void> {
 
     private static DynamicIntProperty semaphoreCount =
             DynamicPropertyFactory.getInstance().getIntProperty("adupdate.semaphoreCount", 10);
@@ -37,13 +37,13 @@ public class AdUpdateCommand extends HystrixCommand<Boolean> {
     }
 
     @Override
-    protected Boolean run() throws Exception {
-        Boolean isUpdated = processor.updateAdUnit(unit);
-        return isUpdated;
+    protected Void run() throws DeException {
+        processor.updateAdUnit(unit);
+        return null;
     }
 
     @Override
-    protected Boolean getFallback() {
+    protected Void getFallback() throws DeException {
         throw new DeException(new Throwable("Error updating adunit"), 500);
     }
 }

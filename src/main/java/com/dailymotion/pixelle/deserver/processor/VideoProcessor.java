@@ -13,10 +13,15 @@ import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.config.DynamicStringProperty;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.search.Explanation;
+import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.action.bulk.BulkItemResponse;
+import org.elasticsearch.action.bulk.BulkRequestBuilder;
+import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
+import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.BoolFilterBuilder;
 import org.elasticsearch.index.query.FilterBuilders;
@@ -101,12 +106,19 @@ public class VideoProcessor {
         return video;
     }
 
-    public boolean insertVideo(Video video) throws DeException {
+    public void insertVideo(Video video) throws DeException {
 
         if (video == null) {
             throw new DeException(new Throwable("no video found in request body"), 400);
         }
+        updateVideo(modifyVideoForInsert(video));
+    }
 
+    /**
+     * @param video - should not be null
+     * @return a modified video
+     */
+    private Video modifyVideoForInsert(Video video) {
         if (video.getLanguages() == null || video.getLanguages().size() <= 0) {
             video.setLanguages(Arrays.asList("all"));
         }
@@ -121,29 +133,69 @@ public class VideoProcessor {
 
         video.setStatus(StringUtils.lowerCase(video.getStatus()));
         video.setVideoId(video.getId());
-        return updateVideo(video);
+        return video;
     }
 
-    public boolean updateVideo(Video video) throws DeException {
+    public void updateVideo(Video video) throws DeException {
         if (video == null) {
             throw new DeException(new Throwable("no video found in request body"), 400);
         }
         logger.info(video.toString());
-
-        boolean result = false;
+        UpdateResponse response;
         try {
-            result = client.prepareUpdate(DeHelper.getIndex(), DeHelper.getOrganicVideoType(), video.getId())
+            response = client.prepareUpdate(DeHelper.getIndex(), DeHelper.getOrganicVideoType(), video.getId())
                     .setDoc(objectMapper.writeValueAsString(video))
                     .setDocAsUpsert(true)
                     .execute()
-                    .actionGet()
-                    .isCreated();
+                    .actionGet();
+
 
         } catch (JsonProcessingException e) {
             logger.error("Error converting video to string", e);
             throw new DeException(e, 500);
+        } catch (ElasticsearchException e) {
+            throw new DeException(e, 500);
         }
-        return result;
+    }
+
+    public void insertVideoInBulk(List<Video> videos) throws DeException {
+        if (DeHelper.isEmptyList(videos)) {
+            return;
+        }
+        BulkRequestBuilder bulkRequest = client.prepareBulk();
+
+        logger.info("Bulk loading:" + videos.size() + " videos");
+        for (Video video : videos) {
+
+            video = modifyVideoForInsert(video);
+
+            try {
+                bulkRequest.add(client.prepareUpdate(DeHelper.getIndex(), DeHelper.getOrganicVideoType(), video.getId())
+                        .setDoc(objectMapper.writeValueAsString(video))
+                        .setDocAsUpsert(true));
+            } catch (JsonProcessingException e) {
+                logger.error("Error converting video to string", e);
+                throw new DeException(e, 500);
+            }
+        }
+        BulkResponse bulkResponse;
+        try {
+            bulkResponse = bulkRequest.execute().actionGet();
+        } catch (ElasticsearchException e) {
+            throw new DeException(e, 500);
+        }
+        if (bulkResponse != null && bulkResponse.hasFailures()) {
+            logger.error("Error Bulk loading:" + videos.size() + " videos");
+            while (bulkResponse.iterator().hasNext()) {
+                BulkItemResponse br = bulkResponse.iterator().next();
+                if (br.isFailed()) {
+                    logger.error(br.getFailureMessage());
+                }
+
+            }
+            // process failures by iterating through each bulk response item
+            throw new DeException(new Throwable("Error inserting videos in Bulk"), 500);
+        }
     }
 
     public List<VideoResponse> recommend(@Nullable SearchQueryRequest sq, Integer positions, @Nullable List<String> excludedIds) {
@@ -177,7 +229,7 @@ public class VideoProcessor {
 
         QueryBuilder qb = QueryBuilders.functionScoreQuery(fb)
                 .add(pubDateScoreBuilder)
-                .add(FilterBuilders.andFilter(FilterBuilders.rangeFilter("clicks").from(0),FilterBuilders.rangeFilter("impressions").from(0)), ScoreFunctionBuilders.scriptFunction(ctrScriptFunction.getValue()).lang(ctrScriptLang.getValue()))
+                .add(FilterBuilders.andFilter(FilterBuilders.rangeFilter("clicks").from(0), FilterBuilders.rangeFilter("impressions").from(0)), ScoreFunctionBuilders.scriptFunction(ctrScriptFunction.getValue()).lang(ctrScriptLang.getValue()))
                 .add(FilterBuilders.termFilter(CHANNEL_TIER, GOLD), ScoreFunctionBuilders.weightFactorFunction(goldPartnerWeight.getValue()))
                 .add(FilterBuilders.termFilter(CHANNEL_TIER, SILVER), ScoreFunctionBuilders.weightFactorFunction(silverPartnerWeight.getValue()))
                 .add(FilterBuilders.termFilter(CHANNEL_TIER, BRONZE), ScoreFunctionBuilders.weightFactorFunction(bronzePartnerWeight.getValue()))

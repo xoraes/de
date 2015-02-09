@@ -12,7 +12,7 @@ import com.netflix.hystrix.HystrixCommandProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class VideoInsertCommand extends HystrixCommand<Boolean> {
+public class VideoInsertCommand extends HystrixCommand<Void> {
 
     private static DynamicIntProperty semaphoreCount =
             DynamicPropertyFactory.getInstance().getIntProperty("videoinsert.semaphoreCount", 2);
@@ -35,13 +35,13 @@ public class VideoInsertCommand extends HystrixCommand<Boolean> {
     }
 
     @Override
-    protected Boolean run() throws Exception {
-        Boolean isCreated = processor.insertVideo(video);
-        return isCreated;
+    protected Void run() throws DeException {
+        processor.insertVideo(video);
+        return null;
     }
 
     @Override
-    protected Boolean getFallback() {
+    protected Void getFallback() throws DeException {
         throw new DeException(new Throwable("Error inserting video"), 500);
     }
 

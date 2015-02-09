@@ -5,35 +5,34 @@
     <property resource="de.properties"/>
     <property file="/etc/de.conf"/>
     <jmxConfigurator/>
+
+    <appender name="SYSLOG" class="ch.qos.logback.classic.net.SyslogAppender">
+        <syslogHost>localhost</syslogHost>
+        <facility>USER</facility>
+        <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
+            <layout class="ch.qos.logback.contrib.json.classic.JsonLayout">
+                <jsonFormatter class="ch.qos.logback.contrib.jackson.JacksonJsonFormatter">
+                    <!-- prettyPrint is probably ok in dev, but usually not ideal in production: -->
+                    <prettyPrint>false</prettyPrint>
+                </jsonFormatter>
+                <context>DE</context>
+                <timestampFormat>yyyy-MM-dd'T'HH:mm:ss.SSS'000Z'</timestampFormat>
+                <timestampFormatTimezoneId>UTC</timestampFormatTimezoneId>
+                <appendLineSeparator>true</appendLineSeparator>
+            </layout>
+        </encoder>
+        <suffixPattern>[%thread] %logger %msg</suffixPattern>
+    </appender>
+
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>%d %-5level %logger{35} - %msg %n</pattern>
         </encoder>
     </appender>
-    <if condition='isDefined("logback.loggly.inputKey")'>
-        <then>
-            <appender name="loggly" class="ch.qos.logback.ext.loggly.LogglyAppender">
-                <inputKey>${logback.loggly.inputKey}</inputKey>
-                <debug>${logback.loggly.debug:-false}</debug>
-                <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
-                    <layout class="ch.qos.logback.contrib.json.classic.JsonLayout">
-                        <jsonFormatter class="ch.qos.logback.contrib.jackson.JacksonJsonFormatter">
-                            <!-- prettyPrint is probably ok in dev, but usually not ideal in production: -->
-                            <prettyPrint>false</prettyPrint>
-                        </jsonFormatter>
-                        <context>DE</context>
-                        <timestampFormat>yyyy-MM-dd'T'HH:mm:ss.SSS'000Z'</timestampFormat>
-                        <timestampFormatTimezoneId>UTC</timestampFormatTimezoneId>
-                        <appendLineSeparator>true</appendLineSeparator>
-                    </layout>
-                </encoder>
-            </appender>
-        </then>
-    </if>
     <root level="${loglevel}">
-        <if condition='isDefined("logback.loggly.inputKey")'>
+        <if condition='property("logback.syslog.enabled").equalsIgnoreCase("true")'>
             <then>
-                <appender-ref ref="loggly"/>
+                <appender-ref ref="SYSLOG"/>
             </then>
         </if>
         <appender-ref ref="STDOUT"/>

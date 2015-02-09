@@ -78,7 +78,7 @@ public class ESVideoIntegrationTest {
             if (json != null) {
                 //deserialize to adunit
                 video = mapper.readValue(json, Video.class);
-                Assert.assertTrue(new VideoInsertCommand(es, video).execute());
+                new VideoInsertCommand(es, video).execute();
             }
 
         }

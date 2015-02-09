@@ -1,5 +1,8 @@
 package com.dailymotion.pixelle.deserver.processor.hystrix;
 
+/**
+ * Created by n.dhupia on 2/4/15.
+ */
 
 import com.dailymotion.pixelle.deserver.model.Video;
 import com.dailymotion.pixelle.deserver.processor.DEProcessor;
@@ -13,37 +16,38 @@ import com.netflix.hystrix.HystrixCommandProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 
 /**
- * Created by n.dhupia on 12/1/14.
+ * Created by n.dhupia on 2/4/15.
  */
-public class VideoUpdateCommand extends HystrixCommand<Void> {
+public class VideoBulkInsertCommand extends HystrixCommand<Void> {
+    private static Logger logger = LoggerFactory.getLogger(VideoBulkInsertCommand.class);
 
     private static DynamicIntProperty semaphoreCount =
-            DynamicPropertyFactory.getInstance().getIntProperty("videoupdate.semaphoreCount", 10);
-    private static Logger logger = LoggerFactory.getLogger(VideoUpdateCommand.class);
-    private Video video;
+            DynamicPropertyFactory.getInstance().getIntProperty("videoBulkInsert.semaphoreCount", 10);
+
+    private List<Video> videos;
     private DEProcessor processor;
 
-    public VideoUpdateCommand(DEProcessor processor, Video video) {
-
-        super(Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey("DecisioningEngine"))
-                .andCommandKey(HystrixCommandKey.Factory.asKey("VideoUpdate"))
+    public VideoBulkInsertCommand(DEProcessor deProcessor, List<Video> videos) {
+        super(HystrixCommand.Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey("DecisioningEngine"))
+                .andCommandKey(HystrixCommandKey.Factory.asKey("VideoBulkInsert"))
                 .andCommandPropertiesDefaults(HystrixCommandProperties.Setter()
                         .withExecutionIsolationStrategy(HystrixCommandProperties.ExecutionIsolationStrategy.SEMAPHORE)
                         .withExecutionIsolationSemaphoreMaxConcurrentRequests(semaphoreCount.get())));
-        this.video = video;
-        this.processor = processor;
+        this.videos = videos;
+        this.processor = deProcessor;
     }
 
     @Override
-    protected Void run() throws Exception {
-        processor.updateVideo(video);
+    protected Void run() throws DeException {
+        processor.insertVideoInBulk(videos);
         return null;
     }
 
     @Override
     protected Void getFallback() throws DeException {
-        throw new DeException(new Throwable("Error updating video"), 500);
+        throw new DeException(new Throwable("Error Inserting video"), 500);
     }
 }

@@ -3,37 +3,16 @@ package com.dailymotion.pixelle.deserver; /**
  */
 
 
-import com.dailymotion.pixelle.deserver.processor.AdUnitProcessor;
-import com.dailymotion.pixelle.deserver.processor.DEProcessor;
-import com.dailymotion.pixelle.deserver.processor.VideoProcessor;
-import com.dailymotion.pixelle.deserver.providers.ESNodeClientProvider;
-import com.dailymotion.pixelle.deserver.servlets.DEServlet;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.servlet.GuiceServletContextListener;
-import com.netflix.hystrix.contrib.metrics.eventstream.HystrixMetricsStreamServlet;
-import com.sun.jersey.guice.JerseyServletModule;
-import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
-import org.elasticsearch.client.Client;
+import com.dailymotion.pixelle.deserver.servlets.DeServletModule;
+import com.google.inject.Module;
+import com.squarespace.jersey2.guice.JerseyGuiceServletContextListener;
 
-public class DEServerContextListener extends GuiceServletContextListener {
+import java.util.Arrays;
+import java.util.List;
+
+public class DEServerContextListener extends JerseyGuiceServletContextListener {
     @Override
-    protected Injector getInjector() {
-        return Guice.createInjector(new JerseyServletModule() {
-            @Override
-            protected void configureServlets() {
-                // Must configure at least one JAX-RS resource or the
-                // server will fail to start.
-                bind(Client.class).toProvider(ESNodeClientProvider.class).asEagerSingleton();
-                bind(AdUnitProcessor.class).asEagerSingleton();
-                bind(VideoProcessor.class).asEagerSingleton();
-                bind(DEProcessor.class).asEagerSingleton();
-                bind(DEServlet.class).asEagerSingleton();
-                bind(HystrixMetricsStreamServlet.class).asEagerSingleton();
-                serve("/hystrix.stream").with(HystrixMetricsStreamServlet.class);
-                // Route all requests through GuiceContainer
-                serve("/*").with(GuiceContainer.class);
-            }
-        });
+    protected List<? extends Module> modules() {
+        return Arrays.asList(new DeServletModule());
     }
 }

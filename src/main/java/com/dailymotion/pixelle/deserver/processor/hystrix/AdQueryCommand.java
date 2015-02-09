@@ -43,12 +43,12 @@ public class AdQueryCommand extends HystrixCommand<List<AdUnitResponse>> {
     }
 
     @Override
-    protected List<AdUnitResponse> run() throws Exception {
+    protected List<AdUnitResponse> run() throws DeException {
         return processor.recommend(sq, positions);
     }
 
     @Override
-    protected List<AdUnitResponse> getFallback() {
+    protected List<AdUnitResponse> getFallback() throws DeException {
         //in future we can do return a fallback adunit here or do something smarter here
         throw new DeException(new Throwable("Error querying adunit"), 500);
     }

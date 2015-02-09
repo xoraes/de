@@ -102,6 +102,11 @@ public class ESIndexTypeFactory {
         builder.startObject("cpc").field("type", "integer").endObject();
         builder.startObject("cpv").field("type", "integer").endObject();
 
+        builder.startObject("clicks").field("type", "float").endObject();
+        builder.startObject("views").field("type", "float").endObject();
+        builder.startObject("impressions").field("type", "float").endObject();
+        builder.startObject("goal_views").field("type", "float").endObject();
+
         builder.startObject("tactic").field("type", "string").field("index", "no").endObject();
         builder.startObject("title").field("type", "string").field("index", "no").endObject();
         builder.startObject("description").field("type", "string").field("index", "no").endObject();
@@ -120,11 +125,6 @@ public class ESIndexTypeFactory {
 
         builder.startObject("duration").field("type", "integer").field("index", "no").endObject();
 
-        builder.startObject("goal_views").field("type", "float").field("index", "no").endObject();
-        builder.startObject("clicks").field("type", "float").field("index", "no").endObject();
-        builder.startObject("views").field("type", "float").field("index", "no").endObject();
-
-        builder.startObject("goal_reached").field("type", "boolean").field("index", "not_analyzed").endObject();
         builder.startObject("paused").field("type", "boolean").field("index", "not_analyzed").endObject();
 
         builder.endObject().endObject().endObject();

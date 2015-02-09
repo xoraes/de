@@ -106,13 +106,13 @@ public class DEProcessor {
     }
 
 
-    public boolean insertAdUnit(AdUnit unit) throws DeException {
-        return adUnitProcessor.insertAdUnit(unit);
+    public void insertAdUnit(AdUnit unit) throws DeException {
+        adUnitProcessor.insertAdUnit(unit);
     }
 
 
-    public boolean updateAdUnit(AdUnit unit) throws DeException {
-        return adUnitProcessor.updateAdUnit(unit);
+    public void updateAdUnit(AdUnit unit) throws DeException {
+        adUnitProcessor.updateAdUnit(unit);
     }
 
 
@@ -131,15 +131,14 @@ public class DEProcessor {
     }
 
 
-    public boolean insertVideo(Video video) throws DeException {
-        return videoProcessor.insertVideo(video);
+    public void insertVideo(Video video) throws DeException {
+        videoProcessor.insertVideo(video);
     }
 
 
-    public boolean updateVideo(Video video) throws DeException {
-        return videoProcessor.updateVideo(video);
+    public void updateVideo(Video video) throws DeException {
+        videoProcessor.updateVideo(video);
     }
-
 
     public ClusterHealthResponse getHealthCheck() throws DeException {
         boolean indexExists = client.admin()
@@ -175,21 +174,20 @@ public class DEProcessor {
     }
 
 
-    public Boolean createAdIndexWithType() throws DeException {
+    public void createIndexWithTypes() throws DeException {
         ImmutableSettings.Builder elasticsearchSettings = ImmutableSettings.settingsBuilder()
                 .put("node.name", DeHelper.getNode())
                 .put("path.data", DeHelper.getDataDir())
                 .put("index.number_of_shards", 1)
                 .put("index.number_of_replicas", 0);
 
-        ESIndexTypeFactory.createIndex(client, DeHelper.getIndex(), elasticsearchSettings.build(), DeHelper.getAdUnitsType());
-        return true;
+        ESIndexTypeFactory.createIndex(client, DeHelper.getIndex(), elasticsearchSettings.build(), DeHelper.getAdUnitsType(), DeHelper.getOrganicVideoType());
     }
 
 
     public boolean deleteIndex() throws DeException {
-        return client.admin().indices().delete(new DeleteIndexRequestBuilder(client.admin().indices(), DeHelper.getIndex())
-                .request()).actionGet().isAcknowledged();
+        DeleteIndexRequestBuilder delIdx = client.admin().indices().prepareDelete(DeHelper.getIndex());
+        return delIdx.execute().actionGet().isAcknowledged();
     }
 
 
@@ -249,5 +247,13 @@ public class DEProcessor {
             }
         }
         return items;
+    }
+
+    public void insertAdUnitsInBulk(List<AdUnit> adUnits) throws DeException {
+        adUnitProcessor.insertAdUnitsInBulk(adUnits);
+    }
+
+    public void insertVideoInBulk(List<Video> videos) throws DeException {
+        videoProcessor.insertVideoInBulk(videos);
     }
 }

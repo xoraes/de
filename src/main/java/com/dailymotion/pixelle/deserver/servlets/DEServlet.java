@@ -10,13 +10,16 @@ import com.dailymotion.pixelle.deserver.processor.DEProcessor;
 import com.dailymotion.pixelle.deserver.processor.DeException;
 import com.dailymotion.pixelle.deserver.processor.DeHelper;
 import com.dailymotion.pixelle.deserver.processor.hystrix.*;
-import com.google.inject.Inject;
 import org.apache.commons.lang.StringUtils;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
+import org.glassfish.jersey.server.ManagedAsync;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import javax.ws.rs.*;
+import javax.ws.rs.container.AsyncResponse;
+import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
@@ -64,8 +67,8 @@ public class DEServlet {
 
     @POST
     @Path("/index")
-    public Response createAdIndexWithType() throws DeException {
-        deProcessor.createAdIndexWithType();
+    public Response createIndexWithTypes() throws DeException {
+        deProcessor.createIndexWithTypes();
         return Response.noContent().build();
     }
 
@@ -114,36 +117,68 @@ public class DEServlet {
         return Response.ok(i).build();
     }
 
+    @POST
+    @Path("/adunits")
+    @ManagedAsync
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.TEXT_PLAIN)
+    public void insertAdUnitsBulk(List<AdUnit> adUnits, @Suspended final AsyncResponse ar) throws DeException {
+        ar.resume(new AdUnitBulkInsertCommand(deProcessor, adUnits).execute());
+    }
+
     @PUT
     @Path("/adunit")
+    @ManagedAsync
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response update(AdUnit unit) throws DeException {
-        new AdUpdateCommand(deProcessor, unit).execute();
-        return Response.noContent().build();
+    @Produces(MediaType.TEXT_PLAIN)
+    public void update(AdUnit unit, @Suspended final AsyncResponse ar) throws DeException {
+        ar.resume(new AdUpdateCommand(deProcessor, unit).execute());
     }
 
     @POST
     @Path("/adunit")
+    @ManagedAsync
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response insert(AdUnit unit) throws DeException {
-        new AdInsertCommand(deProcessor, unit).execute();
-        return Response.noContent().build();
+    @Produces(MediaType.TEXT_PLAIN)
+    public void insert(AdUnit unit, @Suspended final AsyncResponse ar) throws DeException {
+        ar.resume(new AdInsertCommand(deProcessor, unit).execute());
     }
 
     @PUT
     @Path("/video")
+    @ManagedAsync
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response update(Video video) throws DeException {
-        new VideoUpdateCommand(deProcessor, video).execute();
-        return Response.noContent().build();
+    @Produces(MediaType.TEXT_PLAIN)
+    public void update(Video video, @Suspended final AsyncResponse ar) throws DeException {
+        ar.resume(new VideoUpdateCommand(deProcessor, video).execute());
+    }
+
+    @PUT
+    @Path("/videos")
+    @ManagedAsync
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.TEXT_PLAIN)
+    public void updateBulk(List<Video> videos, @Suspended final AsyncResponse ar) throws DeException {
+        ar.resume(new VideoBulkInsertCommand(deProcessor, videos).execute());
     }
 
     @POST
+    @Path("/videos")
+    @ManagedAsync
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.TEXT_PLAIN)
+    public void insertVideosBulk(List<Video> videos, @Suspended final AsyncResponse ar) throws DeException {
+        ar.resume(new VideoBulkInsertCommand(deProcessor, videos).execute());
+    }
+
+
+    @POST
+    @ManagedAsync
     @Path("/video")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response insert(Video video) throws DeException {
-        new VideoInsertCommand(deProcessor, video).execute();
-        return Response.noContent().build();
+    @Produces(MediaType.TEXT_PLAIN)
+    public void insert(Video video, @Suspended final AsyncResponse ar) throws DeException {
+        ar.resume(new VideoInsertCommand(deProcessor, video).execute());
     }
 
     @GET

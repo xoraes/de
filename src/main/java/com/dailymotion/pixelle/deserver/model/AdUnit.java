@@ -90,8 +90,6 @@ public class AdUnit {
     private String delivery;
     @JsonProperty("resizable_thumbnail_url")
     private String resizableThumbnailUrl;
-    @JsonProperty("goal_reached")
-    private Boolean goalReached;
     @JsonProperty("paused")
     private Boolean paused;
 
@@ -373,14 +371,6 @@ public class AdUnit {
 
     public void setResizableThumbnailUrl(String resizableThumbnailUrl) {
         this.resizableThumbnailUrl = resizableThumbnailUrl;
-    }
-
-    public Boolean getGoalReached() {
-        return goalReached;
-    }
-
-    public void setGoalReached(Boolean goalReached) {
-        this.goalReached = goalReached;
     }
 
     public Boolean getPaused() {

@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Created by n.dhupia on 12/1/14.
  */
-public class AdInsertCommand extends HystrixCommand<Boolean> {
+public class AdInsertCommand extends HystrixCommand<Void> {
 
     private static DynamicIntProperty semaphoreCount =
             DynamicPropertyFactory.getInstance().getIntProperty("adinsert.semaphoreCount", 2);
@@ -39,13 +39,13 @@ public class AdInsertCommand extends HystrixCommand<Boolean> {
     }
 
     @Override
-    protected Boolean run() throws Exception {
-        Boolean isCreated = processor.insertAdUnit(unit);
-        return isCreated;
+    protected Void run() throws Exception {
+        processor.insertAdUnit(unit);
+        return null;
     }
 
     @Override
-    protected Boolean getFallback() {
+    protected Void getFallback() throws DeException {
         throw new DeException(new Throwable("Error inserting adunit"), 500);
     }
 

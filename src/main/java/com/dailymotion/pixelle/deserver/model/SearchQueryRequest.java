@@ -37,6 +37,7 @@ public class SearchQueryRequest {
     private String timeTable;
     @JsonIgnore
     private Boolean debugEnabled;
+
     public SearchQueryRequest() {
         setDebugEnabled(false);
     }

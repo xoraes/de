@@ -3,19 +3,35 @@ package com.dailymotion.pixelle.deserver; /**
  */
 
 import com.dailymotion.pixelle.deserver.processor.DeHelper;
+import com.dailymotion.pixelle.deserver.servlets.DEServlet;
+import com.dailymotion.pixelle.deserver.servlets.DeServletModule;
+import com.google.inject.Injector;
 import com.google.inject.servlet.GuiceFilter;
 import com.netflix.config.ConfigurationManager;
 import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.hystrix.contrib.servopublisher.HystrixServoMetricsPublisher;
 import com.netflix.hystrix.strategy.HystrixPlugins;
+import com.squarespace.jersey2.guice.BootstrapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.DefaultServlet;
+import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
+import org.glassfish.hk2.api.ServiceLocator;
+import org.glassfish.jersey.media.multipart.MultiPartFeature;
+import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.servlet.ServletContainer;
+
+import javax.servlet.DispatcherType;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.EnumSet;
 
 public class StartServer {
 
     public static void main(String[] args) throws Exception {
+
         System.setProperty(DynamicPropertyFactory.ENABLE_JMX, "true");
         System.setProperty("archaius.configurationSource.additionalUrls", "file:///etc/de.conf");
         String env = System.getProperty("env");
@@ -24,27 +40,44 @@ public class StartServer {
         }
         ConfigurationManager.loadCascadedPropertiesFromResources("de");
         HystrixPlugins.getInstance().registerMetricsPublisher(HystrixServoMetricsPublisher.getInstance());
-        // Create the server.
+
+
+        ServiceLocator locator = BootstrapUtils.newServiceLocator();
+        Injector injector = BootstrapUtils.newInjector(locator, Arrays.asList(new DeServletModule()));
+
+        BootstrapUtils.install(locator);
+
+        ResourceConfig config = new ResourceConfig();
+
+        config.register(MultiPartFeature.class);
+        config.register(DEServlet.class);
+
+
+        ServletContainer servletContainer = new ServletContainer(config);
+
+        ServletHolder sh = new ServletHolder(servletContainer);
         Server server = new Server(DeHelper.getPort());
+        ServletContextHandler context = new ServletContextHandler(server, "/");
+        context.addServlet(DefaultServlet.class, "/");
 
-        // Create a servlet context and add the jersey servlet.
-        ServletContextHandler sch = new ServletContextHandler(server, "/");
-        // Add our Guice listener that includes our bindings
-        sch.addEventListener(new DEServerContextListener());
+        FilterHolder filterHolder = new FilterHolder(GuiceFilter.class);
+        context.addFilter(filterHolder, "/*",
+                EnumSet.allOf(DispatcherType.class));
 
-        // Then add GuiceFilter and configure the server to
-        // reroute all requests through this filter.
-        sch.addFilter(GuiceFilter.class, "/*", null);
+        context.addServlet(sh, "/*");
 
 
-        // Must add DefaultServlet for embedded Jetty.
-        // Failing to do this will cause 404 errors.
-        // This is not needed if web.xml is used instead.
-        sch.addServlet(DefaultServlet.class, "/");
+        //context.addEventListener(new DEServerContextListener());
 
-        // Start the server
-        server.start();
-        server.join();
+
+        server.setHandler(context);
+
+        try {
+            server.start();
+            server.join();
+        } catch (Exception err) {
+            throw new IOException(err);
+        }
+
     }
 }
-

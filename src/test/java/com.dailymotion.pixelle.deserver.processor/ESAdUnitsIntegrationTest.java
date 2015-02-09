@@ -120,7 +120,7 @@ public class ESAdUnitsIntegrationTest {
             if (json != null) {
                 //deserialize to adunit
                 unit = mapper.readValue(json, AdUnit.class);
-                Assert.assertTrue(new AdInsertCommand(es, unit).execute());
+                new AdInsertCommand(es, unit).execute();
             }
 
         }
@@ -323,8 +323,12 @@ public class ESAdUnitsIntegrationTest {
     @Test
     public void testGoalReached() throws Exception {
         Map m1 = createAdUnitDataMap("1", "1");
-        m1.put("goal_reached", true);
-        loadAdUnitMaps(m1);
+        m1.put("views", 1);
+        m1.put("goal_views", 1);
+        Map m2 = createAdUnitDataMap("2", "2");
+        m2.put("views", 1);
+        m2.put("goal_views", 2);
+        loadAdUnitMaps(m1, m2);
         SearchQueryRequest sq = new SearchQueryRequest();
         sq.setTime("2014-12-31T15:00:00-0800");
         sq.setCategories(new ArrayList(Arrays.asList("cat1")));
@@ -337,8 +341,8 @@ public class ESAdUnitsIntegrationTest {
         ItemsResponse i = new QueryCommand(es, sq, 10, null).execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
-        Assert.assertTrue(i.getResponse().size() == 0);
-        deleteAdUnitsByIds("1");
+        Assert.assertTrue(i.getResponse().size() == 1);
+        deleteAdUnitsByIds("1", "2");
     }
 
     @Test
