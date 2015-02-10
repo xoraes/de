@@ -18,11 +18,7 @@
         </encoder>
     </appender>
     <root level="${loglevel}">
-        <if condition='property("logback.syslog.enabled").equalsIgnoreCase("true")'>
-            <then>
-                <appender-ref ref="SYSLOG"/>
-            </then>
-        </if>
+        <appender-ref ref="SYSLOG"/>
         <appender-ref ref="STDOUT"/>
     </root>
 </configuration>
