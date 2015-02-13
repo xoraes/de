@@ -181,18 +181,10 @@ public class VideoProcessor {
         BulkResponse bulkResponse;
         try {
             bulkResponse = bulkRequest.execute().actionGet();
-        } catch (ElasticsearchException e) {
+        } catch (Exception e) {
             throw new DeException(e, 500);
         }
         if (bulkResponse != null && bulkResponse.hasFailures()) {
-            logger.error("Error Bulk loading:" + videos.size() + " videos");
-            while (bulkResponse.iterator().hasNext()) {
-                BulkItemResponse br = bulkResponse.iterator().next();
-                if (br.isFailed()) {
-                    logger.error(br.getFailureMessage());
-                }
-
-            }
             // process failures by iterating through each bulk response item
             throw new DeException(new Throwable("Error inserting videos in Bulk"), 500);
         }
@@ -233,10 +225,10 @@ public class VideoProcessor {
                 .add(FilterBuilders.termFilter(CHANNEL_TIER, GOLD), ScoreFunctionBuilders.weightFactorFunction(goldPartnerWeight.getValue()))
                 .add(FilterBuilders.termFilter(CHANNEL_TIER, SILVER), ScoreFunctionBuilders.weightFactorFunction(silverPartnerWeight.getValue()))
                 .add(FilterBuilders.termFilter(CHANNEL_TIER, BRONZE), ScoreFunctionBuilders.weightFactorFunction(bronzePartnerWeight.getValue()))
+                .add(ScoreFunctionBuilders.randomFunction(sq.getTime()))
                 .boostMode(boostMode.getValue())
                 .maxBoost(maxBoost.getValue())
                 .scoreMode(scoreMode.getValue());
-
 
         SearchRequestBuilder srb1 = client.prepareSearch(DeHelper.getIndex())
                 .setTypes(DeHelper.getOrganicVideoType())
