@@ -37,13 +37,13 @@ public class AdUpdateCommand extends HystrixCommand<Void> {
     }
 
     @Override
-    protected Void run() throws DeException {
+    protected Void run() {
         processor.updateAdUnit(unit);
         return null;
     }
 
     @Override
-    protected Void getFallback() throws DeException {
+    protected Void getFallback() {
         throw new DeException(new Throwable("Error updating adunit"), 500);
     }
 }

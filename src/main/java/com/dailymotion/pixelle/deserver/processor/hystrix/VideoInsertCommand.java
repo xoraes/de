@@ -35,13 +35,13 @@ public class VideoInsertCommand extends HystrixCommand<Void> {
     }
 
     @Override
-    protected Void run() throws DeException {
+    protected Void run() {
         processor.insertVideo(video);
         return null;
     }
 
     @Override
-    protected Void getFallback() throws DeException {
+    protected Void getFallback() {
         throw new DeException(new Throwable("Error inserting video"), 500);
     }
 

@@ -75,7 +75,6 @@ public class AdUnitProcessor {
             fb.must(FilterBuilders.termsFilter("categories", DeHelper.toLowerCase(sq.getCategories())));
             fb.must(FilterBuilders.termsFilter("languages", DeHelper.toLowerCase(sq.getLanguages())));
             fb.must(FilterBuilders.termsFilter("locations", DeHelper.toLowerCase(sq.getLocations())));
-            fb.mustNot(FilterBuilders.termFilter("goal_reached", true));
             fb.mustNot(FilterBuilders.termFilter("paused", true));
             fb.must(FilterBuilders.rangeFilter("start_date").lte(sq.getTime()));
             fb.must(FilterBuilders.rangeFilter("end_date").gte(sq.getTime()));
@@ -98,7 +97,9 @@ public class AdUnitProcessor {
                 fb.mustNot(FilterBuilders.termsFilter("excluded_categories", DeHelper.toLowerCase(sq.getCategories())));
             }
 
-            fb.must(FilterBuilders.scriptFilter("doc['goal_views'].value == null || doc['views'].value == null || doc['views'].value < doc['goal_views'].value"));
+            fb.must(FilterBuilders.orFilter(FilterBuilders.missingFilter("goal_views"),
+                    FilterBuilders.missingFilter("views"),
+                    FilterBuilders.scriptFilter("doc['views'].value < doc['goal_views'].value").lang("expression")));
 
             QueryBuilder qb = QueryBuilders.functionScoreQuery(fb)
                     .add(ScoreFunctionBuilders.randomFunction((int) (Math.random() * 100)));
@@ -110,8 +111,8 @@ public class AdUnitProcessor {
                     .setQuery(qb)
                     .setSize(positions * 4);
 
-
             logger.info(srb1.toString());
+
 
             SearchResponse searchResponse = srb1.execute().actionGet();
             adUnitResponses = new ArrayList<AdUnitResponse>();

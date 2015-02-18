@@ -37,13 +37,13 @@ public class VideoUpdateCommand extends HystrixCommand<Void> {
     }
 
     @Override
-    protected Void run() throws Exception {
+    protected Void run() {
         processor.updateVideo(video);
         return null;
     }
 
     @Override
-    protected Void getFallback() throws DeException {
+    protected Void getFallback() {
         throw new DeException(new Throwable("Error updating video"), 500);
     }
 }

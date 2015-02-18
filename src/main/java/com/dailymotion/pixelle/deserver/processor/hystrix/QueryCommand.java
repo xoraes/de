@@ -3,7 +3,6 @@ package com.dailymotion.pixelle.deserver.processor.hystrix;
 import com.dailymotion.pixelle.deserver.model.ItemsResponse;
 import com.dailymotion.pixelle.deserver.model.SearchQueryRequest;
 import com.dailymotion.pixelle.deserver.processor.DEProcessor;
-import com.dailymotion.pixelle.deserver.processor.DeException;
 import com.netflix.config.DynamicIntProperty;
 import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.hystrix.HystrixCommand;
@@ -46,7 +45,7 @@ public class QueryCommand extends HystrixCommand<ItemsResponse> {
     }
 
     @Override
-    protected ItemsResponse run() throws DeException {
+    protected ItemsResponse run() {
         return processor.recommend(sq, positions, allowedTypes);
     }
 }

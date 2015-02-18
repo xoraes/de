@@ -43,7 +43,7 @@ public class AdQueryCommand extends HystrixCommand<List<AdUnitResponse>> {
     }
 
     @Override
-    protected List<AdUnitResponse> run() throws DeException {
+    protected List<AdUnitResponse> run() {
         return processor.recommend(sq, positions);
     }
 

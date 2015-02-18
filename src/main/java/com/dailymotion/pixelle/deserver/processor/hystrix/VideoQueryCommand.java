@@ -40,12 +40,12 @@ public class VideoQueryCommand extends HystrixCommand<List<VideoResponse>> {
     }
 
     @Override
-    protected List<VideoResponse> run() throws Exception {
+    protected List<VideoResponse> run() {
         return processor.recommend(sq, positions, null);
     }
 
     @Override
-    protected List<VideoResponse> getFallback() throws DeException {
+    protected List<VideoResponse> getFallback() {
         //in future we can do return a fallback adunit here or do something smarter here
         throw new DeException(new Throwable("Error querying video"), 500);
     }

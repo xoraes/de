@@ -44,7 +44,7 @@ project.ext {
     deserver = '0.1.0'
 }
 dependencies {
-    compile 'org.elasticsearch:elasticsearch:1.4.2'
+    compile 'org.elasticsearch:elasticsearch:1.4.3'
     compile 'com.google.guava:guava:18.0'
     compile 'org.eclipse.jetty:jetty-servlet:9.2.7.v20150116'
     compile 'org.eclipse.jetty:jetty-server:9.2.7.v20150116'
@@ -72,6 +72,8 @@ dependencies {
     compile 'com.netflix.hystrix:hystrix-core:1.4.0-RC6'
     compile 'com.netflix.hystrix:hystrix-metrics-event-stream:1.4.0-RC6'
     compile 'com.netflix.hystrix:hystrix-servo-metrics-publisher:1.4.0-RC6'
+    compile 'com.netflix.servo:servo-core:0.8.3'
+
     testCompile 'junit:junit:latest.release'
 }
 

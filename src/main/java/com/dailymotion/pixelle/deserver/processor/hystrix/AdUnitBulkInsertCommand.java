@@ -37,13 +37,13 @@ public class AdUnitBulkInsertCommand extends HystrixCommand<Void> {
     }
 
     @Override
-    protected Void run() throws DeException {
+    protected Void run() {
         processor.insertAdUnitsInBulk(adUnits);
         return null;
     }
 
     @Override
-    protected Void getFallback() throws DeException {
+    protected Void getFallback() {
         throw new DeException(new Throwable("Error Inserting adunits"), 500);
     }
 }

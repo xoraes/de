@@ -95,9 +95,8 @@ public class ESAdUnitsIntegrationTest {
         m.put("video_id", "video_id");
         m.put("status", "active");
         m.put("duration", 123);
-        m.put("goal_views", 123);
         m.put("cpc", 10);
-        m.put("goal_reached", false);
+        m.put("cpv", 10);
         return m;
     }
 
@@ -170,6 +169,7 @@ public class ESAdUnitsIntegrationTest {
         Assert.assertTrue(adunit.getThumbnailUrl().equals("thumbnail_url"));
         Assert.assertTrue(adunit.getResizableThumbnailUrl().equals("resizable_thumbnail_url"));
         Assert.assertTrue(adunit.getTacticId().equals("1"));
+        Assert.assertTrue(adunit.getCpv() == 10);
 
         deleteAdUnitsByIds("1");
     }
@@ -326,7 +326,7 @@ public class ESAdUnitsIntegrationTest {
         m1.put("views", 1);
         m1.put("goal_views", 1);
         Map m2 = createAdUnitDataMap("2", "2");
-        m2.put("views", 1);
+        m2.put("views", 2);
         m2.put("goal_views", 2);
         loadAdUnitMaps(m1, m2);
         SearchQueryRequest sq = new SearchQueryRequest();
@@ -341,8 +341,39 @@ public class ESAdUnitsIntegrationTest {
         ItemsResponse i = new QueryCommand(es, sq, 10, null).execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
-        Assert.assertTrue(i.getResponse().size() == 1);
+        Assert.assertTrue(i.getResponse().size() == 0);
         deleteAdUnitsByIds("1", "2");
+    }
+
+    @Test
+    public void testGoalReachedTest2() throws Exception {
+        Map m1 = createAdUnitDataMap("1", "1");
+        m1.put("goal_views", 1);
+        Map m2 = createAdUnitDataMap("2", "2");
+        m2.put("views", 1);
+        m2.put("goal_views", 2);
+        Map m3 = createAdUnitDataMap("3", "3");
+        m3.put("views", 3);
+        m3.put("goal_views", 2);
+
+        Map m4 = createAdUnitDataMap("4", "4");
+        m4.put("views", 3);
+
+        loadAdUnitMaps(m1, m2, m3, m4);
+        SearchQueryRequest sq = new SearchQueryRequest();
+        sq.setTime("2014-12-31T15:00:00-0800");
+        sq.setCategories(new ArrayList(Arrays.asList("cat1")));
+        sq.setDevice("dev1");
+        sq.setFormat("fmt1");
+        sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
+        sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
+
+        System.out.println("Search Query ====>" + sq.toString());
+        ItemsResponse i = new QueryCommand(es, sq, 10, null).execute();
+        System.out.println("Response ====>:" + i.toString());
+        Assert.assertNotNull(i);
+        Assert.assertTrue(i.getResponse().size() == 3);
+        deleteAdUnitsByIds("1", "2", "3", "4");
     }
 
     @Test
