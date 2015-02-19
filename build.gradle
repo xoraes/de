@@ -49,12 +49,12 @@ dependencies {
     compile 'org.eclipse.jetty:jetty-servlet:9.2.7.v20150116'
     compile 'org.eclipse.jetty:jetty-server:9.2.7.v20150116'
     compile 'com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.5.0'
-    compile 'org.glassfish.jersey.core:jersey-server:2.15'
     compile 'com.squarespace.jersey2-guice:jersey2-guice:0.5'
     compile 'com.google.inject.extensions:guice-servlet:4.0-beta5'
-    compile 'org.glassfish.jersey.media:jersey-media-json-jackson:2.15'
-    compile 'org.glassfish.jersey.media:jersey-media-multipart:2.15'
-    compile 'org.glassfish.jersey.containers:jersey-container-servlet:2.15'
+    compile 'org.glassfish.jersey.core:jersey-server:2.16'
+    compile 'org.glassfish.jersey.media:jersey-media-json-jackson:2.16'
+    compile 'org.glassfish.jersey.media:jersey-media-multipart:2.16'
+    compile 'org.glassfish.jersey.containers:jersey-container-servlet:2.16'
 
     compile 'org.glassfish.jersey.core:jersey-server:2.15'
 
