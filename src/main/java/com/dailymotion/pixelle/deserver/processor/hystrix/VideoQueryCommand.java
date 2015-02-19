@@ -2,7 +2,6 @@ package com.dailymotion.pixelle.deserver.processor.hystrix;
 
 import com.dailymotion.pixelle.deserver.model.SearchQueryRequest;
 import com.dailymotion.pixelle.deserver.model.VideoResponse;
-import com.dailymotion.pixelle.deserver.processor.DeException;
 import com.dailymotion.pixelle.deserver.processor.VideoProcessor;
 import com.netflix.config.DynamicIntProperty;
 import com.netflix.config.DynamicPropertyFactory;
@@ -42,11 +41,5 @@ public class VideoQueryCommand extends HystrixCommand<List<VideoResponse>> {
     @Override
     protected List<VideoResponse> run() {
         return processor.recommend(sq, positions, null);
-    }
-
-    @Override
-    protected List<VideoResponse> getFallback() {
-        //in future we can do return a fallback adunit here or do something smarter here
-        throw new DeException(new Throwable("Error querying video"), 500);
     }
 }

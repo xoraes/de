@@ -33,8 +33,8 @@ public class ESTestNodeClientProvider implements Provider<Client> {
                 .node()
                 .client();
 
-        //createIndex accepts multiple types name delimited by ,
-        ESIndexTypeFactory.createIndex(client, DeHelper.getIndex(), elasticsearchSettings.build(), DeHelper.getAdUnitsType(), DeHelper.getOrganicVideoType());
+        ESIndexTypeFactory.createIndex(client, DeHelper.getPromotedIndex(), elasticsearchSettings.build(), DeHelper.getAdUnitsType());
+        ESIndexTypeFactory.createIndex(client, DeHelper.getOrganicIndex(), elasticsearchSettings.build(), DeHelper.getVideosType());
         return client;
     }
 }

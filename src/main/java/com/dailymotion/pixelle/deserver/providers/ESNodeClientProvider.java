@@ -15,15 +15,18 @@ import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
  * Created by n.dhupia on 10/29/14.
  */
 public class ESNodeClientProvider implements Provider<Client> {
-    private static DynamicBooleanProperty resetIndex =
-            DynamicPropertyFactory.getInstance().getBooleanProperty("index.pixelle.reset", false);
+    private static DynamicBooleanProperty resetOrganic =
+            DynamicPropertyFactory.getInstance().getBooleanProperty("index.organic.reset", false);
+    private static DynamicBooleanProperty resetPromoted =
+            DynamicPropertyFactory.getInstance().getBooleanProperty("index.promoted.reset", false);
+
     private static Logger logger = LoggerFactory.getLogger(ESNodeClientProvider.class);
 
     public Client get() {
         ImmutableSettings.Builder elasticsearchSettings = ImmutableSettings.settingsBuilder()
                 .put("node.name", DeHelper.getNode())
                 .put("path.data", DeHelper.getDataDir())
-                .put("index.number_of_shards", 1)
+                .put("index.number_of_shards", 3)
                 .put("index.number_of_replicas", 0);
 
         Client client = nodeBuilder()
@@ -34,15 +37,19 @@ public class ESNodeClientProvider implements Provider<Client> {
                 .node()
                 .client();
 
-        if (resetIndex.get()
-                && client.admin().indices().prepareExists(DeHelper.getIndex()).execute().actionGet().isExists()
-                && client.admin().indices().prepareDelete(DeHelper.getIndex()).execute().actionGet().isAcknowledged()) {
-            logger.info("successfully deleted index: " + DeHelper.getIndex());
+        if (resetOrganic.get()
+                && client.admin().indices().prepareExists(DeHelper.getOrganicIndex()).execute().actionGet().isExists()
+                && client.admin().indices().prepareDelete(DeHelper.getOrganicIndex()).execute().actionGet().isAcknowledged()) {
+            logger.info("successfully deleted index: " + DeHelper.getOrganicIndex());
         }
-
-        //createIndex accepts multiple types name delimited by ,
+        if (resetPromoted.get()
+                && client.admin().indices().prepareExists(DeHelper.getPromotedIndex()).execute().actionGet().isExists()
+                && client.admin().indices().prepareDelete(DeHelper.getPromotedIndex()).execute().actionGet().isAcknowledged()) {
+            logger.info("successfully deleted index: " + DeHelper.getPromotedIndex());
+        }
         //creates index only if it does not exist
-        ESIndexTypeFactory.createIndex(client, DeHelper.getIndex(), elasticsearchSettings.build(), DeHelper.getAdUnitsType(), DeHelper.getOrganicVideoType());
+        ESIndexTypeFactory.createIndex(client, DeHelper.getPromotedIndex(), elasticsearchSettings.build(), DeHelper.getAdUnitsType());
+        ESIndexTypeFactory.createIndex(client, DeHelper.getOrganicIndex(), elasticsearchSettings.build(), DeHelper.getVideosType());
         return client;
     }
 }

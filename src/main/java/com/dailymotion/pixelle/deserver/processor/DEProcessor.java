@@ -3,24 +3,17 @@ package com.dailymotion.pixelle.deserver.processor;
 import com.dailymotion.pixelle.deserver.model.*;
 import com.dailymotion.pixelle.deserver.processor.hystrix.AdQueryCommand;
 import com.dailymotion.pixelle.deserver.processor.hystrix.VideoQueryCommand;
-import com.dailymotion.pixelle.deserver.providers.ESIndexTypeFactory;
 import com.google.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
-import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequestBuilder;
-import org.elasticsearch.action.search.SearchRequestBuilder;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.settings.ImmutableSettings;
-import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.sort.SortOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 /**
  * Created by n.dhupia on 12/10/14.
@@ -34,9 +27,9 @@ public class DEProcessor {
 
     @Inject
     public DEProcessor(Client esClient, AdUnitProcessor adUnitProcessor, VideoProcessor videoProcessor) {
-        this.client = esClient;
-        this.adUnitProcessor = adUnitProcessor;
-        this.videoProcessor = videoProcessor;
+        client = esClient;
+        DEProcessor.adUnitProcessor = adUnitProcessor;
+        DEProcessor.videoProcessor = videoProcessor;
     }
 
 
@@ -52,7 +45,6 @@ public class DEProcessor {
             ads = new AdQueryCommand(adUnitProcessor, sq, positions).execute();
             itemsResponse.setResponse(ads);
             return itemsResponse;
-
         }
 
         if (at.length == 1 && StringUtils.containsIgnoreCase(at[0], "promoted")) {
@@ -64,6 +56,7 @@ public class DEProcessor {
 
         if (at.length == 1 && StringUtils.containsIgnoreCase(at[0], "organic")) {
             targetedVideos = new VideoQueryCommand(videoProcessor, sq, positions).execute();
+
             if (targetedVideos != null && targetedVideos.size() >= positions) {
 
                 itemsResponse.setResponse(targetedVideos);
@@ -80,8 +73,21 @@ public class DEProcessor {
                 && StringUtils.containsIgnoreCase(allowedTypes, "promoted")
                 && StringUtils.containsIgnoreCase(allowedTypes, "organic")) {
 
-            ads = new AdQueryCommand(adUnitProcessor, sq, positions).execute();
-            targetedVideos = new VideoQueryCommand(videoProcessor, sq, positions).execute();
+            Future<List<AdUnitResponse>> adsFuture;
+            Future<List<VideoResponse>> targetedVideosFuture;
+
+            adsFuture = new AdQueryCommand(adUnitProcessor, sq, positions).queue();
+            targetedVideosFuture = new VideoQueryCommand(videoProcessor, sq, positions).queue();
+
+            try {
+                ads = adsFuture.get();
+                targetedVideos = targetedVideosFuture.get();
+            } catch (InterruptedException e) {
+                throw new DeException(e, 500);
+            } catch (ExecutionException e) {
+                throw new DeException(e, 500);
+            }
+
             //if we have enough ads and videos, merge and send
             if (!DeHelper.isEmptyList(ads) && !DeHelper.isEmptyList(targetedVideos) && ads.size() + targetedVideos.size() >= positions) {
                 mergedList = mergeAndFillList(ads, targetedVideos, null, positions);
@@ -141,31 +147,37 @@ public class DEProcessor {
     }
 
     public ClusterHealthResponse getHealthCheck() throws DeException {
-        boolean indexExists = client.admin()
+        boolean adIndexExists = client.admin()
                 .indices()
-                .prepareExists(DeHelper.getIndex())
+                .prepareExists(DeHelper.getPromotedIndex())
+                .execute()
+                .actionGet()
+                .isExists();
+        boolean videoIndexExists = client.admin()
+                .indices()
+                .prepareExists(DeHelper.getOrganicIndex())
                 .execute()
                 .actionGet()
                 .isExists();
         boolean adUnitTypeExists = client.admin()
                 .indices()
-                .prepareTypesExists(DeHelper.getIndex())
+                .prepareTypesExists(DeHelper.getPromotedIndex())
                 .setTypes(DeHelper.getAdUnitsType())
                 .execute()
                 .actionGet()
                 .isExists();
         boolean videoTypeExists = client.admin()
                 .indices()
-                .prepareTypesExists(DeHelper.getIndex())
-                .setTypes(DeHelper.getOrganicVideoType())
+                .prepareTypesExists(DeHelper.getOrganicIndex())
+                .setTypes(DeHelper.getVideosType())
                 .execute()
                 .actionGet()
                 .isExists();
 
-        if (indexExists && adUnitTypeExists && videoTypeExists) {
+        if (adIndexExists && videoIndexExists && adUnitTypeExists && videoTypeExists) {
             return client.admin()
                     .cluster()
-                    .prepareHealth(DeHelper.getIndex())
+                    .prepareHealth(DeHelper.getPromotedIndex(), DeHelper.getOrganicIndex())
                     .execute()
                     .actionGet();
         } else {
@@ -174,53 +186,11 @@ public class DEProcessor {
     }
 
 
-    public void createIndexWithTypes() throws DeException {
-        ImmutableSettings.Builder elasticsearchSettings = ImmutableSettings.settingsBuilder()
-                .put("node.name", DeHelper.getNode())
-                .put("path.data", DeHelper.getDataDir())
-                .put("index.number_of_shards", 1)
-                .put("index.number_of_replicas", 0);
-
-        ESIndexTypeFactory.createIndex(client, DeHelper.getIndex(), elasticsearchSettings.build(), DeHelper.getAdUnitsType(), DeHelper.getOrganicVideoType());
-    }
-
-
-    public boolean deleteIndex() throws DeException {
-        DeleteIndexRequestBuilder delIdx = client.admin().indices().prepareDelete(DeHelper.getIndex());
-        return delIdx.execute().actionGet().isAcknowledged();
-    }
-
-
     public boolean deleteById(String indexName, String type, String id) throws DeException {
         if (StringUtils.isBlank(indexName) || StringUtils.isBlank(type) || StringUtils.isBlank(id)) {
             return false;
         }
         return client.prepareDelete(indexName, type, id).execute().actionGet().isFound();
-    }
-
-
-    public String getLastUpdatedTimeStamp(String type) throws DeException {
-        if (StringUtils.isBlank(type)) {
-            throw new DeException(new Throwable("Type cannot be blank"), 400);
-        }
-        final String UPDATED = "_updated";
-
-        QueryBuilder qb = QueryBuilders.matchAllQuery();
-
-        SearchRequestBuilder srb1 = client.prepareSearch(DeHelper.getIndex())
-                .setTypes(type)
-                .setSearchType(SearchType.QUERY_AND_FETCH)
-                .setQuery(qb)
-                .setSize(1)
-                .addSort(UPDATED, SortOrder.DESC)
-                .addField(UPDATED);
-        SearchResponse searchResponse = srb1.execute().actionGet();
-
-        if (searchResponse != null && searchResponse.getHits() != null && searchResponse.getHits().getHits().length == 1) {
-            return searchResponse.getHits().getHits()[0].field(UPDATED).getValue();
-        }
-
-        return ZEROTIME;
     }
 
     public List<? extends ItemsResponse> mergeAndFillList(final List<AdUnitResponse> ads, final List<VideoResponse> targetedVideos, final List<VideoResponse> untargetedVideos, final Integer positions) {
@@ -255,5 +225,12 @@ public class DEProcessor {
 
     public void insertVideoInBulk(List<Video> videos) throws DeException {
         videoProcessor.insertVideoInBulk(videos);
+    }
+
+    protected void deleteIndex(String indexName) {
+        if (client.admin().indices().prepareExists(indexName).execute().actionGet().isExists()
+                && client.admin().indices().prepareDelete(indexName).execute().actionGet().isAcknowledged()) {
+            logger.info("successfully deleted index: " + DeHelper.getPromotedIndex());
+        }
     }
 }

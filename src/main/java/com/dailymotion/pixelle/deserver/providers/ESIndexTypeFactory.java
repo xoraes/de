@@ -20,7 +20,7 @@ public class ESIndexTypeFactory {
     private static Logger logger = LoggerFactory.getLogger(ESIndexTypeFactory.class);
     private static Injector injector;
 
-    public static void createIndex(Client client, String indexName, Settings settings, String... types) throws DeException {
+    public static void createIndex(Client client, String indexName, Settings settings, String typeName) throws DeException {
 
         boolean ack = false;
         try {
@@ -39,30 +39,30 @@ public class ESIndexTypeFactory {
                     logger.info("Index already exists ! Not re-creating");
                 }
             }
-            for (String typeName : types) {
-                if (!client.admin().indices()
-                        .prepareTypesExists(indexName)
-                        .setTypes(typeName)
+
+            if (!client.admin().indices()
+                    .prepareTypesExists(indexName)
+                    .setTypes(typeName)
+                    .execute()
+                    .actionGet()
+                    .isExists()) {
+
+                ack = client.admin()
+                        .indices()
+                        .preparePutMapping(indexName)
+                        .setType(typeName)
+                        .setSource(createMapping(typeName))
                         .execute()
                         .actionGet()
-                        .isExists()) {
+                        .isAcknowledged();
 
-                    ack = client.admin()
-                            .indices()
-                            .preparePutMapping(indexName)
-                            .setType(typeName)
-                            .setSource(createMapping(typeName))
-                            .execute()
-                            .actionGet()
-                            .isAcknowledged();
-
-                    if (ack) {
-                        logger.info("type creation succeeded");
-                    }
-                } else {
-                    logger.info("type adready exists");
+                if (ack) {
+                    logger.info("type creation succeeded");
                 }
+            } else {
+                logger.info("type adready exists");
             }
+
         } catch (IOException e) {
             logger.error(e.getMessage());
             //TODO Use throwableProvider instead of this

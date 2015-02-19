@@ -2,7 +2,6 @@ package com.dailymotion.pixelle.deserver.processor.hystrix;
 
 import com.dailymotion.pixelle.deserver.model.Video;
 import com.dailymotion.pixelle.deserver.processor.DEProcessor;
-import com.dailymotion.pixelle.deserver.processor.DeException;
 import com.netflix.config.DynamicIntProperty;
 import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.hystrix.HystrixCommand;
@@ -39,10 +38,4 @@ public class VideoInsertCommand extends HystrixCommand<Void> {
         processor.insertVideo(video);
         return null;
     }
-
-    @Override
-    protected Void getFallback() {
-        throw new DeException(new Throwable("Error inserting video"), 500);
-    }
-
 }

@@ -3,7 +3,6 @@ package com.dailymotion.pixelle.deserver.processor.hystrix;
 
 import com.dailymotion.pixelle.deserver.model.Video;
 import com.dailymotion.pixelle.deserver.processor.DEProcessor;
-import com.dailymotion.pixelle.deserver.processor.DeException;
 import com.netflix.config.DynamicIntProperty;
 import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.hystrix.HystrixCommand;
@@ -40,10 +39,5 @@ public class VideoUpdateCommand extends HystrixCommand<Void> {
     protected Void run() {
         processor.updateVideo(video);
         return null;
-    }
-
-    @Override
-    protected Void getFallback() {
-        throw new DeException(new Throwable("Error updating video"), 500);
     }
 }

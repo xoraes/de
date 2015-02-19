@@ -57,8 +57,9 @@ public class ESAdUnitsIntegrationTest {
 
     @AfterClass
     public static void tearDown() throws Exception {
-        System.out.println("Deleting the index");
-        es.deleteIndex();
+        System.out.println("Deleting all known indices");
+        es.deleteIndex(DeHelper.getOrganicIndex());
+        es.deleteIndex(DeHelper.getPromotedIndex());
         injector = null;
     }
 
@@ -133,7 +134,7 @@ public class ESAdUnitsIntegrationTest {
 
     public static void deleteAdUnitsByIds(String... ids) throws Exception {
         for (String id : ids) {
-            Assert.assertTrue(es.deleteById(DeHelper.getIndex(), DeHelper.getAdUnitsType(), id));
+            Assert.assertTrue(es.deleteById(DeHelper.getPromotedIndex(), DeHelper.getAdUnitsType(), id));
         }
     }
 
@@ -193,35 +194,6 @@ public class ESAdUnitsIntegrationTest {
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 3);
         deleteAdUnitsByIds("1", "2", "3");
-    }
-
-    @Test
-    public void testGetLastUpdated() throws Exception {
-        Map m1 = createAdUnitDataMap("1", "1");
-        Map m2 = createAdUnitDataMap("2", "2");
-        Map m3 = createAdUnitDataMap("3", "3");
-        Map m4 = createAdUnitDataMap("4", "4");
-        Map m5 = createAdUnitDataMap("5", "5");
-        Map m6 = createAdUnitDataMap("6", "6");
-
-        m1.put("_updated", "2014-01-01T00:00:01Z");
-        m2.put("_updated", "2014-01-01T00:00:14Z");
-        m3.put("_updated", "2014-01-01T00:00:19Z");
-        m4.put("_updated", "2014-01-01T00:00:11Z");
-        m5.put("_updated", "2014-01-01T00:00:02Z");
-        m6.put("_updated", "2014-01-01T00:01:00Z");
-
-        Thread.sleep(2000);
-        String datetime = es.getLastUpdatedTimeStamp(DeHelper.getAdUnitsType());
-        Assert.assertNotNull(datetime);
-        System.out.println("DATETIME ====>:" + datetime);
-        loadAdUnitMaps(m1, m2, m3, m4, m5, m6);
-
-        datetime = es.getLastUpdatedTimeStamp(DeHelper.getAdUnitsType());
-        System.out.println("DATETIME ====>:" + datetime);
-        Assert.assertNotNull(datetime);
-        Assert.assertEquals("2014-01-01T00:01:00Z", datetime);
-        deleteAdUnitsByIds("1", "2", "3", "4", "5", "6");
     }
 
     @Test
@@ -359,7 +331,10 @@ public class ESAdUnitsIntegrationTest {
         Map m4 = createAdUnitDataMap("4", "4");
         m4.put("views", 3);
 
-        loadAdUnitMaps(m1, m2, m3, m4);
+        Map m5 = createAdUnitDataMap("5", "5");
+
+
+        loadAdUnitMaps(m1, m2, m3, m4, m5);
         SearchQueryRequest sq = new SearchQueryRequest();
         sq.setTime("2014-12-31T15:00:00-0800");
         sq.setCategories(new ArrayList(Arrays.asList("cat1")));
@@ -372,8 +347,8 @@ public class ESAdUnitsIntegrationTest {
         ItemsResponse i = new QueryCommand(es, sq, 10, null).execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
-        Assert.assertTrue(i.getResponse().size() == 3);
-        deleteAdUnitsByIds("1", "2", "3", "4");
+        Assert.assertTrue(i.getResponse().size() == 4);
+        deleteAdUnitsByIds("1", "2", "3", "4", "5");
     }
 
     @Test

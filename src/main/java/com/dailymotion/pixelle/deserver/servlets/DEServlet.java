@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import javax.servlet.annotation.WebServlet;
 import javax.ws.rs.*;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
@@ -25,6 +26,7 @@ import javax.ws.rs.core.Response;
 import java.util.List;
 
 @Path("/")
+@WebServlet(asyncSupported = true)
 public class DEServlet {
     private static Logger logger = LoggerFactory.getLogger(DEServlet.class);
     private DEProcessor deProcessor;
@@ -65,42 +67,14 @@ public class DEServlet {
         return deProcessor.getAdUnitsByCampaign(cid);
     }
 
-    @POST
-    @Path("/index")
-    public Response createIndexWithTypes() throws DeException {
-        deProcessor.createIndexWithTypes();
-        return Response.noContent().build();
-    }
-
-    @DELETE
-    @Path("/index")
-    public Response deleteIndex() throws DeException {
-        deProcessor.deleteIndex();
-        return Response.noContent().build();
-    }
-
     @DELETE
     @Path("/adunit")
     public Response deleteAdUnit(@QueryParam("id") String id) throws DeException {
-        if (deProcessor.deleteById(DeHelper.getIndex(), DeHelper.getAdUnitsType(), id)) {
+        if (deProcessor.deleteById(DeHelper.getPromotedIndex(), DeHelper.getAdUnitsType(), id)) {
             return Response.noContent().build();
         } else {
             return Response.ok(id + " not found").build();
         }
-    }
-
-    @GET
-    @Path("/video/lastdatetime")
-    @Produces(MediaType.TEXT_PLAIN)
-    public String getVideoLastTimeStamp(@QueryParam("type") String type) throws DeException {
-        return deProcessor.getLastUpdatedTimeStamp(DeHelper.getOrganicVideoType());
-    }
-
-    @GET
-    @Path("/adunits/lastdatetime")
-    @Produces(MediaType.TEXT_PLAIN)
-    public String getAdLastTimeStamp(@QueryParam("type") String type) throws DeException {
-        return deProcessor.getLastUpdatedTimeStamp(DeHelper.getAdUnitsType());
     }
 
     @POST
@@ -191,7 +165,7 @@ public class DEServlet {
     @DELETE
     @Path("/video")
     public Response deleteVideoById(@QueryParam("id") String id) throws DeException {
-        if (deProcessor.deleteById(DeHelper.getIndex(), DeHelper.getOrganicVideoType(), id)) {
+        if (deProcessor.deleteById(DeHelper.getOrganicIndex(), DeHelper.getVideosType(), id)) {
             return Response.noContent().build();
         } else {
             return Response.ok(id + " not found").build();

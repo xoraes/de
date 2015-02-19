@@ -84,14 +84,14 @@ public class VideoProcessor {
 
     @Inject
     public VideoProcessor(Client esClient) {
-        this.client = esClient;
+        client = esClient;
     }
 
     public Video getVideoById(String id) throws DeException {
         if (StringUtils.isBlank(id)) {
             throw new DeException(new Throwable("id cannot be blank"), 400);
         }
-        GetResponse response = client.prepareGet(DeHelper.getIndex(), DeHelper.getOrganicVideoType(), id).execute().actionGet();
+        GetResponse response = client.prepareGet(DeHelper.getOrganicIndex(), DeHelper.getVideosType(), id).execute().actionGet();
         Video video = null;
         byte[] responseSourceAsBytes = response.getSourceAsBytes();
         if (response != null && responseSourceAsBytes != null) {
@@ -142,7 +142,7 @@ public class VideoProcessor {
         logger.info(video.toString());
         UpdateResponse response;
         try {
-            response = client.prepareUpdate(DeHelper.getIndex(), DeHelper.getOrganicVideoType(), video.getId())
+            response = client.prepareUpdate(DeHelper.getOrganicIndex(), DeHelper.getVideosType(), video.getId())
                     .setDoc(objectMapper.writeValueAsString(video))
                     .setDocAsUpsert(true)
                     .execute()
@@ -169,7 +169,7 @@ public class VideoProcessor {
             video = modifyVideoForInsert(video);
 
             try {
-                bulkRequest.add(client.prepareUpdate(DeHelper.getIndex(), DeHelper.getOrganicVideoType(), video.getId())
+                bulkRequest.add(client.prepareUpdate(DeHelper.getOrganicIndex(), DeHelper.getVideosType(), video.getId())
                         .setDoc(objectMapper.writeValueAsString(video))
                         .setDocAsUpsert(true));
             } catch (JsonProcessingException e) {
@@ -229,8 +229,8 @@ public class VideoProcessor {
                 .maxBoost(maxBoost.getValue())
                 .scoreMode(scoreMode.getValue());
 
-        SearchRequestBuilder srb1 = client.prepareSearch(DeHelper.getIndex())
-                .setTypes(DeHelper.getOrganicVideoType())
+        SearchRequestBuilder srb1 = client.prepareSearch(DeHelper.getOrganicIndex())
+                .setTypes(DeHelper.getVideosType())
                 .setSearchType(SearchType.DFS_QUERY_AND_FETCH)
                 .setQuery(qb)
                 .setExplain(sq.getDebugEnabled())

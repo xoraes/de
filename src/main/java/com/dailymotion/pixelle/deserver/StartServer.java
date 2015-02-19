@@ -65,11 +65,6 @@ public class StartServer {
                 EnumSet.allOf(DispatcherType.class));
 
         context.addServlet(sh, "/*");
-
-
-        //context.addEventListener(new DEServerContextListener());
-
-
         server.setHandler(context);
 
         try {

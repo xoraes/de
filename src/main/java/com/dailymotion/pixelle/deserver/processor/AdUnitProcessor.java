@@ -20,7 +20,6 @@ import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
-import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.BoolFilterBuilder;
 import org.elasticsearch.index.query.FilterBuilders;
@@ -57,7 +56,7 @@ public class AdUnitProcessor {
 
     @Inject
     public AdUnitProcessor(Client esClient) {
-        this.client = esClient;
+        client = esClient;
     }
 
     public List<AdUnitResponse> recommend(SearchQueryRequest sq, Integer positions) throws DeException {
@@ -105,7 +104,7 @@ public class AdUnitProcessor {
                     .add(ScoreFunctionBuilders.randomFunction((int) (Math.random() * 100)));
 
 
-            SearchRequestBuilder srb1 = client.prepareSearch(DeHelper.getIndex())
+            SearchRequestBuilder srb1 = client.prepareSearch(DeHelper.getPromotedIndex())
                     .setTypes(DeHelper.getAdUnitsType())
                     .setSearchType(SearchType.DFS_QUERY_AND_FETCH)
                     .setQuery(qb)
@@ -147,7 +146,7 @@ public class AdUnitProcessor {
 
         BoolFilterBuilder fb = FilterBuilders.boolFilter().must(FilterBuilders.termFilter("campaign", cid));
         QueryBuilder qb = QueryBuilders.filteredQuery(null, fb);
-        SearchRequestBuilder srb1 = client.prepareSearch(DeHelper.getIndex())
+        SearchRequestBuilder srb1 = client.prepareSearch(DeHelper.getPromotedIndex())
                 .setTypes(DeHelper.getAdUnitsType())
                 .setSearchType(SearchType.QUERY_AND_FETCH)
                 .setQuery(qb);
@@ -227,9 +226,9 @@ public class AdUnitProcessor {
         if (unit == null) {
             throw new DeException(new Throwable("no adunit found in request body"), 400);
         }
-        UpdateResponse response;
+
         try {
-            response = client.prepareUpdate(DeHelper.getIndex(), DeHelper.getAdUnitsType(), unit.getId())
+            client.prepareUpdate(DeHelper.getPromotedIndex(), DeHelper.getAdUnitsType(), unit.getId())
                     .setDoc(objectMapper.writeValueAsString(unit))
                     .setDocAsUpsert(true)
                     .execute()
@@ -253,7 +252,7 @@ public class AdUnitProcessor {
             adUnit = modifyAdUnitForInsert(adUnit);
 
             try {
-                bulkRequest.add(client.prepareUpdate(DeHelper.getIndex(), DeHelper.getAdUnitsType(), adUnit.getId())
+                bulkRequest.add(client.prepareUpdate(DeHelper.getPromotedIndex(), DeHelper.getAdUnitsType(), adUnit.getId())
                         .setDoc(objectMapper.writeValueAsString(adUnit))
                         .setDocAsUpsert(true));
             } catch (JsonProcessingException e) {
@@ -286,7 +285,7 @@ public class AdUnitProcessor {
         if (StringUtils.isBlank(id)) {
             throw new DeException(new Throwable("id cannot be blank"), 400);
         }
-        GetResponse response = client.prepareGet(DeHelper.getIndex(), DeHelper.getAdUnitsType(), id).execute().actionGet();
+        GetResponse response = client.prepareGet(DeHelper.getPromotedIndex(), DeHelper.getAdUnitsType(), id).execute().actionGet();
         AdUnit unit = null;
         byte[] responseSourceAsBytes = response.getSourceAsBytes();
         if (response != null && responseSourceAsBytes != null) {
@@ -304,7 +303,7 @@ public class AdUnitProcessor {
         QueryBuilder qb = QueryBuilders.matchAllQuery();
 
         //TODO fix this later - we should do paging instead of getting all docs
-        SearchRequestBuilder srb1 = client.prepareSearch(DeHelper.getIndex())
+        SearchRequestBuilder srb1 = client.prepareSearch(DeHelper.getPromotedIndex())
                 .setTypes(DeHelper.getAdUnitsType())
                 .setQuery(qb)
                 .setSize(1000000);

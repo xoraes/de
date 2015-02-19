@@ -19,16 +19,18 @@ import java.util.*;
  */
 public class DeHelper {
     private static Logger logger = LoggerFactory.getLogger(DeHelper.class);
-    private static DynamicStringProperty index =
-            DynamicPropertyFactory.getInstance().getStringProperty("index", "");
-    private static DynamicStringProperty adType =
-            DynamicPropertyFactory.getInstance().getStringProperty("adUnitsType", "");
-    private static DynamicStringProperty ovType =
-            DynamicPropertyFactory.getInstance().getStringProperty("ovType", "");
+    private static DynamicStringProperty organicIndex =
+            DynamicPropertyFactory.getInstance().getStringProperty("organicIndex", "organic");
+    private static DynamicStringProperty promotedIndex =
+            DynamicPropertyFactory.getInstance().getStringProperty("promotedIndex", "promoted");
+    private static DynamicStringProperty adunitsType =
+            DynamicPropertyFactory.getInstance().getStringProperty("adunitsType", "adunits");
+    private static DynamicStringProperty videosType =
+            DynamicPropertyFactory.getInstance().getStringProperty("videosType", "videos");
     private static DynamicStringProperty clusterName =
-            DynamicPropertyFactory.getInstance().getStringProperty("clusterName", "");
+            DynamicPropertyFactory.getInstance().getStringProperty("clusterName", "pixelle");
     private static DynamicStringProperty nodeName =
-            DynamicPropertyFactory.getInstance().getStringProperty("nodeName", "");
+            DynamicPropertyFactory.getInstance().getStringProperty("nodeName", "pixellenode");
     private static DynamicStringProperty dataDirectory =
             DynamicPropertyFactory.getInstance().getStringProperty("datadir", "/data/es");
     private static DynamicIntProperty dePort =
@@ -44,18 +46,22 @@ public class DeHelper {
         return nodeName.get();
     }
 
-    public static String getIndex() {
-        return index.get();
+    public static String getPromotedIndex() {
+        return promotedIndex.get();
+    }
+
+    public static String getOrganicIndex() {
+        return organicIndex.get();
     }
 
     public static String getAdUnitsType() {
 
-        return adType.get();
+        return adunitsType.get();
     }
 
-    public static String getOrganicVideoType() {
+    public static String getVideosType() {
 
-        return ovType.get();
+        return videosType.get();
     }
 
 

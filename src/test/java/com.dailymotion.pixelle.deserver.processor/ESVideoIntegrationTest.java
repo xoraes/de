@@ -53,14 +53,15 @@ public class ESVideoIntegrationTest {
 
     public static void deleteVideosByIds(String... ids) throws Exception {
         for (String id : ids) {
-            Assert.assertTrue(es.deleteById(DeHelper.getIndex(), DeHelper.getOrganicVideoType(), id));
+            Assert.assertTrue(es.deleteById(DeHelper.getOrganicIndex(), DeHelper.getVideosType(), id));
         }
     }
 
     @AfterClass
     public static void tearDown() throws Exception {
-        System.out.println("Deleting the index");
-        es.deleteIndex();
+        System.out.println("Deleting all known indices");
+        es.deleteIndex(DeHelper.getOrganicIndex());
+        es.deleteIndex(DeHelper.getPromotedIndex());
         injector = null;
     }
 
