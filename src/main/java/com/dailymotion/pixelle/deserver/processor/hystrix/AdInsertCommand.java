@@ -2,7 +2,6 @@ package com.dailymotion.pixelle.deserver.processor.hystrix;
 
 import com.dailymotion.pixelle.deserver.model.AdUnit;
 import com.dailymotion.pixelle.deserver.processor.DEProcessor;
-import com.dailymotion.pixelle.deserver.processor.DeException;
 import com.netflix.config.DynamicIntProperty;
 import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.hystrix.HystrixCommand;
@@ -43,10 +42,4 @@ public class AdInsertCommand extends HystrixCommand<Void> {
         processor.insertAdUnit(unit);
         return null;
     }
-
-    @Override
-    protected Void getFallback() throws DeException {
-        throw new DeException(new Throwable("Error inserting adunit"), 500);
-    }
-
 }

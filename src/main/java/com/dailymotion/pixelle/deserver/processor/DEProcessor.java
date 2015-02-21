@@ -4,7 +4,13 @@ import com.dailymotion.pixelle.deserver.model.*;
 import com.dailymotion.pixelle.deserver.processor.hystrix.AdQueryCommand;
 import com.dailymotion.pixelle.deserver.processor.hystrix.VideoQueryCommand;
 import com.google.inject.Inject;
+import com.netflix.servo.DefaultMonitorRegistry;
+import com.netflix.servo.monitor.MonitorConfig;
+import com.netflix.servo.monitor.StatsTimer;
+import com.netflix.servo.monitor.Stopwatch;
+import com.netflix.servo.stats.StatsConfig;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.jetty.http.HttpStatus;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.client.Client;
 import org.slf4j.Logger;
@@ -14,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by n.dhupia on 12/10/14.
@@ -24,6 +31,15 @@ public class DEProcessor {
     private static Client client;
     private static AdUnitProcessor adUnitProcessor;
     private static VideoProcessor videoProcessor;
+    private static StatsTimer adsTimer = new StatsTimer(MonitorConfig.builder("ads_statsTimer").build(), new StatsConfig.Builder().build());
+    private static StatsTimer videosTimer = new StatsTimer(MonitorConfig.builder("videos_statsTimer").build(), new StatsConfig.Builder().build());
+    private static StatsTimer widgetTimer = new StatsTimer(MonitorConfig.builder("widget_statsTimer").build(), new StatsConfig.Builder().build());
+
+    static {
+        DefaultMonitorRegistry.getInstance().register(adsTimer);
+        DefaultMonitorRegistry.getInstance().register(videosTimer);
+        DefaultMonitorRegistry.getInstance().register(widgetTimer);
+    }
 
     @Inject
     public DEProcessor(Client esClient, AdUnitProcessor adUnitProcessor, VideoProcessor videoProcessor) {
@@ -37,70 +53,90 @@ public class DEProcessor {
         List<VideoResponse> targetedVideos = null;
         List<AdUnitResponse> ads = null;
         List<? extends ItemsResponse> mergedList = null;
+        Stopwatch stopwatch;
+
         ItemsResponse itemsResponse = new ItemsResponse();
         String[] at = StringUtils.split(allowedTypes, ",", 2);
         sq = DeHelper.modifySearchQueryReq(sq);
 
         if (at == null || at.length == 0) {
-            ads = new AdQueryCommand(adUnitProcessor, sq, positions).execute();
-            itemsResponse.setResponse(ads);
+            stopwatch = adsTimer.start();
+            try {
+                ads = new AdQueryCommand(adUnitProcessor, sq, positions).execute();
+                itemsResponse.setResponse(ads);
+            } finally {
+                adsTimer.record(stopwatch.getDuration(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);
+            }
             return itemsResponse;
         }
 
         if (at.length == 1 && StringUtils.containsIgnoreCase(at[0], "promoted")) {
-            ads = new AdQueryCommand(adUnitProcessor, sq, positions).execute();
-            itemsResponse.setResponse(ads);
+            stopwatch = adsTimer.start();
+            try {
+                ads = new AdQueryCommand(adUnitProcessor, sq, positions).execute();
+                itemsResponse.setResponse(ads);
+            } finally {
+                adsTimer.record(stopwatch.getDuration(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);
+            }
             return itemsResponse;
-
         }
 
         if (at.length == 1 && StringUtils.containsIgnoreCase(at[0], "organic")) {
-            targetedVideos = new VideoQueryCommand(videoProcessor, sq, positions).execute();
+            stopwatch = videosTimer.start();
+            try {
+                targetedVideos = new VideoQueryCommand(videoProcessor, sq, positions).execute();
 
-            if (targetedVideos != null && targetedVideos.size() >= positions) {
+                if (targetedVideos != null && targetedVideos.size() >= positions) {
 
-                itemsResponse.setResponse(targetedVideos);
-                return itemsResponse;
-            } else {
-                List<VideoResponse> untargetedVideos = videoProcessor.getUntargetedVideos(targetedVideos, positions, sq);
-                mergedList = mergeAndFillList(null, targetedVideos, untargetedVideos, positions);
-                itemsResponse.setResponse(mergedList);
-                return itemsResponse;
+                    itemsResponse.setResponse(targetedVideos);
+                    return itemsResponse;
+                } else {
+                    List<VideoResponse> untargetedVideos = videoProcessor.getUntargetedVideos(targetedVideos, positions, sq);
+                    mergedList = mergeAndFillList(null, targetedVideos, untargetedVideos, positions);
+                    itemsResponse.setResponse(mergedList);
+                    return itemsResponse;
+                }
+            } finally {
+                videosTimer.record(stopwatch.getDuration(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);
             }
         }
 
         if (at.length == 2
                 && StringUtils.containsIgnoreCase(allowedTypes, "promoted")
                 && StringUtils.containsIgnoreCase(allowedTypes, "organic")) {
-
-            Future<List<AdUnitResponse>> adsFuture;
-            Future<List<VideoResponse>> targetedVideosFuture;
-
-            adsFuture = new AdQueryCommand(adUnitProcessor, sq, positions).queue();
-            targetedVideosFuture = new VideoQueryCommand(videoProcessor, sq, positions).queue();
-
+            stopwatch = widgetTimer.start();
             try {
-                ads = adsFuture.get();
-                targetedVideos = targetedVideosFuture.get();
-            } catch (InterruptedException e) {
-                throw new DeException(e, 500);
-            } catch (ExecutionException e) {
-                throw new DeException(e, 500);
-            }
+                Future<List<AdUnitResponse>> adsFuture;
+                Future<List<VideoResponse>> targetedVideosFuture;
 
-            //if we have enough ads and videos, merge and send
-            if (!DeHelper.isEmptyList(ads) && !DeHelper.isEmptyList(targetedVideos) && ads.size() + targetedVideos.size() >= positions) {
-                mergedList = mergeAndFillList(ads, targetedVideos, null, positions);
-                itemsResponse.setResponse(mergedList);
-                return itemsResponse;
-            } else if (DeHelper.isEmptyList(ads) && targetedVideos.size() >= positions) { //ads empty, enough videos
-                itemsResponse.setResponse(targetedVideos);
-                return itemsResponse;
-            } else { //fill with untargetged videos
-                List<VideoResponse> untargetedVideos = videoProcessor.getUntargetedVideos(targetedVideos, positions, sq);
-                mergedList = mergeAndFillList(ads, targetedVideos, untargetedVideos, positions);
-                itemsResponse.setResponse(mergedList);
-                return itemsResponse;
+                adsFuture = new AdQueryCommand(adUnitProcessor, sq, positions).queue();
+                targetedVideosFuture = new VideoQueryCommand(videoProcessor, sq, positions).queue();
+
+                try {
+                    ads = adsFuture.get();
+                    targetedVideos = targetedVideosFuture.get();
+                } catch (InterruptedException e) {
+                    throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
+                } catch (ExecutionException e) {
+                    throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
+                }
+
+                //if we have enough ads and videos, merge and send
+                if (!DeHelper.isEmptyList(ads) && !DeHelper.isEmptyList(targetedVideos) && ads.size() + targetedVideos.size() >= positions) {
+                    mergedList = mergeAndFillList(ads, targetedVideos, null, positions);
+                    itemsResponse.setResponse(mergedList);
+                    return itemsResponse;
+                } else if (DeHelper.isEmptyList(ads) && targetedVideos.size() >= positions) { //ads empty, enough videos
+                    itemsResponse.setResponse(targetedVideos);
+                    return itemsResponse;
+                } else { //fill with untargetged videos
+                    List<VideoResponse> untargetedVideos = videoProcessor.getUntargetedVideos(targetedVideos, positions, sq);
+                    mergedList = mergeAndFillList(ads, targetedVideos, untargetedVideos, positions);
+                    itemsResponse.setResponse(mergedList);
+                    return itemsResponse;
+                }
+            } finally {
+                widgetTimer.record(stopwatch.getDuration(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);
             }
         }
         return itemsResponse;
@@ -181,7 +217,7 @@ public class DEProcessor {
                     .execute()
                     .actionGet();
         } else {
-            throw new DeException(new Throwable("index or type does not exist"), 500);
+            throw new DeException(new Throwable("index or type does not exist"), HttpStatus.INTERNAL_SERVER_ERROR_500);
         }
     }
 

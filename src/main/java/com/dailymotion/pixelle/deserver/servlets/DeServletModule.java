@@ -23,5 +23,6 @@ public class DeServletModule extends ServletModule {
         bind(DEServlet.class).asEagerSingleton();
         bind(HystrixMetricsStreamServlet.class).asEagerSingleton();
         serve("/hystrix.stream").with(HystrixMetricsStreamServlet.class);
+
     }
 }

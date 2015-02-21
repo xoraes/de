@@ -13,6 +13,7 @@ import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.config.DynamicStringProperty;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.search.Explanation;
+import org.eclipse.jetty.http.HttpStatus;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -57,7 +58,7 @@ public class VideoProcessor {
             DynamicPropertyFactory.getInstance().getFloatProperty("silverPartner.weightPercent", 0.25f);
 
     private static DynamicFloatProperty maxBoost =
-            DynamicPropertyFactory.getInstance().getFloatProperty("maxboost", 100.0f);
+            DynamicPropertyFactory.getInstance().getFloatProperty("maxboost", 10.0f);
 
     private static DynamicFloatProperty bronzePartnerWeight =
             DynamicPropertyFactory.getInstance().getFloatProperty("bronzePartner.weightPercent", 0.01f);
@@ -89,7 +90,7 @@ public class VideoProcessor {
 
     public Video getVideoById(String id) throws DeException {
         if (StringUtils.isBlank(id)) {
-            throw new DeException(new Throwable("id cannot be blank"), 400);
+            throw new DeException(new Throwable("id cannot be blank"), HttpStatus.BAD_REQUEST_400);
         }
         GetResponse response = client.prepareGet(DeHelper.getOrganicIndex(), DeHelper.getVideosType(), id).execute().actionGet();
         Video video = null;
@@ -99,7 +100,7 @@ public class VideoProcessor {
                 video = objectMapper.readValue(responseSourceAsBytes, Video.class);
             } catch (IOException e) {
                 logger.error("error parsing video", e);
-                throw new DeException(e, 500);
+                throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
             }
         }
         return video;
@@ -108,7 +109,7 @@ public class VideoProcessor {
     public void insertVideo(Video video) throws DeException {
 
         if (video == null) {
-            throw new DeException(new Throwable("no video found in request body"), 400);
+            throw new DeException(new Throwable("no video found in request body"), HttpStatus.BAD_REQUEST_400);
         }
         updateVideo(modifyVideoForInsert(video));
     }
@@ -137,7 +138,7 @@ public class VideoProcessor {
 
     public void updateVideo(Video video) throws DeException {
         if (video == null) {
-            throw new DeException(new Throwable("no video found in request body"), 400);
+            throw new DeException(new Throwable("no video found in request body"), HttpStatus.BAD_REQUEST_400);
         }
         logger.info(video.toString());
         UpdateResponse response;
@@ -151,9 +152,9 @@ public class VideoProcessor {
 
         } catch (JsonProcessingException e) {
             logger.error("Error converting video to string", e);
-            throw new DeException(e, 500);
+            throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
         } catch (ElasticsearchException e) {
-            throw new DeException(e, 500);
+            throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
         }
     }
 
@@ -174,18 +175,18 @@ public class VideoProcessor {
                         .setDocAsUpsert(true));
             } catch (JsonProcessingException e) {
                 logger.error("Error converting video to string", e);
-                throw new DeException(e, 500);
+                throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
             }
         }
         BulkResponse bulkResponse;
         try {
             bulkResponse = bulkRequest.execute().actionGet();
         } catch (Exception e) {
-            throw new DeException(e, 500);
+            throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
         }
         if (bulkResponse != null && bulkResponse.hasFailures()) {
             // process failures by iterating through each bulk response item
-            throw new DeException(new Throwable("Error inserting videos in Bulk"), 500);
+            throw new DeException(new Throwable("Error inserting videos in Bulk"), HttpStatus.INTERNAL_SERVER_ERROR_500);
         }
     }
 
@@ -262,7 +263,7 @@ public class VideoProcessor {
                     logger.info(ex.toString());
                 }
             } catch (IOException e) {
-                throw new DeException(e.getCause(), 500);
+                throw new DeException(e.getCause(), HttpStatus.INTERNAL_SERVER_ERROR_500);
             }
             videoResponses.add(video);
         }

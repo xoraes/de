@@ -10,6 +10,7 @@ import com.netflix.hystrix.HystrixCommand;
 import com.netflix.hystrix.HystrixCommandGroupKey;
 import com.netflix.hystrix.HystrixCommandKey;
 import com.netflix.hystrix.HystrixCommandProperties;
+import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +40,6 @@ public class AdQueryCommand extends HystrixCommand<List<AdUnitResponse>> {
         this.sq = sq;
         this.positions = pos;
         this.processor = processor;
-
     }
 
     @Override
@@ -50,6 +50,6 @@ public class AdQueryCommand extends HystrixCommand<List<AdUnitResponse>> {
     @Override
     protected List<AdUnitResponse> getFallback() throws DeException {
         //in future we can do return a fallback adunit here or do something smarter here
-        throw new DeException(new Throwable("Error querying adunit"), 500);
+        throw new DeException(new Throwable("Error querying adunit"), HttpStatus.INTERNAL_SERVER_ERROR_500);
     }
 }

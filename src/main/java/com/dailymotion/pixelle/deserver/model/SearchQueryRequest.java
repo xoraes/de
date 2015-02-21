@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -122,7 +123,7 @@ public class SearchQueryRequest {
             return mapper.writeValueAsString(this);
         } catch (JsonProcessingException e) {
             logger.error("error parsing json", e);
-            throw new DeException(e, 500);
+            throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
         }
     }
 }

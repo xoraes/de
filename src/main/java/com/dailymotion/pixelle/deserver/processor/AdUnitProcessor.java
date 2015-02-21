@@ -12,6 +12,7 @@ import com.netflix.servo.monitor.BasicCounter;
 import com.netflix.servo.monitor.Counter;
 import com.netflix.servo.monitor.MonitorConfig;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.jetty.http.HttpStatus;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
@@ -121,15 +122,15 @@ public class AdUnitProcessor {
                 try {
                     unit = objectMapper.readValue(hit.getSourceAsString(), AdUnitResponse.class);
                 } catch (IOException e) {
-                    throw new DeException(e.getCause(), 500);
+                    throw new DeException(e.getCause(), HttpStatus.INTERNAL_SERVER_ERROR_500);
                 }
                 adUnitResponses.add(unit);
             }
-            logger.info("Num responses:" + adUnitResponses.size());
             adUnitResponses = DeHelper.removeDuplicateCampaigns(positions, adUnitResponses);
+            logger.info("Num responses:" + adUnitResponses.size());
 
         }
-        if (adUnitResponses == null || adUnitResponses.size() == 0) {
+        if (DeHelper.isEmptyList(adUnitResponses)) {
             logger.info("No ads returned =======> " + sq.toString());
         } else {
             logger.info("Success =======> " + adUnitResponses.toString());
@@ -140,7 +141,7 @@ public class AdUnitProcessor {
 
     public List<AdUnit> getAdUnitsByCampaign(String cid) {
         if (StringUtils.isBlank(cid)) {
-            throw new DeException(new Throwable("no cid provided"), 400);
+            throw new DeException(new Throwable("no cid provided"), HttpStatus.BAD_REQUEST_400);
         }
 
 
@@ -157,11 +158,11 @@ public class AdUnitProcessor {
             try {
                 unit = objectMapper.readValue(hit.getSourceAsString(), AdUnit.class);
             } catch (IOException e) {
-                throw new DeException(e.getCause(), 500);
+                throw new DeException(e.getCause(), HttpStatus.INTERNAL_SERVER_ERROR_500);
             }
             adUnits.add(unit);
         }
-        if (adUnits.size() == 0) {
+        if (DeHelper.isEmptyList(adUnits)) {
             return null;
         }
         return adUnits;
@@ -169,27 +170,27 @@ public class AdUnitProcessor {
 
     public void insertAdUnit(AdUnit unit) throws DeException {
         if (unit == null) {
-            throw new DeException(new Throwable("no adunit found in request body"), 400);
+            throw new DeException(new Throwable("no adunit found in request body"), HttpStatus.BAD_REQUEST_400);
         }
         updateAdUnit(modifyAdUnitForInsert(unit));
     }
 
     private AdUnit modifyAdUnitForInsert(AdUnit unit) {
-        if (unit.getLocations() == null || unit.getLocations().size() <= 0) {
+        if (DeHelper.isEmptyList(unit.getLocations())) {
             unit.setLocations(Arrays.asList("all"));
         }
 
-        if (unit.getLanguages() == null || unit.getLanguages().size() <= 0) {
+        if (DeHelper.isEmptyList(unit.getLanguages())) {
             unit.setLanguages(Arrays.asList("all"));
         }
 
-        if (unit.getDevices() == null || unit.getDevices().size() <= 0) {
+        if (DeHelper.isEmptyList(unit.getDevices())) {
             unit.setDevices(Arrays.asList("all"));
         }
-        if (unit.getCategories() == null || unit.getCategories().size() <= 0) {
+        if (DeHelper.isEmptyList(unit.getCategories())) {
             unit.setCategories(Arrays.asList("all"));
         }
-        if (unit.getFormats() == null || unit.getFormats().size() <= 0) {
+        if (DeHelper.isEmptyList(unit.getFormats())) {
             unit.setFormats(Arrays.asList("all"));
         }
 
@@ -207,7 +208,7 @@ public class AdUnitProcessor {
             unit.setStartDate(DeHelper.timeToISO8601String(DeHelper.currentUTCTime()));
         }
         if (StringUtils.isBlank(unit.getEndDate())) {
-            unit.setEndDate(DeHelper.timeToISO8601String(DeHelper.currentUTCTime().plusYears(100)));
+            unit.setEndDate(DeHelper.timeToISO8601String(DeHelper.currentUTCTime().plusYears(Integer.MAX_VALUE)));
         }
 
         unit.setCategories(DeHelper.stringListToLowerCase(unit.getCategories()));
@@ -224,7 +225,7 @@ public class AdUnitProcessor {
 
     public void updateAdUnit(AdUnit unit) throws DeException {
         if (unit == null) {
-            throw new DeException(new Throwable("no adunit found in request body"), 400);
+            throw new DeException(new Throwable("no adunit found in request body"), HttpStatus.BAD_REQUEST_400);
         }
 
         try {
@@ -234,9 +235,9 @@ public class AdUnitProcessor {
                     .execute()
                     .actionGet();
         } catch (JsonProcessingException e) {
-            throw new DeException(e, 500);
+            throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
         } catch (ElasticsearchException e) {
-            throw new DeException(e, 500);
+            throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
         }
     }
 
@@ -257,7 +258,7 @@ public class AdUnitProcessor {
                         .setDocAsUpsert(true));
             } catch (JsonProcessingException e) {
                 logger.error("Error converting adunit to string", e);
-                throw new DeException(e, 500);
+                throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
             }
         }
 
@@ -265,7 +266,7 @@ public class AdUnitProcessor {
         try {
             bulkResponse = bulkRequest.execute().actionGet();
         } catch (ElasticsearchException e) {
-            throw new DeException(e, 500);
+            throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
         }
         if (bulkResponse != null && bulkResponse.hasFailures()) {
             logger.error("Error Bulk loading:" + adUnits.size() + " adUnits");
@@ -277,13 +278,13 @@ public class AdUnitProcessor {
 
             }
             // process failures by iterating through each bulk response item
-            throw new DeException(new Throwable("Error inserting adunits in Bulk"), 500);
+            throw new DeException(new Throwable("Error inserting adunits in Bulk"), HttpStatus.INTERNAL_SERVER_ERROR_500);
         }
     }
 
     public AdUnit getAdUnitById(String id) throws DeException {
         if (StringUtils.isBlank(id)) {
-            throw new DeException(new Throwable("id cannot be blank"), 400);
+            throw new DeException(new Throwable("id cannot be blank"), HttpStatus.BAD_REQUEST_400);
         }
         GetResponse response = client.prepareGet(DeHelper.getPromotedIndex(), DeHelper.getAdUnitsType(), id).execute().actionGet();
         AdUnit unit = null;
@@ -293,7 +294,7 @@ public class AdUnitProcessor {
                 unit = objectMapper.readValue(responseSourceAsBytes, AdUnit.class);
             } catch (IOException e) {
                 logger.error("error parsing adunit", e);
-                throw new DeException(e, 500);
+                throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
             }
         }
         return unit;
@@ -316,11 +317,11 @@ public class AdUnitProcessor {
             try {
                 unit = objectMapper.readValue(hit.getSourceAsString(), AdUnit.class);
             } catch (IOException e) {
-                throw new DeException(e.getCause(), 500);
+                throw new DeException(e.getCause(), HttpStatus.INTERNAL_SERVER_ERROR_500);
             }
             adUnits.add(unit);
         }
-        if (adUnits.size() == 0) {
+        if (DeHelper.isEmptyList(adUnits)) {
             return null;
         }
         return adUnits;
