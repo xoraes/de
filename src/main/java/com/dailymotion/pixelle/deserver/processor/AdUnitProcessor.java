@@ -49,11 +49,11 @@ public class AdUnitProcessor {
     // JMX: com.netflix.servo.COUNTER.TotalAdsRequestsServed
     private static Counter totalAdsRequestsServed = new BasicCounter(MonitorConfig
             .builder("TotalAdsRequestsServed").build());
-
     static {
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         DefaultMonitorRegistry.getInstance().register(totalAdsRequestsServed);
     }
+    private Integer MAX_YEARS = 100;
 
     @Inject
     public AdUnitProcessor(Client esClient) {
@@ -179,7 +179,6 @@ public class AdUnitProcessor {
         if (DeHelper.isEmptyList(unit.getLocations())) {
             unit.setLocations(Arrays.asList("all"));
         }
-
         if (DeHelper.isEmptyList(unit.getLanguages())) {
             unit.setLanguages(Arrays.asList("all"));
         }
@@ -208,7 +207,7 @@ public class AdUnitProcessor {
             unit.setStartDate(DeHelper.timeToISO8601String(DeHelper.currentUTCTime()));
         }
         if (StringUtils.isBlank(unit.getEndDate())) {
-            unit.setEndDate(DeHelper.timeToISO8601String(DeHelper.currentUTCTime().plusYears(Integer.MAX_VALUE)));
+            unit.setEndDate(DeHelper.timeToISO8601String(DeHelper.currentUTCTime().plusYears(MAX_YEARS)));
         }
 
         unit.setCategories(DeHelper.stringListToLowerCase(unit.getCategories()));
@@ -247,11 +246,12 @@ public class AdUnitProcessor {
         }
         BulkRequestBuilder bulkRequest = client.prepareBulk();
 
-        logger.info("Bulk loading:" + adUnits.size() + " videos");
+        logger.info("Bulk loading:" + adUnits.size() + " ads");
+
+
         for (AdUnit adUnit : adUnits) {
-
             adUnit = modifyAdUnitForInsert(adUnit);
-
+            logger.info("Loading adunit" + adUnit.toString());
             try {
                 bulkRequest.add(client.prepareUpdate(DeHelper.getPromotedIndex(), DeHelper.getAdUnitsType(), adUnit.getId())
                         .setDoc(objectMapper.writeValueAsString(adUnit))

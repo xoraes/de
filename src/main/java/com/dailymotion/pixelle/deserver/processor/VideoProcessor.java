@@ -168,6 +168,7 @@ public class VideoProcessor {
         for (Video video : videos) {
 
             video = modifyVideoForInsert(video);
+            logger.info("Loading video" + video.toString());
 
             try {
                 bulkRequest.add(client.prepareUpdate(DeHelper.getOrganicIndex(), DeHelper.getVideosType(), video.getId())
