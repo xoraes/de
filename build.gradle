@@ -54,7 +54,8 @@ dependencies {
 
     compile 'org.glassfish.jersey.core:jersey-server:2.15'
     compile 'org.glassfish.jersey.media:jersey-media-json-jackson:2.15'
-    compile 'org.glassfish.jersey.media:jersey-media-jaxb:2.15'
+    //needed for jersey 2.16
+    //compile 'org.glassfish.jersey.media:jersey-media-jaxb:2.16'
     compile 'org.glassfish.jersey.media:jersey-media-multipart:2.15'
     compile 'org.glassfish.jersey.containers:jersey-container-servlet:2.15'
 
