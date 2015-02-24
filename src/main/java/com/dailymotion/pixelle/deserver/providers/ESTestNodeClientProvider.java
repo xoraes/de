@@ -15,6 +15,10 @@ import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
 public class ESTestNodeClientProvider implements Provider<Client> {
     private static Logger logger = LoggerFactory.getLogger(ESTestNodeClientProvider.class);
 
+    /**
+     * Provider for testing. This creates the indices, mapping and then returns the client
+     * @return es client
+     */
     public Client get() {
         boolean ack;
         ImmutableSettings.Builder elasticsearchSettings = ImmutableSettings.settingsBuilder()

@@ -20,6 +20,14 @@ public class ESIndexTypeFactory {
     private static Logger logger = LoggerFactory.getLogger(ESIndexTypeFactory.class);
     private static Injector injector;
 
+    /**
+     * Creates an es index given name, settings and type. Type mapping is added automatically using typename
+     * @param client
+     * @param indexName
+     * @param settings
+     * @param typeName
+     * @throws DeException
+     */
     public static void createIndex(Client client, String indexName, Settings settings, String typeName) throws DeException {
 
         boolean ack = false;

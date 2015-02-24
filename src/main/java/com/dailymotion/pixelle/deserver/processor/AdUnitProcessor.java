@@ -53,7 +53,9 @@ public class AdUnitProcessor {
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         DefaultMonitorRegistry.getInstance().register(totalAdsRequestsServed);
     }
-    private Integer MAX_YEARS = 100;
+    private final Integer MAX_YEARS = 100;
+    private final Integer MAX_RANDOM = 100;
+    private final Integer SIZ_MULTIPLIER = 4;
 
     @Inject
     public AdUnitProcessor(Client esClient) {
@@ -61,6 +63,7 @@ public class AdUnitProcessor {
     }
 
     public List<AdUnitResponse> recommend(SearchQueryRequest sq, Integer positions) throws DeException {
+
         List<AdUnitResponse> adUnitResponses = null;
         if (sq != null) {
             DateTimeFormatter df = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ssZ");
@@ -79,21 +82,21 @@ public class AdUnitProcessor {
             fb.must(FilterBuilders.rangeFilter("start_date").lte(sq.getTime()));
             fb.must(FilterBuilders.rangeFilter("end_date").gte(sq.getTime()));
 
-            if (sq.getDevice() != null) {
+            if (StringUtils.isNotBlank(sq.getDevice())) {
                 fb.must(FilterBuilders.termsFilter("devices", "all", sq.getDevice().toLowerCase()));
             } else {
                 fb.must(FilterBuilders.termsFilter("devices", "all"));
             }
-            if (sq.getFormat() != null) {
+            if (StringUtils.isNotBlank(sq.getFormat())) {
                 fb.must(FilterBuilders.termsFilter("formats", "all", sq.getFormat().toLowerCase()));
             } else {
                 fb.must(FilterBuilders.termsFilter("formats", "all"));
             }
-            if (sq.getLocations() != null && sq.getLocations().size() > 0) {
+            if (! DeHelper.isEmptyList(sq.getLocations())) {
                 fb.mustNot(FilterBuilders.termsFilter("excluded_locations", DeHelper.toLowerCase(sq.getLocations())));
             }
 
-            if (sq.getCategories() != null && sq.getCategories().size() > 0) {
+            if (! DeHelper.isEmptyList(sq.getCategories())) {
                 fb.mustNot(FilterBuilders.termsFilter("excluded_categories", DeHelper.toLowerCase(sq.getCategories())));
             }
 
@@ -102,14 +105,14 @@ public class AdUnitProcessor {
                     FilterBuilders.scriptFilter("doc['views'].value < doc['goal_views'].value").lang("expression")));
 
             QueryBuilder qb = QueryBuilders.functionScoreQuery(fb)
-                    .add(ScoreFunctionBuilders.randomFunction((int) (Math.random() * 100)));
+                    .add(ScoreFunctionBuilders.randomFunction((int) (Math.random() * MAX_RANDOM)));
 
 
             SearchRequestBuilder srb1 = client.prepareSearch(DeHelper.getPromotedIndex())
                     .setTypes(DeHelper.getAdUnitsType())
                     .setSearchType(SearchType.DFS_QUERY_AND_FETCH)
                     .setQuery(qb)
-                    .setSize(positions * 4);
+                    .setSize(positions * SIZ_MULTIPLIER);
 
             logger.info(srb1.toString());
 

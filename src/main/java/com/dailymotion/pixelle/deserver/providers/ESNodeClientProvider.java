@@ -22,12 +22,17 @@ public class ESNodeClientProvider implements Provider<Client> {
 
     private static Logger logger = LoggerFactory.getLogger(ESNodeClientProvider.class);
 
+    /**
+     * Provider that creates the indices, mapping and then returns the client for use in the application
+     * @return es client
+     */
     public Client get() {
         ImmutableSettings.Builder elasticsearchSettings = ImmutableSettings.settingsBuilder()
                 .put("node.name", DeHelper.getNode())
                 .put("path.data", DeHelper.getDataDir())
                 .put("index.number_of_shards", 3)
-                .put("index.number_of_replicas", 0);
+                .put("index.number_of_replicas", 0)
+                .put("index.refresh_interval", "30s");
 
         Client client = nodeBuilder()
                 .settings(elasticsearchSettings)

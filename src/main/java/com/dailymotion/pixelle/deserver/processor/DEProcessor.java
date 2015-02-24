@@ -31,9 +31,9 @@ public class DEProcessor {
     private static Client client;
     private static AdUnitProcessor adUnitProcessor;
     private static VideoProcessor videoProcessor;
-    private static StatsTimer adsTimer = new StatsTimer(MonitorConfig.builder("ads_statsTimer").build(), new StatsConfig.Builder().build());
-    private static StatsTimer videosTimer = new StatsTimer(MonitorConfig.builder("videos_statsTimer").build(), new StatsConfig.Builder().build());
-    private static StatsTimer widgetTimer = new StatsTimer(MonitorConfig.builder("widget_statsTimer").build(), new StatsConfig.Builder().build());
+    private static StatsTimer adsTimer = new StatsTimer(MonitorConfig.builder("adsQuery_statsTimer").build(), new StatsConfig.Builder().withPublishMean(true).build());
+    private static StatsTimer videosTimer = new StatsTimer(MonitorConfig.builder("videosQuery_statsTimer").build(), new StatsConfig.Builder().withPublishMean(true).build());
+    private static StatsTimer widgetTimer = new StatsTimer(MonitorConfig.builder("widgetQuery_statsTimer").build(), new StatsConfig.Builder().withPublishMean(true).build());
 
     static {
         DefaultMonitorRegistry.getInstance().register(adsTimer);

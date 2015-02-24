@@ -43,7 +43,7 @@ public class StartServer {
 
 
         ServiceLocator locator = BootstrapUtils.newServiceLocator();
-        Injector injector = BootstrapUtils.newInjector(locator, Arrays.asList(new DeServletModule()));
+        BootstrapUtils.newInjector(locator, Arrays.asList(new DeServletModule()));
 
         BootstrapUtils.install(locator);
 

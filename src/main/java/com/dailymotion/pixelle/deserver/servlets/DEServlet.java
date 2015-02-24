@@ -36,12 +36,23 @@ public class DEServlet {
         this.deProcessor = deProcessor;
     }
 
+    /**
+     *
+     * @return Object representing the health of the cluster
+     * @throws DeException
+     */
     @GET
     @Path("/healthcheck")
     @Produces(MediaType.APPLICATION_JSON)
     public ClusterHealthResponse healthCheck() throws DeException {
         return deProcessor.getHealthCheck();
     }
+
+    /**
+     *
+     * @return same as healthcheck
+     * @throws DeException
+     */
 
     @GET
     @Path("/status")
@@ -50,6 +61,12 @@ public class DEServlet {
         return healthCheck();
     }
 
+    /**
+     *
+     * @param id adunit id
+     * @return adunit
+     * @throws DeException
+     */
     @GET
     @Path("/adunit")
     @Produces(MediaType.APPLICATION_JSON)
@@ -57,6 +74,12 @@ public class DEServlet {
         return deProcessor.getAdUnitById(id);
     }
 
+    /**
+     *
+     * @param cid - the campaign id
+     * @return adunits related to a campaign. If cid is blank, then return all adunits
+     * @throws DeException
+     */
     @GET
     @Path("/adunits")
     @Produces(MediaType.APPLICATION_JSON)
@@ -67,6 +90,12 @@ public class DEServlet {
         return deProcessor.getAdUnitsByCampaign(cid);
     }
 
+    /**
+     *
+     * @param id the adunit id
+     * @return response with status code 204 if delete is success otherwise 200
+     * @throws DeException
+     */
     @DELETE
     @Path("/adunit")
     public Response deleteAdUnit(@QueryParam("id") String id) throws DeException {
@@ -77,6 +106,15 @@ public class DEServlet {
         }
     }
 
+    /**
+     *
+     * @param sq - the search query object
+     * @param pos - the number of units to return
+     * @param allowedTypes - can be blank or "promoted" or "organic" or "promoted,organic"
+     * @param isDebugEnabled - true if debug information is requested
+     * @return Response object with json body containing items including adunits and/or organic videos as requested
+     * @throws DeException
+     */
     @POST
     @Path("/query")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -91,6 +129,12 @@ public class DEServlet {
         return Response.ok(i).build();
     }
 
+    /**
+     * This method suspends the incoming thread, indexes the a list of adunits to ES and then resumes the thread
+     * @param adUnits
+     * @param ar
+     * @throws DeException
+     */
     @POST
     @Path("/adunits")
     @ManagedAsync
@@ -100,33 +144,42 @@ public class DEServlet {
         ar.resume(new AdUnitBulkInsertCommand(deProcessor, adUnits).execute());
     }
 
+    /**
+     * This method suspends the incoming thread, indexes a adunit to ES and then resumes the thread
+     * @param adunit
+     * @param ar
+     * @throws DeException
+     */
     @PUT
     @Path("/adunit")
     @ManagedAsync
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
-    public void update(AdUnit unit, @Suspended final AsyncResponse ar) throws DeException {
-        ar.resume(new AdUpdateCommand(deProcessor, unit).execute());
+    public void update(AdUnit adunit, @Suspended final AsyncResponse ar) throws DeException {
+        ar.resume(new AdUpdateCommand(deProcessor, adunit).execute());
     }
 
+    /**
+     * This method suspends the incoming thread, indexes a adunit to ES and then resumes the thread
+     * @param adunit
+     * @param ar
+     * @throws DeException
+     */
     @POST
     @Path("/adunit")
     @ManagedAsync
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
-    public void insert(AdUnit unit, @Suspended final AsyncResponse ar) throws DeException {
-        ar.resume(new AdInsertCommand(deProcessor, unit).execute());
+    public void insert(AdUnit adunit, @Suspended final AsyncResponse ar) throws DeException {
+        ar.resume(new AdInsertCommand(deProcessor, adunit).execute());
     }
 
-    @PUT
-    @Path("/video")
-    @ManagedAsync
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.TEXT_PLAIN)
-    public void update(Video video, @Suspended final AsyncResponse ar) throws DeException {
-        ar.resume(new VideoUpdateCommand(deProcessor, video).execute());
-    }
-
+    /**
+     * This method suspends the incoming thread, updates/indexes a list of videos to ES and then resumes the thread
+     * @param videos
+     * @param ar
+     * @throws DeException
+     */
     @PUT
     @Path("/videos")
     @ManagedAsync
@@ -136,6 +189,12 @@ public class DEServlet {
         ar.resume(new VideoBulkInsertCommand(deProcessor, videos).execute());
     }
 
+    /**
+     * This method suspends the incoming thread, inserts/indexes a list of videos to ES and then resumes the thread
+     * @param videos
+     * @param ar
+     * @throws DeException
+     */
     @POST
     @Path("/videos")
     @ManagedAsync
@@ -145,6 +204,27 @@ public class DEServlet {
         ar.resume(new VideoBulkInsertCommand(deProcessor, videos).execute());
     }
 
+    /**
+     * This method suspends the incoming thread, indexes a video to ES and then resumes the thread
+     * @param video
+     * @param ar
+     * @throws DeException
+     */
+    @PUT
+    @Path("/video")
+    @ManagedAsync
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.TEXT_PLAIN)
+    public void update(Video video, @Suspended final AsyncResponse ar) throws DeException {
+        ar.resume(new VideoUpdateCommand(deProcessor, video).execute());
+    }
+
+    /**
+     * This method suspends the incoming thread, inserts/indexes a video to ES and then resumes the thread
+     * @param video
+     * @param ar
+     * @throws DeException
+     */
 
     @POST
     @ManagedAsync
@@ -155,6 +235,12 @@ public class DEServlet {
         ar.resume(new VideoInsertCommand(deProcessor, video).execute());
     }
 
+    /**
+     *
+     * @param id - video id
+     * @return Video
+     * @throws DeException
+     */
     @GET
     @Path("/video")
     @Produces(MediaType.APPLICATION_JSON)
@@ -162,6 +248,12 @@ public class DEServlet {
         return deProcessor.getVideoById(id);
     }
 
+    /**
+     *
+     * @param id - video id
+     * @return response with status code 204 if delete is success otherwise 200
+     * @throws DeException
+     */
     @DELETE
     @Path("/video")
     public Response deleteVideoById(@QueryParam("id") String id) throws DeException {
