@@ -2,7 +2,6 @@ package com.dailymotion.pixelle.deserver.providers;
 
 import com.dailymotion.pixelle.deserver.processor.DeException;
 import com.dailymotion.pixelle.deserver.processor.DeHelper;
-import com.google.inject.Injector;
 import com.google.inject.ProvisionException;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.settings.Settings;
@@ -16,12 +15,15 @@ import java.io.IOException;
 /**
  * Created by n.dhupia on 11/19/14.
  */
-public class ESIndexTypeFactory {
+public final class ESIndexTypeFactory {
     private static Logger logger = LoggerFactory.getLogger(ESIndexTypeFactory.class);
-    private static Injector injector;
+
+    private ESIndexTypeFactory() {
+    }
 
     /**
-     * Creates an es index given name, settings and type. Type mapping is added automatically using typename
+     * Creates an es index given name, settings and type. Type mapping is added automatically using typename.
+     *
      * @param client
      * @param indexName
      * @param settings
@@ -41,7 +43,7 @@ public class ESIndexTypeFactory {
                         .execute()
                         .actionGet()
                         .isAcknowledged();
-                if (ack == true) {
+                if (ack) {
                     logger.info("Index creation succeeded");
                 } else {
                     logger.info("Index already exists ! Not re-creating");

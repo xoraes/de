@@ -43,19 +43,20 @@ import java.util.List;
  * Created by n.dhupia on 11/3/14.
  */
 public class AdUnitProcessor {
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final Integer MAX_YEARS = 100;
+    private static final Integer MAX_RANDOM = 100;
+    private static final Integer SIZ_MULTIPLIER = 4;
     private static Logger logger = LoggerFactory.getLogger(AdUnitProcessor.class);
     private static Client client;
     // JMX: com.netflix.servo.COUNTER.TotalAdsRequestsServed
     private static Counter totalAdsRequestsServed = new BasicCounter(MonitorConfig
             .builder("TotalAdsRequestsServed").build());
+
     static {
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        OBJECT_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         DefaultMonitorRegistry.getInstance().register(totalAdsRequestsServed);
     }
-    private final Integer MAX_YEARS = 100;
-    private final Integer MAX_RANDOM = 100;
-    private final Integer SIZ_MULTIPLIER = 4;
 
     @Inject
     public AdUnitProcessor(Client esClient) {
@@ -92,11 +93,11 @@ public class AdUnitProcessor {
             } else {
                 fb.must(FilterBuilders.termsFilter("formats", "all"));
             }
-            if (! DeHelper.isEmptyList(sq.getLocations())) {
+            if (!DeHelper.isEmptyList(sq.getLocations())) {
                 fb.mustNot(FilterBuilders.termsFilter("excluded_locations", DeHelper.toLowerCase(sq.getLocations())));
             }
 
-            if (! DeHelper.isEmptyList(sq.getCategories())) {
+            if (!DeHelper.isEmptyList(sq.getCategories())) {
                 fb.mustNot(FilterBuilders.termsFilter("excluded_categories", DeHelper.toLowerCase(sq.getCategories())));
             }
 
@@ -123,7 +124,7 @@ public class AdUnitProcessor {
             for (SearchHit hit : searchResponse.getHits().getHits()) {
                 AdUnitResponse unit;
                 try {
-                    unit = objectMapper.readValue(hit.getSourceAsString(), AdUnitResponse.class);
+                    unit = OBJECT_MAPPER.readValue(hit.getSourceAsString(), AdUnitResponse.class);
                 } catch (IOException e) {
                     throw new DeException(e.getCause(), HttpStatus.INTERNAL_SERVER_ERROR_500);
                 }
@@ -159,7 +160,7 @@ public class AdUnitProcessor {
         for (SearchHit hit : searchResponse.getHits().getHits()) {
             AdUnit unit;
             try {
-                unit = objectMapper.readValue(hit.getSourceAsString(), AdUnit.class);
+                unit = OBJECT_MAPPER.readValue(hit.getSourceAsString(), AdUnit.class);
             } catch (IOException e) {
                 throw new DeException(e.getCause(), HttpStatus.INTERNAL_SERVER_ERROR_500);
             }
@@ -232,7 +233,7 @@ public class AdUnitProcessor {
 
         try {
             client.prepareUpdate(DeHelper.getPromotedIndex(), DeHelper.getAdUnitsType(), unit.getId())
-                    .setDoc(objectMapper.writeValueAsString(unit))
+                    .setDoc(OBJECT_MAPPER.writeValueAsString(unit))
                     .setDocAsUpsert(true)
                     .execute()
                     .actionGet();
@@ -257,7 +258,7 @@ public class AdUnitProcessor {
             logger.info("Loading adunit" + adUnit.toString());
             try {
                 bulkRequest.add(client.prepareUpdate(DeHelper.getPromotedIndex(), DeHelper.getAdUnitsType(), adUnit.getId())
-                        .setDoc(objectMapper.writeValueAsString(adUnit))
+                        .setDoc(OBJECT_MAPPER.writeValueAsString(adUnit))
                         .setDocAsUpsert(true));
             } catch (JsonProcessingException e) {
                 logger.error("Error converting adunit to string", e);
@@ -294,7 +295,7 @@ public class AdUnitProcessor {
         byte[] responseSourceAsBytes = response.getSourceAsBytes();
         if (response != null && responseSourceAsBytes != null) {
             try {
-                unit = objectMapper.readValue(responseSourceAsBytes, AdUnit.class);
+                unit = OBJECT_MAPPER.readValue(responseSourceAsBytes, AdUnit.class);
             } catch (IOException e) {
                 logger.error("error parsing adunit", e);
                 throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
@@ -318,7 +319,7 @@ public class AdUnitProcessor {
         for (SearchHit hit : searchResponse.getHits().getHits()) {
             AdUnit unit;
             try {
-                unit = objectMapper.readValue(hit.getSourceAsString(), AdUnit.class);
+                unit = OBJECT_MAPPER.readValue(hit.getSourceAsString(), AdUnit.class);
             } catch (IOException e) {
                 throw new DeException(e.getCause(), HttpStatus.INTERNAL_SERVER_ERROR_500);
             }

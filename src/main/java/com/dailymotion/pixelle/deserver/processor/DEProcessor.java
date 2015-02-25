@@ -1,6 +1,11 @@
 package com.dailymotion.pixelle.deserver.processor;
 
-import com.dailymotion.pixelle.deserver.model.*;
+import com.dailymotion.pixelle.deserver.model.AdUnit;
+import com.dailymotion.pixelle.deserver.model.AdUnitResponse;
+import com.dailymotion.pixelle.deserver.model.ItemsResponse;
+import com.dailymotion.pixelle.deserver.model.SearchQueryRequest;
+import com.dailymotion.pixelle.deserver.model.Video;
+import com.dailymotion.pixelle.deserver.model.VideoResponse;
 import com.dailymotion.pixelle.deserver.processor.hystrix.AdQueryCommand;
 import com.dailymotion.pixelle.deserver.processor.hystrix.VideoQueryCommand;
 import com.google.inject.Inject;
@@ -229,7 +234,10 @@ public class DEProcessor {
         return client.prepareDelete(indexName, type, id).execute().actionGet().isFound();
     }
 
-    public List<? extends ItemsResponse> mergeAndFillList(final List<AdUnitResponse> ads, final List<VideoResponse> targetedVideos, final List<VideoResponse> untargetedVideos, final Integer positions) {
+    public List<? extends ItemsResponse> mergeAndFillList(final List<AdUnitResponse> ads,
+                                                          final List<VideoResponse> targetedVideos,
+                                                          final List<VideoResponse> untargetedVideos,
+                                                          final Integer positions) {
 
         String pattern = DeHelper.getWidgetPattern();
         int len = pattern.length();

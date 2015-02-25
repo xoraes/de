@@ -43,11 +43,16 @@ import java.util.List;
  * Created by n.dhupia on 12/10/14.
  */
 public class VideoProcessor {
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     static {
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        OBJECT_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
+
+    private static final String CHANNEL_TIER = "channel_tier";
+    private static final String GOLD = "gold";
+    private static final String BRONZE = "bronze";
+    private static final String SILVER = "silver";
 
     private static Logger logger = LoggerFactory.getLogger(VideoProcessor.class);
     private static Client client;
@@ -97,7 +102,7 @@ public class VideoProcessor {
         byte[] responseSourceAsBytes = response.getSourceAsBytes();
         if (response != null && responseSourceAsBytes != null) {
             try {
-                video = objectMapper.readValue(responseSourceAsBytes, Video.class);
+                video = OBJECT_MAPPER.readValue(responseSourceAsBytes, Video.class);
             } catch (IOException e) {
                 logger.error("error parsing video", e);
                 throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
@@ -144,7 +149,7 @@ public class VideoProcessor {
         UpdateResponse response;
         try {
             response = client.prepareUpdate(DeHelper.getOrganicIndex(), DeHelper.getVideosType(), video.getId())
-                    .setDoc(objectMapper.writeValueAsString(video))
+                    .setDoc(OBJECT_MAPPER.writeValueAsString(video))
                     .setDocAsUpsert(true)
                     .execute()
                     .actionGet();
@@ -172,7 +177,7 @@ public class VideoProcessor {
 
             try {
                 bulkRequest.add(client.prepareUpdate(DeHelper.getOrganicIndex(), DeHelper.getVideosType(), video.getId())
-                        .setDoc(objectMapper.writeValueAsString(video))
+                        .setDoc(OBJECT_MAPPER.writeValueAsString(video))
                         .setDocAsUpsert(true));
             } catch (JsonProcessingException e) {
                 logger.error("Error converting video to string", e);
@@ -192,10 +197,6 @@ public class VideoProcessor {
     }
 
     public List<VideoResponse> recommend(@Nullable SearchQueryRequest sq, Integer positions, @Nullable List<String> excludedIds) {
-        final String CHANNEL_TIER = "channel_tier";
-        final String GOLD = "gold";
-        final String BRONZE = "bronze";
-        final String SILVER = "silver";
 
         List<VideoResponse> videoResponses = null;
         BoolFilterBuilder fb = FilterBuilders.boolFilter();
@@ -222,7 +223,8 @@ public class VideoProcessor {
 
         QueryBuilder qb = QueryBuilders.functionScoreQuery(fb)
                 .add(pubDateScoreBuilder)
-                .add(FilterBuilders.andFilter(FilterBuilders.rangeFilter("clicks").from(0), FilterBuilders.rangeFilter("impressions").from(0)), ScoreFunctionBuilders.scriptFunction(ctrScriptFunction.getValue()).lang(ctrScriptLang.getValue()))
+                .add(FilterBuilders.andFilter(FilterBuilders.rangeFilter("clicks").from(0), FilterBuilders.rangeFilter("impressions").from(0)),
+                        ScoreFunctionBuilders.scriptFunction(ctrScriptFunction.getValue()).lang(ctrScriptLang.getValue()))
                 .add(FilterBuilders.termFilter(CHANNEL_TIER, GOLD), ScoreFunctionBuilders.weightFactorFunction(goldPartnerWeight.getValue()))
                 .add(FilterBuilders.termFilter(CHANNEL_TIER, SILVER), ScoreFunctionBuilders.weightFactorFunction(silverPartnerWeight.getValue()))
                 .add(FilterBuilders.termFilter(CHANNEL_TIER, BRONZE), ScoreFunctionBuilders.weightFactorFunction(bronzePartnerWeight.getValue()))
@@ -254,7 +256,7 @@ public class VideoProcessor {
         for (SearchHit hit : searchResponse.getHits().getHits()) {
             VideoResponse video = null;
             try {
-                video = objectMapper.readValue(hit.getSourceAsString(), VideoResponse.class);
+                video = OBJECT_MAPPER.readValue(hit.getSourceAsString(), VideoResponse.class);
                 if (sq.getDebugEnabled() == Boolean.TRUE) {
                     Explanation ex = new Explanation();
                     ex.setValue(hit.getScore());

@@ -5,7 +5,6 @@ package com.dailymotion.pixelle.deserver; /**
 import com.dailymotion.pixelle.deserver.processor.DeHelper;
 import com.dailymotion.pixelle.deserver.servlets.DEServlet;
 import com.dailymotion.pixelle.deserver.servlets.DeServletModule;
-import com.google.inject.Injector;
 import com.google.inject.servlet.GuiceFilter;
 import com.netflix.config.ConfigurationManager;
 import com.netflix.config.DynamicPropertyFactory;
@@ -28,7 +27,10 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.EnumSet;
 
-public class StartServer {
+public final class StartServer {
+
+    private StartServer() {
+    }
 
     public static void main(String[] args) throws Exception {
 
@@ -73,6 +75,5 @@ public class StartServer {
         } catch (Exception err) {
             throw new IOException(err);
         }
-
     }
 }

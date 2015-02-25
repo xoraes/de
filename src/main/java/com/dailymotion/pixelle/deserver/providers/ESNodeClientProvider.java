@@ -23,7 +23,8 @@ public class ESNodeClientProvider implements Provider<Client> {
     private static Logger logger = LoggerFactory.getLogger(ESNodeClientProvider.class);
 
     /**
-     * Provider that creates the indices, mapping and then returns the client for use in the application
+     * Provider that creates the indices, mapping and then returns the client for use in the application.
+     *
      * @return es client
      */
     public Client get() {

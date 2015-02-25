@@ -12,11 +12,15 @@ import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
 /**
  * Created by n.dhupia on 10/29/14.
  */
-public class ESTestNodeClientProvider implements Provider<Client> {
+public final class ESTestNodeClientProvider implements Provider<Client> {
     private static Logger logger = LoggerFactory.getLogger(ESTestNodeClientProvider.class);
 
+    private ESTestNodeClientProvider() {
+    }
+
     /**
-     * Provider for testing. This creates the indices, mapping and then returns the client
+     * Provider for testing. This creates the indices, mapping and then returns the client.
+     *
      * @return es client
      */
     public Client get() {

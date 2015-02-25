@@ -12,12 +12,16 @@ import org.joda.time.LocalDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by n.dhupia on 11/6/14.
  */
-public class DeHelper {
+public final class DeHelper {
     private static Logger logger = LoggerFactory.getLogger(DeHelper.class);
     private static DynamicStringProperty organicIndex =
             DynamicPropertyFactory.getInstance().getStringProperty("organicIndex", "organic");
@@ -37,6 +41,8 @@ public class DeHelper {
             DynamicPropertyFactory.getInstance().getIntProperty("port", 8080);
     private static DynamicStringProperty widgetPattern =
             DynamicPropertyFactory.getInstance().getStringProperty("widget.pattern", "oop");
+    private DeHelper() {
+    }
 
     public static String getCluster() {
         return clusterName.get();

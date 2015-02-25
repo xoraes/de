@@ -1,6 +1,5 @@
 package com.dailymotion.pixelle.deserver.processor;
 
-
 import com.dailymotion.pixelle.deserver.model.AdUnit;
 import com.dailymotion.pixelle.deserver.model.AdUnitResponse;
 import com.dailymotion.pixelle.deserver.model.ItemsResponse;

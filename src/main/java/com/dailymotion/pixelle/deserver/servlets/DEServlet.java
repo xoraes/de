@@ -9,7 +9,13 @@ import com.dailymotion.pixelle.deserver.model.Video;
 import com.dailymotion.pixelle.deserver.processor.DEProcessor;
 import com.dailymotion.pixelle.deserver.processor.DeException;
 import com.dailymotion.pixelle.deserver.processor.DeHelper;
-import com.dailymotion.pixelle.deserver.processor.hystrix.*;
+import com.dailymotion.pixelle.deserver.processor.hystrix.AdInsertCommand;
+import com.dailymotion.pixelle.deserver.processor.hystrix.AdUnitBulkInsertCommand;
+import com.dailymotion.pixelle.deserver.processor.hystrix.AdUpdateCommand;
+import com.dailymotion.pixelle.deserver.processor.hystrix.QueryCommand;
+import com.dailymotion.pixelle.deserver.processor.hystrix.VideoBulkInsertCommand;
+import com.dailymotion.pixelle.deserver.processor.hystrix.VideoInsertCommand;
+import com.dailymotion.pixelle.deserver.processor.hystrix.VideoUpdateCommand;
 import org.apache.commons.lang.StringUtils;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.glassfish.jersey.server.ManagedAsync;
@@ -18,7 +24,14 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.servlet.annotation.WebServlet;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
@@ -37,7 +50,6 @@ public class DEServlet {
     }
 
     /**
-     *
      * @return Object representing the health of the cluster
      * @throws DeException
      */
@@ -49,7 +61,6 @@ public class DEServlet {
     }
 
     /**
-     *
      * @return same as healthcheck
      * @throws DeException
      */
@@ -62,7 +73,6 @@ public class DEServlet {
     }
 
     /**
-     *
      * @param id adunit id
      * @return adunit
      * @throws DeException
@@ -75,7 +85,6 @@ public class DEServlet {
     }
 
     /**
-     *
      * @param cid - the campaign id
      * @return adunits related to a campaign. If cid is blank, then return all adunits
      * @throws DeException
@@ -91,7 +100,6 @@ public class DEServlet {
     }
 
     /**
-     *
      * @param id the adunit id
      * @return response with status code 204 if delete is success otherwise 200
      * @throws DeException
@@ -107,10 +115,9 @@ public class DEServlet {
     }
 
     /**
-     *
-     * @param sq - the search query object
-     * @param pos - the number of units to return
-     * @param allowedTypes - can be blank or "promoted" or "organic" or "promoted,organic"
+     * @param sq             - the search query object
+     * @param pos            - the number of units to return
+     * @param allowedTypes   - can be blank or "promoted" or "organic" or "promoted,organic"
      * @param isDebugEnabled - true if debug information is requested
      * @return Response object with json body containing items including adunits and/or organic videos as requested
      * @throws DeException
@@ -119,7 +126,10 @@ public class DEServlet {
     @Path("/query")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response query(SearchQueryRequest sq, @QueryParam("positions") Integer pos, @QueryParam("type") String allowedTypes, @QueryParam("debug") Boolean isDebugEnabled) throws DeException {
+    public Response query(SearchQueryRequest sq,
+                          @QueryParam("positions") Integer pos,
+                          @QueryParam("type") String allowedTypes,
+                          @QueryParam("debug") Boolean isDebugEnabled) throws DeException {
         if (isDebugEnabled == null) {
             sq.setDebugEnabled(false);
         } else {
@@ -130,7 +140,8 @@ public class DEServlet {
     }
 
     /**
-     * This method suspends the incoming thread, indexes the a list of adunits to ES and then resumes the thread
+     * This method suspends the incoming thread, indexes the a list of adunits to ES and then resumes the thread.
+     *
      * @param adUnits
      * @param ar
      * @throws DeException
@@ -145,7 +156,8 @@ public class DEServlet {
     }
 
     /**
-     * This method suspends the incoming thread, indexes a adunit to ES and then resumes the thread
+     * This method suspends the incoming thread, indexes a adunit to ES and then resumes the thread.
+     *
      * @param adunit
      * @param ar
      * @throws DeException
@@ -160,7 +172,8 @@ public class DEServlet {
     }
 
     /**
-     * This method suspends the incoming thread, indexes a adunit to ES and then resumes the thread
+     * This method suspends the incoming thread, indexes a adunit to ES and then resumes the thread.
+     *
      * @param adunit
      * @param ar
      * @throws DeException
@@ -175,7 +188,8 @@ public class DEServlet {
     }
 
     /**
-     * This method suspends the incoming thread, updates/indexes a list of videos to ES and then resumes the thread
+     * This method suspends the incoming thread, updates/indexes a list of videos to ES and then resumes the thread.
+     *
      * @param videos
      * @param ar
      * @throws DeException
@@ -190,7 +204,8 @@ public class DEServlet {
     }
 
     /**
-     * This method suspends the incoming thread, inserts/indexes a list of videos to ES and then resumes the thread
+     * This method suspends the incoming thread, inserts/indexes a list of videos to ES and then resumes the thread.
+     *
      * @param videos
      * @param ar
      * @throws DeException
@@ -205,7 +220,8 @@ public class DEServlet {
     }
 
     /**
-     * This method suspends the incoming thread, indexes a video to ES and then resumes the thread
+     * This method suspends the incoming thread, indexes a video to ES and then resumes the thread.
+     *
      * @param video
      * @param ar
      * @throws DeException
@@ -220,7 +236,8 @@ public class DEServlet {
     }
 
     /**
-     * This method suspends the incoming thread, inserts/indexes a video to ES and then resumes the thread
+     * This method suspends the incoming thread, inserts/indexes a video to ES and then resumes the thread.
+     *
      * @param video
      * @param ar
      * @throws DeException
@@ -236,7 +253,6 @@ public class DEServlet {
     }
 
     /**
-     *
      * @param id - video id
      * @return Video
      * @throws DeException
@@ -249,7 +265,6 @@ public class DEServlet {
     }
 
     /**
-     *
      * @param id - video id
      * @return response with status code 204 if delete is success otherwise 200
      * @throws DeException
