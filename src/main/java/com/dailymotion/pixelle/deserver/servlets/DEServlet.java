@@ -50,6 +50,8 @@ public class DEServlet {
     }
 
     /**
+     * Returns the status of promoted and organic index.
+     *
      * @return Object representing the health of the cluster
      * @throws DeException
      */
@@ -61,10 +63,11 @@ public class DEServlet {
     }
 
     /**
+     * Returns the status of promoted and organic index.
+     *
      * @return same as healthcheck
      * @throws DeException
      */
-
     @GET
     @Path("/status")
     @Produces(MediaType.APPLICATION_JSON)
@@ -73,6 +76,8 @@ public class DEServlet {
     }
 
     /**
+     * Returns the adunit given an adunit id.
+     *
      * @param id adunit id
      * @return adunit
      * @throws DeException
@@ -85,6 +90,8 @@ public class DEServlet {
     }
 
     /**
+     * Get all ad units for a given campaign id. If campaign id is blank, return all adunits.
+     *
      * @param cid - the campaign id
      * @return adunits related to a campaign. If cid is blank, then return all adunits
      * @throws DeException
@@ -100,6 +107,8 @@ public class DEServlet {
     }
 
     /**
+     * Delete the ad units given its id.
+     *
      * @param id the adunit id
      * @return response with status code 204 if delete is success otherwise 200
      * @throws DeException
@@ -115,6 +124,11 @@ public class DEServlet {
     }
 
     /**
+     * Given a json formatted search query, and positions - returns a list containing ad units and videos. For
+     * allowedType = promoted return adunits, for allowTypes = organic return videos, for allowedTypes =
+     * promoted,organic return a mix of promoted and organic videos. The order of this returned mixed list of
+     * organic and promoted videos is based on a predefined pattern configured using the widget.pattern property.
+     *
      * @param sq             - the search query object
      * @param pos            - the number of units to return
      * @param allowedTypes   - can be blank or "promoted" or "organic" or "promoted,organic"
@@ -140,7 +154,7 @@ public class DEServlet {
     }
 
     /**
-     * This method suspends the incoming thread, indexes the a list of adunits to ES and then resumes the thread.
+     * Asynchronously inserts a list of videos to the promoted index.
      *
      * @param adUnits
      * @param ar
@@ -156,7 +170,7 @@ public class DEServlet {
     }
 
     /**
-     * This method suspends the incoming thread, indexes a adunit to ES and then resumes the thread.
+     * Asynchronously updates an ad unit to the promoted index.
      *
      * @param adunit
      * @param ar
@@ -172,7 +186,7 @@ public class DEServlet {
     }
 
     /**
-     * This method suspends the incoming thread, indexes a adunit to ES and then resumes the thread.
+     * Asynchronously inserts a ad unit to the promoted index.
      *
      * @param adunit
      * @param ar
@@ -188,7 +202,7 @@ public class DEServlet {
     }
 
     /**
-     * This method suspends the incoming thread, updates/indexes a list of videos to ES and then resumes the thread.
+     * Asynchronously updates a list of videos to the organic index.
      *
      * @param videos
      * @param ar
@@ -204,7 +218,7 @@ public class DEServlet {
     }
 
     /**
-     * This method suspends the incoming thread, inserts/indexes a list of videos to ES and then resumes the thread.
+     * Asynchronously inserts a list of videos to the organic index.
      *
      * @param videos
      * @param ar
@@ -220,7 +234,7 @@ public class DEServlet {
     }
 
     /**
-     * This method suspends the incoming thread, indexes a video to ES and then resumes the thread.
+     * Asynchronously, updates/indexes a video to ES.
      *
      * @param video
      * @param ar
@@ -236,7 +250,7 @@ public class DEServlet {
     }
 
     /**
-     * This method suspends the incoming thread, inserts/indexes a video to ES and then resumes the thread.
+     * Asynchronously, inserts/indexes a video to ES.
      *
      * @param video
      * @param ar
@@ -253,6 +267,8 @@ public class DEServlet {
     }
 
     /**
+     * Returns info for a given video id.
+     *
      * @param id - video id
      * @return Video
      * @throws DeException
@@ -265,6 +281,8 @@ public class DEServlet {
     }
 
     /**
+     * Deletes video from the index.
+     *
      * @param id - video id
      * @return response with status code 204 if delete is success otherwise 200
      * @throws DeException

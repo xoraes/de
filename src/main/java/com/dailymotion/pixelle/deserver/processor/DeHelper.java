@@ -22,6 +22,7 @@ import java.util.Map;
  * Created by n.dhupia on 11/6/14.
  */
 public final class DeHelper {
+    private static final String DATETIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ssZ";
     private static Logger logger = LoggerFactory.getLogger(DeHelper.class);
     private static DynamicStringProperty organicIndex =
             DynamicPropertyFactory.getInstance().getStringProperty("organicIndex", "organic");
@@ -41,6 +42,11 @@ public final class DeHelper {
             DynamicPropertyFactory.getInstance().getIntProperty("port", 8080);
     private static DynamicStringProperty widgetPattern =
             DynamicPropertyFactory.getInstance().getStringProperty("widget.pattern", "oop");
+    private static DynamicIntProperty retryOnConflictAdUnits =
+            DynamicPropertyFactory.getInstance().getIntProperty("adunits.retryOnConflict", 5);
+    private static DynamicIntProperty retryOnConflictVideos =
+            DynamicPropertyFactory.getInstance().getIntProperty("videos.retryOnConflict", 5);
+
     private DeHelper() {
     }
 
@@ -70,6 +76,13 @@ public final class DeHelper {
         return videosType.get();
     }
 
+    public static int getAdUnitsRetryOnConflict() {
+        return retryOnConflictAdUnits.get();
+    }
+
+    public static int getVideosRetryOnConflict() {
+        return retryOnConflictVideos.get();
+    }
 
     public static String getDataDir() {
 
@@ -158,6 +171,10 @@ public final class DeHelper {
     public static int getPort() {
 
         return dePort.get();
+    }
+
+    public static String getDateTimeFormatString() {
+        return DATETIME_FORMAT;
     }
 
     public static List<String> toLowerCase(List<String> list) {

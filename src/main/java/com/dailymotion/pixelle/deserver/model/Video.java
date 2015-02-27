@@ -237,7 +237,6 @@ public class Video {
         this.impressions = impressions;
     }
 
-
     public String toString() {
         ObjectMapper mapper = new ObjectMapper();
 

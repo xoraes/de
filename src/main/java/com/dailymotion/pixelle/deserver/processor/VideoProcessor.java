@@ -124,12 +124,12 @@ public class VideoProcessor {
      * @return a modified video
      */
     private Video modifyVideoForInsert(Video video) {
-        if (video.getLanguages() == null || video.getLanguages().size() <= 0) {
+        if (DeHelper.isEmptyList(video.getLanguages())) {
             video.setLanguages(Arrays.asList("all"));
         }
 
 
-        if (video.getCategories() == null || video.getCategories().size() <= 0) {
+        if (DeHelper.isEmptyList(video.getCategories())) {
             video.setCategories(Arrays.asList("all"));
         }
 
@@ -151,6 +151,7 @@ public class VideoProcessor {
             response = client.prepareUpdate(DeHelper.getOrganicIndex(), DeHelper.getVideosType(), video.getId())
                     .setDoc(OBJECT_MAPPER.writeValueAsString(video))
                     .setDocAsUpsert(true)
+                    .setRetryOnConflict(DeHelper.getVideosRetryOnConflict())
                     .execute()
                     .actionGet();
 
@@ -178,6 +179,7 @@ public class VideoProcessor {
             try {
                 bulkRequest.add(client.prepareUpdate(DeHelper.getOrganicIndex(), DeHelper.getVideosType(), video.getId())
                         .setDoc(OBJECT_MAPPER.writeValueAsString(video))
+                        .setRetryOnConflict(DeHelper.getVideosRetryOnConflict())
                         .setDocAsUpsert(true));
             } catch (JsonProcessingException e) {
                 logger.error("Error converting video to string", e);

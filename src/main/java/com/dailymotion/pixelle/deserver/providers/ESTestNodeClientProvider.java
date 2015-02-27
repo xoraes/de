@@ -15,7 +15,7 @@ import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
 public final class ESTestNodeClientProvider implements Provider<Client> {
     private static Logger logger = LoggerFactory.getLogger(ESTestNodeClientProvider.class);
 
-    private ESTestNodeClientProvider() {
+    protected ESTestNodeClientProvider() {
     }
 
     /**

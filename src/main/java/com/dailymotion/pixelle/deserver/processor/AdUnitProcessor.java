@@ -49,6 +49,7 @@ public class AdUnitProcessor {
     private static final Integer SIZ_MULTIPLIER = 4;
     private static Logger logger = LoggerFactory.getLogger(AdUnitProcessor.class);
     private static Client client;
+
     // JMX: com.netflix.servo.COUNTER.TotalAdsRequestsServed
     private static Counter totalAdsRequestsServed = new BasicCounter(MonitorConfig
             .builder("TotalAdsRequestsServed").build());
@@ -67,7 +68,7 @@ public class AdUnitProcessor {
 
         List<AdUnitResponse> adUnitResponses = null;
         if (sq != null) {
-            DateTimeFormatter df = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ssZ");
+            DateTimeFormatter df = DateTimeFormat.forPattern(DeHelper.getDateTimeFormatString());
             //If withOffsetParsed() is not used then everything is converted to local time
             //resulting in dayOfWeek and HourOfDay to be incorrect
             DateTime dt = df.withOffsetParsed().parseDateTime(sq.getTime());
@@ -221,8 +222,8 @@ public class AdUnitProcessor {
         unit.setFormats(DeHelper.stringListToLowerCase(unit.getFormats()));
         unit.setLanguages(DeHelper.stringListToLowerCase(unit.getLanguages()));
         unit.setLocations(DeHelper.stringListToLowerCase(unit.getLocations()));
-
         unit.setStatus(StringUtils.lowerCase(unit.getStatus()));
+
         return unit;
     }
 
@@ -235,6 +236,7 @@ public class AdUnitProcessor {
             client.prepareUpdate(DeHelper.getPromotedIndex(), DeHelper.getAdUnitsType(), unit.getId())
                     .setDoc(OBJECT_MAPPER.writeValueAsString(unit))
                     .setDocAsUpsert(true)
+                    .setRetryOnConflict(DeHelper.getAdUnitsRetryOnConflict())
                     .execute()
                     .actionGet();
         } catch (JsonProcessingException e) {
@@ -259,6 +261,7 @@ public class AdUnitProcessor {
             try {
                 bulkRequest.add(client.prepareUpdate(DeHelper.getPromotedIndex(), DeHelper.getAdUnitsType(), adUnit.getId())
                         .setDoc(OBJECT_MAPPER.writeValueAsString(adUnit))
+                        .setRetryOnConflict(DeHelper.getAdUnitsRetryOnConflict())
                         .setDocAsUpsert(true));
             } catch (JsonProcessingException e) {
                 logger.error("Error converting adunit to string", e);
