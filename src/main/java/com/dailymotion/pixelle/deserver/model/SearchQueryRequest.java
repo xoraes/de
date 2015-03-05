@@ -34,6 +34,8 @@ public class SearchQueryRequest {
     private String time;
     @JsonProperty("browser")
     private String browser;
+    @JsonProperty("channel")
+    private String channel;
     @JsonIgnore
     private String timeTable;
     @JsonIgnore
@@ -115,6 +117,13 @@ public class SearchQueryRequest {
         this.debugEnabled = debugEnabled;
     }
 
+    public String getChannel() {
+        return channel;
+    }
+
+    public void setChannel(String channel) {
+        this.channel = channel;
+    }
 
     public String toString() {
         ObjectMapper mapper = new ObjectMapper();

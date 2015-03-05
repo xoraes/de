@@ -34,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -53,9 +54,8 @@ public class VideoProcessor {
     private static final String GOLD = "gold";
     private static final String BRONZE = "bronze";
     private static final String SILVER = "silver";
-
+    protected static Client client;
     private static Logger logger = LoggerFactory.getLogger(VideoProcessor.class);
-    private static Client client;
     private static DynamicFloatProperty goldPartnerWeight =
             DynamicPropertyFactory.getInstance().getFloatProperty("goldPartner.weightPercent", 0.5f);
 
@@ -97,7 +97,7 @@ public class VideoProcessor {
         if (StringUtils.isBlank(id)) {
             throw new DeException(new Throwable("id cannot be blank"), HttpStatus.BAD_REQUEST_400);
         }
-        GetResponse response = client.prepareGet(DeHelper.getOrganicIndex(), DeHelper.getVideosType(), id).execute().actionGet();
+        GetResponse response = client.prepareGet(DeHelper.organicIndex.get(), DeHelper.videosType.get(), id).execute().actionGet();
         Video video = null;
         byte[] responseSourceAsBytes = response.getSourceAsBytes();
         if (response != null && responseSourceAsBytes != null) {
@@ -123,11 +123,13 @@ public class VideoProcessor {
      * @param video - should not be null
      * @return a modified video
      */
-    private Video modifyVideoForInsert(Video video) {
+    protected Video modifyVideoForInsert(@NotNull Video video) {
+
+        if (video == null) return video;
+
         if (DeHelper.isEmptyList(video.getLanguages())) {
             video.setLanguages(Arrays.asList("all"));
         }
-
 
         if (DeHelper.isEmptyList(video.getCategories())) {
             video.setCategories(Arrays.asList("all"));
@@ -148,10 +150,10 @@ public class VideoProcessor {
         logger.info(video.toString());
         UpdateResponse response;
         try {
-            response = client.prepareUpdate(DeHelper.getOrganicIndex(), DeHelper.getVideosType(), video.getId())
+            response = client.prepareUpdate(DeHelper.organicIndex.get(), DeHelper.videosType.get(), video.getId())
                     .setDoc(OBJECT_MAPPER.writeValueAsString(video))
                     .setDocAsUpsert(true)
-                    .setRetryOnConflict(DeHelper.getVideosRetryOnConflict())
+                    .setRetryOnConflict(DeHelper.retryOnConflictVideos.get())
                     .execute()
                     .actionGet();
 
@@ -165,6 +167,14 @@ public class VideoProcessor {
     }
 
     public void insertVideoInBulk(List<Video> videos) throws DeException {
+        insertVideoInBulk(videos, DeHelper.organicIndex.get());
+    }
+
+    public void insertChannelVideoInBulk(List<Video> videos) throws DeException {
+        insertVideoInBulk(videos, DeHelper.channelIndex.get());
+    }
+
+    private void insertVideoInBulk(List<Video> videos, String index) {
         if (DeHelper.isEmptyList(videos)) {
             return;
         }
@@ -174,12 +184,12 @@ public class VideoProcessor {
         for (Video video : videos) {
 
             video = modifyVideoForInsert(video);
-            logger.info("Loading video" + video.toString());
+            logger.info("Loading video to " + index + " : " + video.toString());
 
             try {
-                bulkRequest.add(client.prepareUpdate(DeHelper.getOrganicIndex(), DeHelper.getVideosType(), video.getId())
+                bulkRequest.add(client.prepareUpdate(index, DeHelper.videosType.get(), video.getId())
                         .setDoc(OBJECT_MAPPER.writeValueAsString(video))
-                        .setRetryOnConflict(DeHelper.getVideosRetryOnConflict())
+                        .setRetryOnConflict(DeHelper.retryOnConflictVideos.get())
                         .setDocAsUpsert(true));
             } catch (JsonProcessingException e) {
                 logger.error("Error converting video to string", e);
@@ -235,9 +245,9 @@ public class VideoProcessor {
                 .maxBoost(maxBoost.getValue())
                 .scoreMode(scoreMode.getValue());
 
-        SearchRequestBuilder srb1 = client.prepareSearch(DeHelper.getOrganicIndex())
-                .setTypes(DeHelper.getVideosType())
-                .setSearchType(SearchType.DFS_QUERY_AND_FETCH)
+        SearchRequestBuilder srb1 = client.prepareSearch(DeHelper.organicIndex.get())
+                .setTypes(DeHelper.videosType.get())
+                .setSearchType(SearchType.QUERY_THEN_FETCH)
                 .setQuery(qb)
                 .setExplain(sq.getDebugEnabled())
                 .setSize(positions);
@@ -256,9 +266,9 @@ public class VideoProcessor {
         videoResponses = new ArrayList<VideoResponse>();
 
         for (SearchHit hit : searchResponse.getHits().getHits()) {
-            VideoResponse video = null;
+
             try {
-                video = OBJECT_MAPPER.readValue(hit.getSourceAsString(), VideoResponse.class);
+                VideoResponse video = OBJECT_MAPPER.readValue(hit.getSourceAsString(), VideoResponse.class);
                 if (sq.getDebugEnabled() == Boolean.TRUE) {
                     Explanation ex = new Explanation();
                     ex.setValue(hit.getScore());
@@ -266,11 +276,11 @@ public class VideoProcessor {
                     ex.addDetail(hit.explanation());
                     video.setDebugInfo(ex.toHtml().replace("\n", ""));
                     logger.info(ex.toString());
+                    videoResponses.add(video);
                 }
             } catch (IOException e) {
-                throw new DeException(e.getCause(), HttpStatus.INTERNAL_SERVER_ERROR_500);
+                throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
             }
-            videoResponses.add(video);
         }
         logger.info("Num video responses:" + videoResponses.size());
 

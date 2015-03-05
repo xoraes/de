@@ -26,7 +26,7 @@ public final class ESTestNodeClientProvider implements Provider<Client> {
     public Client get() {
         boolean ack;
         ImmutableSettings.Builder elasticsearchSettings = ImmutableSettings.settingsBuilder()
-                .put("node.name", DeHelper.getNode())
+                .put("node.name", DeHelper.nodeName.get())
                 .put("index.store.type", "memory")
                 .put("index.number_of_shards", 1)
                 .put("index.number_of_replicas", 0);
@@ -34,15 +34,16 @@ public final class ESTestNodeClientProvider implements Provider<Client> {
 
         Client client = nodeBuilder()
                 .settings(elasticsearchSettings)
-                .clusterName(DeHelper.getCluster())
+                .clusterName(DeHelper.clusterName.get())
                 .data(true)
                 .client(false)
                 .local(true)
                 .node()
                 .client();
 
-        ESIndexTypeFactory.createIndex(client, DeHelper.getPromotedIndex(), elasticsearchSettings.build(), DeHelper.getAdUnitsType());
-        ESIndexTypeFactory.createIndex(client, DeHelper.getOrganicIndex(), elasticsearchSettings.build(), DeHelper.getVideosType());
+        ESIndexTypeFactory.createIndex(client, DeHelper.promotedIndex.get(), elasticsearchSettings.build(), DeHelper.adunitsType.get());
+        ESIndexTypeFactory.createIndex(client, DeHelper.organicIndex.get(), elasticsearchSettings.build(), DeHelper.videosType.get());
+        ESIndexTypeFactory.createIndex(client, DeHelper.channelIndex.get(), elasticsearchSettings.build(), DeHelper.videosType.get());
         return client;
     }
 }

@@ -116,7 +116,7 @@ public class DEServlet {
     @DELETE
     @Path("/adunit")
     public Response deleteAdUnit(@QueryParam("id") String id) throws DeException {
-        if (deProcessor.deleteById(DeHelper.getPromotedIndex(), DeHelper.getAdUnitsType(), id)) {
+        if (deProcessor.deleteById(DeHelper.promotedIndex.get(), DeHelper.adunitsType.get(), id)) {
             return Response.noContent().build();
         } else {
             return Response.ok(id + " not found").build();
@@ -290,7 +290,7 @@ public class DEServlet {
     @DELETE
     @Path("/video")
     public Response deleteVideoById(@QueryParam("id") String id) throws DeException {
-        if (deProcessor.deleteById(DeHelper.getOrganicIndex(), DeHelper.getVideosType(), id)) {
+        if (deProcessor.deleteById(DeHelper.organicIndex.get(), DeHelper.videosType.get(), id)) {
             return Response.noContent().build();
         } else {
             return Response.ok(id + " not found").build();

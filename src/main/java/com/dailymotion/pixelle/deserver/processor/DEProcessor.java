@@ -7,6 +7,7 @@ import com.dailymotion.pixelle.deserver.model.SearchQueryRequest;
 import com.dailymotion.pixelle.deserver.model.Video;
 import com.dailymotion.pixelle.deserver.model.VideoResponse;
 import com.dailymotion.pixelle.deserver.processor.hystrix.AdQueryCommand;
+import com.dailymotion.pixelle.deserver.processor.hystrix.ChannelQueryCommand;
 import com.dailymotion.pixelle.deserver.processor.hystrix.VideoQueryCommand;
 import com.google.inject.Inject;
 import com.netflix.servo.DefaultMonitorRegistry;
@@ -22,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -31,26 +33,30 @@ import java.util.concurrent.TimeUnit;
  * Created by n.dhupia on 12/10/14.
  */
 public class DEProcessor {
-    private static final String ZEROTIME = "0001-01-01T00:00:00Z";
     private static Logger logger = LoggerFactory.getLogger(DEProcessor.class);
     private static Client client;
     private static AdUnitProcessor adUnitProcessor;
     private static VideoProcessor videoProcessor;
+    private static ChannelProcessor channelProcessor;
+
     private static StatsTimer adsTimer = new StatsTimer(MonitorConfig.builder("adsQuery_statsTimer").build(), new StatsConfig.Builder().withPublishMean(true).build());
     private static StatsTimer videosTimer = new StatsTimer(MonitorConfig.builder("videosQuery_statsTimer").build(), new StatsConfig.Builder().withPublishMean(true).build());
-    private static StatsTimer widgetTimer = new StatsTimer(MonitorConfig.builder("widgetQuery_statsTimer").build(), new StatsConfig.Builder().withPublishMean(true).build());
+    private static StatsTimer openWidgetTimer = new StatsTimer(MonitorConfig.builder("openWidgetQuery_statsTimer").build(), new StatsConfig.Builder().withPublishMean(true).build());
+    private static StatsTimer channelWidgetTimer = new StatsTimer(MonitorConfig.builder("myWidgetTimerQuery_statsTimer").build(), new StatsConfig.Builder().withPublishMean(true).build());
 
     static {
         DefaultMonitorRegistry.getInstance().register(adsTimer);
         DefaultMonitorRegistry.getInstance().register(videosTimer);
-        DefaultMonitorRegistry.getInstance().register(widgetTimer);
+        DefaultMonitorRegistry.getInstance().register(openWidgetTimer);
+        DefaultMonitorRegistry.getInstance().register(channelWidgetTimer);
     }
 
     @Inject
-    public DEProcessor(Client esClient, AdUnitProcessor adUnitProcessor, VideoProcessor videoProcessor) {
+    public DEProcessor(Client esClient, AdUnitProcessor adUnitProcessor, VideoProcessor videoProcessor, ChannelProcessor channelProcessor) {
         client = esClient;
         DEProcessor.adUnitProcessor = adUnitProcessor;
         DEProcessor.videoProcessor = videoProcessor;
+        DEProcessor.channelProcessor = channelProcessor;
     }
 
 
@@ -62,7 +68,7 @@ public class DEProcessor {
 
         ItemsResponse itemsResponse = new ItemsResponse();
         String[] at = StringUtils.split(allowedTypes, ",", 2);
-        sq = DeHelper.modifySearchQueryReq(sq);
+        sq = modifySearchQueryReq(sq);
 
         if (at == null || at.length == 0) {
             stopwatch = adsTimer.start();
@@ -105,11 +111,49 @@ public class DEProcessor {
                 videosTimer.record(stopwatch.getDuration(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);
             }
         }
+        if (at.length == 2
+                && StringUtils.containsIgnoreCase(allowedTypes, "promoted")
+                && StringUtils.containsIgnoreCase(allowedTypes, "channel")) {
+            stopwatch = channelWidgetTimer.start();
+            try {
+                Future<List<AdUnitResponse>> adsFuture;
+                Future<List<VideoResponse>> targetedVideosFuture;
+
+                adsFuture = new AdQueryCommand(adUnitProcessor, sq, positions).queue();
+                targetedVideosFuture = new ChannelQueryCommand(channelProcessor, sq, positions).queue();
+
+                try {
+                    ads = adsFuture.get();
+                    targetedVideos = targetedVideosFuture.get();
+                } catch (InterruptedException e) {
+                    throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
+                } catch (ExecutionException e) {
+                    throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
+                }
+
+                //if we have enough ads and videos, merge and send
+                if (!DeHelper.isEmptyList(ads) && !DeHelper.isEmptyList(targetedVideos) && ads.size() + targetedVideos.size() >= positions) {
+                    mergedList = mergeAndFillList(ads, targetedVideos, null, positions);
+                    itemsResponse.setResponse(mergedList);
+                    return itemsResponse;
+                } else if (DeHelper.isEmptyList(ads) && targetedVideos.size() >= positions) { //ads empty, enough videos
+                    itemsResponse.setResponse(targetedVideos);
+                    return itemsResponse;
+                } else { //fill with untargetged videos
+                    List<VideoResponse> untargetedVideos = videoProcessor.getUntargetedVideos(targetedVideos, positions, sq);
+                    mergedList = mergeAndFillList(ads, targetedVideos, untargetedVideos, positions);
+                    itemsResponse.setResponse(mergedList);
+                    return itemsResponse;
+                }
+            } finally {
+                channelWidgetTimer.record(stopwatch.getDuration(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);
+            }
+        }
 
         if (at.length == 2
                 && StringUtils.containsIgnoreCase(allowedTypes, "promoted")
                 && StringUtils.containsIgnoreCase(allowedTypes, "organic")) {
-            stopwatch = widgetTimer.start();
+            stopwatch = openWidgetTimer.start();
             try {
                 Future<List<AdUnitResponse>> adsFuture;
                 Future<List<VideoResponse>> targetedVideosFuture;
@@ -141,7 +185,7 @@ public class DEProcessor {
                     return itemsResponse;
                 }
             } finally {
-                widgetTimer.record(stopwatch.getDuration(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);
+                openWidgetTimer.record(stopwatch.getDuration(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);
             }
         }
         return itemsResponse;
@@ -190,27 +234,27 @@ public class DEProcessor {
     public ClusterHealthResponse getHealthCheck() throws DeException {
         boolean adIndexExists = client.admin()
                 .indices()
-                .prepareExists(DeHelper.getPromotedIndex())
+                .prepareExists(DeHelper.promotedIndex.get())
                 .execute()
                 .actionGet()
                 .isExists();
         boolean videoIndexExists = client.admin()
                 .indices()
-                .prepareExists(DeHelper.getOrganicIndex())
+                .prepareExists(DeHelper.organicIndex.get())
                 .execute()
                 .actionGet()
                 .isExists();
         boolean adUnitTypeExists = client.admin()
                 .indices()
-                .prepareTypesExists(DeHelper.getPromotedIndex())
-                .setTypes(DeHelper.getAdUnitsType())
+                .prepareTypesExists(DeHelper.promotedIndex.get())
+                .setTypes(DeHelper.adunitsType.get())
                 .execute()
                 .actionGet()
                 .isExists();
         boolean videoTypeExists = client.admin()
                 .indices()
-                .prepareTypesExists(DeHelper.getOrganicIndex())
-                .setTypes(DeHelper.getVideosType())
+                .prepareTypesExists(DeHelper.organicIndex.get())
+                .setTypes(DeHelper.videosType.get())
                 .execute()
                 .actionGet()
                 .isExists();
@@ -218,7 +262,7 @@ public class DEProcessor {
         if (adIndexExists && videoIndexExists && adUnitTypeExists && videoTypeExists) {
             return client.admin()
                     .cluster()
-                    .prepareHealth(DeHelper.getPromotedIndex(), DeHelper.getOrganicIndex())
+                    .prepareHealth(DeHelper.promotedIndex.get(), DeHelper.organicIndex.get())
                     .execute()
                     .actionGet();
         } else {
@@ -239,7 +283,7 @@ public class DEProcessor {
                                                           final List<VideoResponse> untargetedVideos,
                                                           final Integer positions) {
 
-        String pattern = DeHelper.getWidgetPattern();
+        String pattern = DeHelper.widgetPattern.get();
         int len = pattern.length();
 
         List<ItemsResponse> items = new ArrayList<ItemsResponse>();
@@ -271,10 +315,38 @@ public class DEProcessor {
         videoProcessor.insertVideoInBulk(videos);
     }
 
+    public void insertChannelVideoInBulk(List<Video> videos) throws DeException {
+        videoProcessor.insertChannelVideoInBulk(videos);
+    }
+
     protected void deleteIndex(String indexName) {
         if (client.admin().indices().prepareExists(indexName).execute().actionGet().isExists()
                 && client.admin().indices().prepareDelete(indexName).execute().actionGet().isAcknowledged()) {
-            logger.info("successfully deleted index: " + DeHelper.getPromotedIndex());
+            logger.info("successfully deleted index: " + DeHelper.promotedIndex.get());
         }
+    }
+
+    private SearchQueryRequest modifySearchQueryReq(SearchQueryRequest sq) {
+        if (sq != null) {
+            if (DeHelper.isEmptyList(sq.getCategories())) {
+                sq.setCategories(Arrays.asList("all"));
+            } else {
+                sq.getCategories().add("all");
+            }
+            if (DeHelper.isEmptyList(sq.getLocations())) {
+                sq.setLocations(Arrays.asList("all"));
+            } else {
+                sq.getLocations().add("all");
+            }
+            if (DeHelper.isEmptyList(sq.getLanguages())) {
+                sq.setLanguages(Arrays.asList("all"));
+            } else {
+                sq.getLanguages().add("all");
+            }
+            if (StringUtils.isBlank(sq.getTime())) {
+                sq.setTime(DeHelper.timeToISO8601String(DeHelper.currentUTCTime()));
+            }
+        }
+        return sq;
     }
 }

@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 public class VideoUpdateCommand extends HystrixCommand<Void> {
 
     private static DynamicIntProperty semaphoreCount =
-            DynamicPropertyFactory.getInstance().getIntProperty("videoupdate.semaphoreCount", 10);
+            DynamicPropertyFactory.getInstance().getIntProperty("videoupdate.semaphore.count", 10);
     private static Logger logger = LoggerFactory.getLogger(VideoUpdateCommand.class);
     private Video video;
     private DEProcessor processor;

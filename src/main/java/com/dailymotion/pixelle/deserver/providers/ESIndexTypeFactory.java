@@ -3,6 +3,8 @@ package com.dailymotion.pixelle.deserver.providers;
 import com.dailymotion.pixelle.deserver.processor.DeException;
 import com.dailymotion.pixelle.deserver.processor.DeHelper;
 import com.google.inject.ProvisionException;
+import com.netflix.config.DynamicIntProperty;
+import com.netflix.config.DynamicPropertyFactory;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -17,6 +19,9 @@ import java.io.IOException;
  */
 public final class ESIndexTypeFactory {
     private static Logger logger = LoggerFactory.getLogger(ESIndexTypeFactory.class);
+    private static DynamicIntProperty channelTtl =
+            DynamicPropertyFactory.getInstance().getIntProperty("channel.index.ttl", 300000); // 5 minutes
+
 
     private ESIndexTypeFactory() {
     }
@@ -61,7 +66,7 @@ public final class ESIndexTypeFactory {
                         .indices()
                         .preparePutMapping(indexName)
                         .setType(typeName)
-                        .setSource(createMapping(typeName))
+                        .setSource(createMapping(indexName))
                         .execute()
                         .actionGet()
                         .isAcknowledged();
@@ -80,13 +85,16 @@ public final class ESIndexTypeFactory {
         }
     }
 
-    private static XContentBuilder createMapping(String typeName) throws IOException {
-        if (typeName.equalsIgnoreCase(DeHelper.getAdUnitsType())) {
-            return createAdUnitMapping(typeName);
+    private static XContentBuilder createMapping(String indexName) throws IOException {
+        if (indexName.equalsIgnoreCase(DeHelper.promotedIndex.get())) {
+            return createAdUnitMapping(DeHelper.adunitsType.get());
+        } else if (indexName.equalsIgnoreCase(DeHelper.organicIndex.get())) {
+            return createVideosMapping(DeHelper.videosType.get());
         } else {
-            return createVideosMapping(typeName);
+            return createVideosMapping(DeHelper.videosType.get(), true);
         }
     }
+
 
     private static XContentBuilder createAdUnitMapping(String typeName) throws IOException {
         XContentBuilder builder = XContentFactory.jsonBuilder().startObject().startObject(typeName).startObject("properties");
@@ -94,7 +102,7 @@ public final class ESIndexTypeFactory {
         builder.startObject("_updated").field("type", "date").field("format", "date_time_no_millis").field("index", "not_analyzed").endObject();
         builder.startObject("start_date").field("type", "date").field("format", "date_time_no_millis").field("index", "not_analyzed").endObject();
         builder.startObject("end_date").field("type", "date").field("format", "date_time_no_millis").field("index", "not_analyzed").endObject();
-        
+
         builder.startObject("_id").field("type", "string").field("index", "not_analyzed").endObject();
         builder.startObject("ad").field("type", "string").field("index", "not_analyzed").endObject();
         builder.startObject("campaign").field("type", "string").field("index", "not_analyzed").endObject();
@@ -144,6 +152,10 @@ public final class ESIndexTypeFactory {
     }
 
     private static XContentBuilder createVideosMapping(String typeName) throws IOException {
+        return createVideosMapping(typeName, false);
+    }
+
+    private static XContentBuilder createVideosMapping(String typeName, Boolean isTtlSet) throws IOException {
         XContentBuilder builder = XContentFactory.jsonBuilder().startObject().startObject(typeName).startObject("properties");
         builder.startObject("_created").field("type", "date").field("format", "date_time_no_millis").field("index", "not_analyzed").endObject();
         builder.startObject("_updated").field("type", "date").field("format", "date_time_no_millis").field("index", "not_analyzed").endObject();
@@ -165,17 +177,20 @@ public final class ESIndexTypeFactory {
         builder.startObject("description").field("type", "string").field("index", "no").endObject();
         builder.startObject("thumbnail_url").field("type", "string").field("index", "no").endObject();
         builder.startObject("resizable_thumbnail_url").field("type", "string").field("index", "no").endObject();
-        builder.startObject("channel").field("type", "string").field("index", "no").endObject();
+        builder.startObject("channel").field("type", "string").field("index", "not_analyzed").endObject();
         builder.startObject("channel_id").field("type", "string").field("index", "no").endObject();
 
         builder.startObject("channel_name").field("type", "string").field("index", "no").endObject();
         builder.startObject("channel_url").field("type", "string").field("index", "no").endObject();
 
         builder.startObject("duration").field("type", "integer").field("index", "no").endObject();
+        builder.endObject();
 
-        builder.endObject().endObject().endObject();
+        if (isTtlSet) {
+            builder.startObject("_ttl").field("enabled", true).field("default", channelTtl.get()).endObject();
+        }
 
-
+        builder.endObject().endObject();
         return builder;
     }
 }

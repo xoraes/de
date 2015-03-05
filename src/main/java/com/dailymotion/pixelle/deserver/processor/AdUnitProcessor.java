@@ -29,6 +29,7 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
@@ -37,7 +38,9 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by n.dhupia on 11/3/14.
@@ -110,9 +113,9 @@ public class AdUnitProcessor {
                     .add(ScoreFunctionBuilders.randomFunction((int) (Math.random() * MAX_RANDOM)));
 
 
-            SearchRequestBuilder srb1 = client.prepareSearch(DeHelper.getPromotedIndex())
-                    .setTypes(DeHelper.getAdUnitsType())
-                    .setSearchType(SearchType.DFS_QUERY_AND_FETCH)
+            SearchRequestBuilder srb1 = client.prepareSearch(DeHelper.promotedIndex.get())
+                    .setTypes(DeHelper.adunitsType.get())
+                    .setSearchType(SearchType.QUERY_AND_FETCH)
                     .setQuery(qb)
                     .setSize(positions * SIZ_MULTIPLIER);
 
@@ -123,15 +126,14 @@ public class AdUnitProcessor {
             adUnitResponses = new ArrayList<AdUnitResponse>();
 
             for (SearchHit hit : searchResponse.getHits().getHits()) {
-                AdUnitResponse unit;
                 try {
-                    unit = OBJECT_MAPPER.readValue(hit.getSourceAsString(), AdUnitResponse.class);
+                    AdUnitResponse unit = OBJECT_MAPPER.readValue(hit.getSourceAsString(), AdUnitResponse.class);
+                    adUnitResponses.add(unit);
                 } catch (IOException e) {
-                    throw new DeException(e.getCause(), HttpStatus.INTERNAL_SERVER_ERROR_500);
+                    throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
                 }
-                adUnitResponses.add(unit);
             }
-            adUnitResponses = DeHelper.removeDuplicateCampaigns(positions, adUnitResponses);
+            adUnitResponses = removeDuplicateCampaigns(positions, adUnitResponses);
             logger.info("Num responses:" + adUnitResponses.size());
 
         }
@@ -152,8 +154,8 @@ public class AdUnitProcessor {
 
         BoolFilterBuilder fb = FilterBuilders.boolFilter().must(FilterBuilders.termFilter("campaign", cid));
         QueryBuilder qb = QueryBuilders.filteredQuery(null, fb);
-        SearchRequestBuilder srb1 = client.prepareSearch(DeHelper.getPromotedIndex())
-                .setTypes(DeHelper.getAdUnitsType())
+        SearchRequestBuilder srb1 = client.prepareSearch(DeHelper.promotedIndex.get())
+                .setTypes(DeHelper.adunitsType.get())
                 .setSearchType(SearchType.QUERY_AND_FETCH)
                 .setQuery(qb);
         SearchResponse searchResponse = srb1.execute().actionGet();
@@ -198,12 +200,12 @@ public class AdUnitProcessor {
             unit.setFormats(Arrays.asList("all"));
         }
 
-        List<String> sch = DeHelper.convertSchedulesToTimeTable(unit.getSchedules());
+        List<String> sch = convertSchedulesToTimeTable(unit.getSchedules());
 
         if (DeHelper.isEmptyList(sch)) {
             unit.setTimetable(new ArrayList<String>(Arrays.asList("all")));
         }
-        unit.setTimetable(DeHelper.convertSchedulesToTimeTable(unit.getSchedules()));
+        unit.setTimetable(convertSchedulesToTimeTable(unit.getSchedules()));
         unit.setSchedules(null);
         if (unit.getCpc() == null || unit.getCpc() == 0) {
             unit.setCpc(0L);
@@ -233,10 +235,10 @@ public class AdUnitProcessor {
         }
 
         try {
-            client.prepareUpdate(DeHelper.getPromotedIndex(), DeHelper.getAdUnitsType(), unit.getId())
+            client.prepareUpdate(DeHelper.promotedIndex.get(), DeHelper.adunitsType.get(), unit.getId())
                     .setDoc(OBJECT_MAPPER.writeValueAsString(unit))
                     .setDocAsUpsert(true)
-                    .setRetryOnConflict(DeHelper.getAdUnitsRetryOnConflict())
+                    .setRetryOnConflict(DeHelper.retryOnConflictAdUnits.get())
                     .execute()
                     .actionGet();
         } catch (JsonProcessingException e) {
@@ -259,9 +261,9 @@ public class AdUnitProcessor {
             adUnit = modifyAdUnitForInsert(adUnit);
             logger.info("Loading adunit" + adUnit.toString());
             try {
-                bulkRequest.add(client.prepareUpdate(DeHelper.getPromotedIndex(), DeHelper.getAdUnitsType(), adUnit.getId())
+                bulkRequest.add(client.prepareUpdate(DeHelper.promotedIndex.get(), DeHelper.adunitsType.get(), adUnit.getId())
                         .setDoc(OBJECT_MAPPER.writeValueAsString(adUnit))
-                        .setRetryOnConflict(DeHelper.getAdUnitsRetryOnConflict())
+                        .setRetryOnConflict(DeHelper.retryOnConflictAdUnits.get())
                         .setDocAsUpsert(true));
             } catch (JsonProcessingException e) {
                 logger.error("Error converting adunit to string", e);
@@ -293,7 +295,7 @@ public class AdUnitProcessor {
         if (StringUtils.isBlank(id)) {
             throw new DeException(new Throwable("id cannot be blank"), HttpStatus.BAD_REQUEST_400);
         }
-        GetResponse response = client.prepareGet(DeHelper.getPromotedIndex(), DeHelper.getAdUnitsType(), id).execute().actionGet();
+        GetResponse response = client.prepareGet(DeHelper.promotedIndex.get(), DeHelper.adunitsType.get(), id).execute().actionGet();
         AdUnit unit = null;
         byte[] responseSourceAsBytes = response.getSourceAsBytes();
         if (response != null && responseSourceAsBytes != null) {
@@ -311,8 +313,8 @@ public class AdUnitProcessor {
         QueryBuilder qb = QueryBuilders.matchAllQuery();
 
         //TODO fix this later - we should do paging instead of getting all docs
-        SearchRequestBuilder srb1 = client.prepareSearch(DeHelper.getPromotedIndex())
-                .setTypes(DeHelper.getAdUnitsType())
+        SearchRequestBuilder srb1 = client.prepareSearch(DeHelper.promotedIndex.get())
+                .setTypes(DeHelper.adunitsType.get())
                 .setQuery(qb)
                 .setSize(1000000);
 
@@ -332,5 +334,50 @@ public class AdUnitProcessor {
             return null;
         }
         return adUnits;
+    }
+
+    private List<AdUnitResponse> removeDuplicateCampaigns(int positions, List<AdUnitResponse> units) {
+        int count = 1;
+        Map<String, Integer> m = new HashMap<String, Integer>();
+        List<AdUnitResponse> uniqueAds = new ArrayList<AdUnitResponse>();
+
+        for (AdUnitResponse unit : units) {
+            if (count > positions) {
+                break;
+            }
+            if (!m.containsKey(unit.getCampaignId())) {
+                m.put(unit.getCampaignId(), 1);
+                uniqueAds.add(unit);
+                count++;
+            }
+        }
+        return uniqueAds;
+    }
+
+    private Boolean isHourSet(int hour, int mask) {
+        return (mask & (1 << hour)) > 0;
+    }
+
+    private List<String> convertSchedulesToTimeTable(Integer[] schedules) {
+        String day;
+        Boolean hourSet;
+        List<String> timeTable = null;
+        if (schedules != null && schedules.length > 0) {
+            timeTable = new ArrayList<String>();
+            for (int i = 0; i < 7; i++) {
+                LocalDate date = new LocalDate();
+                if (i == 0) {
+                    date = date.withDayOfWeek(7);
+                } else {
+                    date = date.withDayOfWeek(i);
+                }
+                day = date.dayOfWeek().getAsText().toLowerCase();
+                for (int j = 0; j < 24; j++) {
+                    hourSet = isHourSet(j, schedules[i]);
+                    timeTable.add(day + ":" + j + ":" + hourSet.toString());
+                }
+            }
+        }
+        return timeTable;
     }
 }

@@ -20,7 +20,7 @@ public class AdUnitBulkInsertCommand extends HystrixCommand<Void> {
     private static Logger logger = LoggerFactory.getLogger(AdUnitBulkInsertCommand.class);
 
     private static DynamicIntProperty semaphoreCount =
-            DynamicPropertyFactory.getInstance().getIntProperty("adUnitBulkInsert.semaphoreCount", 10);
+            DynamicPropertyFactory.getInstance().getIntProperty("adunitbulkinsert.semaphore.count", 10);
 
     private List<AdUnit> adUnits;
     private DEProcessor processor;

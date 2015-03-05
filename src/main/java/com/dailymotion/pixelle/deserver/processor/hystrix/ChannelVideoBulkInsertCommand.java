@@ -5,7 +5,7 @@ package com.dailymotion.pixelle.deserver.processor.hystrix;
  */
 
 import com.dailymotion.pixelle.deserver.model.Video;
-import com.dailymotion.pixelle.deserver.processor.DEProcessor;
+import com.dailymotion.pixelle.deserver.processor.ChannelProcessor;
 import com.netflix.config.DynamicIntProperty;
 import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.hystrix.HystrixCommand;
@@ -20,28 +20,28 @@ import java.util.List;
 /**
  * Created by n.dhupia on 2/4/15.
  */
-public class VideoBulkInsertCommand extends HystrixCommand<Void> {
-    private static Logger logger = LoggerFactory.getLogger(VideoBulkInsertCommand.class);
+public class ChannelVideoBulkInsertCommand extends HystrixCommand<Void> {
+    private static Logger logger = LoggerFactory.getLogger(ChannelVideoBulkInsertCommand.class);
 
     private static DynamicIntProperty semaphoreCount =
-            DynamicPropertyFactory.getInstance().getIntProperty("videobulkbinsert.semaphore.count", 10);
+            DynamicPropertyFactory.getInstance().getIntProperty("channel.videobulkbinsert.semaphore.count", 10);
 
     private List<Video> videos;
-    private DEProcessor processor;
+    private ChannelProcessor processor;
 
-    public VideoBulkInsertCommand(DEProcessor deProcessor, List<Video> videos) {
+    public ChannelVideoBulkInsertCommand(ChannelProcessor processor, List<Video> videos) {
         super(HystrixCommand.Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey("DecisioningEngine"))
-                .andCommandKey(HystrixCommandKey.Factory.asKey("VideoBulkInsert"))
+                .andCommandKey(HystrixCommandKey.Factory.asKey("ChannelVideoBulkInsert"))
                 .andCommandPropertiesDefaults(HystrixCommandProperties.Setter()
                         .withExecutionIsolationStrategy(HystrixCommandProperties.ExecutionIsolationStrategy.SEMAPHORE)
                         .withExecutionIsolationSemaphoreMaxConcurrentRequests(semaphoreCount.get())));
         this.videos = videos;
-        this.processor = deProcessor;
+        this.processor = processor;
     }
 
     @Override
-    protected Void run() {
-        processor.insertVideoInBulk(videos);
+    protected Void run() throws Exception {
+        processor.insertChannelVideoInBulk(videos);
         return null;
     }
 }

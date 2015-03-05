@@ -57,8 +57,8 @@ public class ESAdUnitsIntegrationTest {
     @AfterClass
     public static void tearDown() throws Exception {
         System.out.println("Deleting all known indices");
-        es.deleteIndex(DeHelper.getOrganicIndex());
-        es.deleteIndex(DeHelper.getPromotedIndex());
+        es.deleteIndex(DeHelper.organicIndex.get());
+        es.deleteIndex(DeHelper.promotedIndex.get());
         injector = null;
     }
 
@@ -133,7 +133,7 @@ public class ESAdUnitsIntegrationTest {
 
     public static void deleteAdUnitsByIds(String... ids) throws Exception {
         for (String id : ids) {
-            Assert.assertTrue(es.deleteById(DeHelper.getPromotedIndex(), DeHelper.getAdUnitsType(), id));
+            Assert.assertTrue(es.deleteById(DeHelper.promotedIndex.get(), DeHelper.adunitsType.get(), id));
         }
     }
 

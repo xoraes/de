@@ -16,7 +16,7 @@ import com.netflix.hystrix.HystrixCommandProperties;
 public class QueryCommand extends HystrixCommand<ItemsResponse> {
 
     private static DynamicIntProperty semaphoreCount =
-            DynamicPropertyFactory.getInstance().getIntProperty("query.semaphoreCount", 10);
+            DynamicPropertyFactory.getInstance().getIntProperty("query.semaphore.count", 100);
     private SearchQueryRequest sq;
     private String allowedTypes;
     private DEProcessor processor;
