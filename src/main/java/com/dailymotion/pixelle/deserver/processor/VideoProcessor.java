@@ -264,7 +264,6 @@ public class VideoProcessor {
         videoResponses = new ArrayList<VideoResponse>();
 
         for (SearchHit hit : searchResponse.getHits().getHits()) {
-
             try {
                 VideoResponse video = OBJECT_MAPPER.readValue(hit.getSourceAsString(), VideoResponse.class);
                 if (sq.getDebugEnabled() == Boolean.TRUE) {
@@ -274,8 +273,8 @@ public class VideoProcessor {
                     ex.addDetail(hit.explanation());
                     video.setDebugInfo(ex.toHtml().replace("\n", ""));
                     logger.info(ex.toString());
-                    videoResponses.add(video);
                 }
+                videoResponses.add(video);
             } catch (IOException e) {
                 throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
             }

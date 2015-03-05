@@ -5,6 +5,7 @@ import com.dailymotion.pixelle.deserver.model.SearchQueryRequest;
 import com.dailymotion.pixelle.deserver.model.Video;
 import com.dailymotion.pixelle.deserver.model.VideoResponse;
 import com.dailymotion.pixelle.deserver.processor.hystrix.QueryCommand;
+import com.dailymotion.pixelle.deserver.processor.hystrix.VideoBulkInsertCommand;
 import com.dailymotion.pixelle.deserver.processor.hystrix.VideoInsertCommand;
 import com.dailymotion.pixelle.deserver.providers.ESTestNodeClientProvider;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -18,10 +19,13 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -31,6 +35,7 @@ public class ESVideoIntegrationTest {
     private static final ObjectMapper mapper = new ObjectMapper();
     private static Injector injector;
     private static DEProcessor es;
+    private static Logger logger = LoggerFactory.getLogger(ESVideoIntegrationTest.class);
 
     @BeforeClass
     public static void setUp() throws Exception {
@@ -59,7 +64,7 @@ public class ESVideoIntegrationTest {
 
     @AfterClass
     public static void tearDown() throws Exception {
-        System.out.println("Deleting all known indices");
+        logger.info("Deleting all known indices");
         es.deleteIndex(DeHelper.organicIndex.get());
         es.deleteIndex(DeHelper.promotedIndex.get());
         injector = null;
@@ -68,6 +73,7 @@ public class ESVideoIntegrationTest {
     public static void loadVideoMaps(Map<String, Object>... map) throws Exception {
         String json;
         Video video;
+        List<Video> videos = new ArrayList<Video>();
         for (Map m : map) {
             try {
                 //serialize to json
@@ -79,10 +85,10 @@ public class ESVideoIntegrationTest {
             if (json != null) {
                 //deserialize to adunit
                 video = mapper.readValue(json, Video.class);
-                new VideoInsertCommand(es, video).execute();
+                videos.add(video);
             }
-
         }
+        new VideoBulkInsertCommand(es, videos).execute();
         Thread.sleep(2000);
     }
 
@@ -105,7 +111,6 @@ public class ESVideoIntegrationTest {
         m.put("channel_tier", "channel_tier");
         m.put("resizable_thumbnail_url", "resizable_thumbnail_url");
         m.put("thumbnail_url", "thumbnail_url");
-        m.put("status", "active");
         m.put("duration", 123);
         return m;
     }
@@ -291,27 +296,6 @@ public class ESVideoIntegrationTest {
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 3);
         deleteVideosByIds("1", "2", "3");
-    }
-
-    @Test
-    public void testStatusInActive() throws Exception {
-        Map m1 = createVideoDataMap("1");
-        m1.put("status", "inactive");
-        loadVideoMaps(m1);
-        SearchQueryRequest sq = new SearchQueryRequest();
-        sq.setTime("2014-12-31T15:00:00-0800");
-        sq.setCategories(new ArrayList(Arrays.asList("cat1")));
-        sq.setDevice("dev1");
-        sq.setFormat("fmt1");
-        sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
-        sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
-
-        System.out.println("Search Query ====>" + sq.toString());
-        ItemsResponse i = new QueryCommand(es, sq, 10, "organic").execute();
-        System.out.println("Response ====>:" + i.toString());
-        Assert.assertNotNull(i);
-        Assert.assertTrue(i.getResponse().size() == 0);
-        deleteVideosByIds("1");
     }
 
     @Test

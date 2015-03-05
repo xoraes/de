@@ -41,6 +41,20 @@ public final class ESTestNodeClientProvider implements Provider<Client> {
                 .node()
                 .client();
 
+        if (client.admin().indices().prepareExists(DeHelper.organicIndex.get()).execute().actionGet().isExists()
+                && client.admin().indices().prepareDelete(DeHelper.organicIndex.get()).execute().actionGet().isAcknowledged()) {
+            logger.info("successfully deleted index: " + DeHelper.organicIndex.get());
+        }
+        if (client.admin().indices().prepareExists(DeHelper.promotedIndex.get()).execute().actionGet().isExists()
+                && client.admin().indices().prepareDelete(DeHelper.promotedIndex.get()).execute().actionGet().isAcknowledged()) {
+            logger.info("successfully deleted index: " + DeHelper.promotedIndex.get());
+        }
+        if (client.admin().indices().prepareExists(DeHelper.channelIndex.get()).execute().actionGet().isExists()
+                && client.admin().indices().prepareDelete(DeHelper.channelIndex.get()).execute().actionGet().isAcknowledged()) {
+            logger.info("successfully deleted index: " + DeHelper.channelIndex.get());
+        }
+
+
         ESIndexTypeFactory.createIndex(client, DeHelper.promotedIndex.get(), elasticsearchSettings.build(), DeHelper.adunitsType.get());
         ESIndexTypeFactory.createIndex(client, DeHelper.organicIndex.get(), elasticsearchSettings.build(), DeHelper.videosType.get());
         ESIndexTypeFactory.createIndex(client, DeHelper.channelIndex.get(), elasticsearchSettings.build(), DeHelper.videosType.get());

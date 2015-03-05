@@ -22,14 +22,6 @@ public class QueryCommand extends HystrixCommand<ItemsResponse> {
     private DEProcessor processor;
     private Integer positions;
 
-    protected QueryCommand(HystrixCommandGroupKey group) {
-        super(group);
-    }
-
-    protected QueryCommand(Setter setter) {
-        super(setter);
-    }
-
     public QueryCommand(DEProcessor processor, SearchQueryRequest sq, Integer positions, String allowedTypes) {
 
         super(Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey("DecisioningEngine"))
@@ -37,7 +29,6 @@ public class QueryCommand extends HystrixCommand<ItemsResponse> {
                 .andCommandPropertiesDefaults(HystrixCommandProperties.Setter()
                         .withExecutionIsolationStrategy(HystrixCommandProperties.ExecutionIsolationStrategy.SEMAPHORE)
                         .withExecutionIsolationSemaphoreMaxConcurrentRequests(semaphoreCount.get())));
-
         this.sq = sq;
         this.allowedTypes = allowedTypes;
         this.processor = processor;

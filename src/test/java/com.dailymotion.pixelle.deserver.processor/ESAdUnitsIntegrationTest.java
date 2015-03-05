@@ -93,7 +93,6 @@ public class ESAdUnitsIntegrationTest {
         m.put("thumbnail_url", "thumbnail_url");
         m.put("IGNOREME", "IGNOREME"); //Unknown json should be ignored
         m.put("video_id", "video_id");
-        m.put("status", "active");
         m.put("duration", 123);
         m.put("cpc", 10);
         m.put("cpv", 10);
@@ -373,26 +372,5 @@ public class ESAdUnitsIntegrationTest {
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 2);
         deleteAdUnitsByIds("1", "2", "3");
-    }
-
-    @Test
-    public void testStatusInActive() throws Exception {
-        Map m1 = createAdUnitDataMap("1", "1");
-        m1.put("status", "inactive");
-        loadAdUnitMaps(m1);
-        SearchQueryRequest sq = new SearchQueryRequest();
-        sq.setTime("2014-12-31T15:00:00-0800");
-        sq.setCategories(new ArrayList(Arrays.asList("cat1")));
-        sq.setDevice("dev1");
-        sq.setFormat("fmt1");
-        sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
-        sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
-
-        System.out.println("Search Query ====>" + sq.toString());
-        ItemsResponse i = new QueryCommand(es, sq, 10, null).execute();
-        System.out.println("Response ====>:" + i.toString());
-        Assert.assertNotNull(i);
-        Assert.assertTrue(i.getResponse().size() == 0);
-        deleteAdUnitsByIds("1");
     }
 }
