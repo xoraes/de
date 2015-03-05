@@ -78,7 +78,6 @@ public class AdUnitProcessor {
             String timetable = dt.dayOfWeek().getAsText().toLowerCase() + ":" + dt.getHourOfDay() + ":" + "true";
 
             BoolFilterBuilder fb = FilterBuilders.boolFilter();
-            fb.must(FilterBuilders.termFilter("status", "active"));
             fb.must(FilterBuilders.termFilter("timetable", timetable));
             fb.must(FilterBuilders.termsFilter("categories", DeHelper.toLowerCase(sq.getCategories())));
             fb.must(FilterBuilders.termsFilter("languages", DeHelper.toLowerCase(sq.getLanguages())));
@@ -224,7 +223,6 @@ public class AdUnitProcessor {
         unit.setFormats(DeHelper.stringListToLowerCase(unit.getFormats()));
         unit.setLanguages(DeHelper.stringListToLowerCase(unit.getLanguages()));
         unit.setLocations(DeHelper.stringListToLowerCase(unit.getLocations()));
-        unit.setStatus(StringUtils.lowerCase(unit.getStatus()));
 
         return unit;
     }

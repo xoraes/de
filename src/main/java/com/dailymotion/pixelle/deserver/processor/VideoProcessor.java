@@ -138,7 +138,6 @@ public class VideoProcessor {
         video.setCategories(DeHelper.stringListToLowerCase(video.getCategories()));
         video.setLanguages(DeHelper.stringListToLowerCase(video.getLanguages()));
 
-        video.setStatus(StringUtils.lowerCase(video.getStatus()));
         video.setVideoId(video.getId());
         return video;
     }
@@ -212,7 +211,6 @@ public class VideoProcessor {
 
         List<VideoResponse> videoResponses = null;
         BoolFilterBuilder fb = FilterBuilders.boolFilter();
-        fb.must(FilterBuilders.termFilter("status", "active"));
         if (sq != null) {
             if (!DeHelper.isEmptyList(sq.getCategories())) {
                 fb.must(FilterBuilders.termsFilter("categories", DeHelper.toLowerCase(sq.getCategories())));

@@ -53,8 +53,6 @@ public class AdUnit {
     private String description;
     @JsonProperty("title")
     private String title;
-    @JsonProperty("status")
-    private String status;
     @JsonProperty("goal_period")
     private String goalPeriod;
     @JsonProperty("goal_views")
@@ -228,14 +226,6 @@ public class AdUnit {
 
     public void setTitle(String title) {
         this.title = title;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
     }
 
     public String getGoalPeriod() {

@@ -40,8 +40,6 @@ public class Video {
     private String description;
     @JsonProperty("title")
     private String title;
-    @JsonProperty("status")
-    private String status;
     @JsonProperty("duration")
     private Integer duration;
     @JsonProperty("categories")
@@ -155,14 +153,6 @@ public class Video {
 
     public void setTitle(String title) {
         this.title = title;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
     }
 
     public Integer getDuration() {
