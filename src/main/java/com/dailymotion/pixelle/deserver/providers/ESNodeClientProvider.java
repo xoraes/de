@@ -47,7 +47,7 @@ public class ESNodeClientProvider implements Provider<Client> {
         ImmutableSettings.Builder channelSettings = ImmutableSettings.settingsBuilder()
                 .put("index.number_of_shards", 3)
                 .put("index.number_of_replicas", 0)
-                .put("index.refresh_interval", "1s");
+                .put("index.refresh_interval", "30s");
 
 
         Client client = nodeBuilder()

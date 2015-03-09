@@ -8,6 +8,12 @@ import com.dailymotion.pixelle.deserver.model.VideoResponse;
 import com.dailymotion.pixelle.deserver.processor.hystrix.ChannelVideoBulkInsertCommand;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.config.DynamicStringProperty;
@@ -42,8 +48,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by n.dhupia on 2/27/15.
@@ -55,6 +64,37 @@ public class ChannelProcessor extends VideoProcessor {
     private static final DynamicStringProperty listOfValidCategories = DynamicPropertyFactory.getInstance().getStringProperty("pixelle.channel.categories", "");
     private static Logger logger = LoggerFactory.getLogger(ChannelProcessor.class);
     private static CloseableHttpClient httpclient = HttpClients.createDefault();
+
+    private LoadingCache<String, List<Video>> videosCache = CacheBuilder.newBuilder().maximumSize(1000).refreshAfterWrite(4, TimeUnit.MINUTES)
+            .build(
+                    new CacheLoader<String, List<Video>>() {
+                        @Override
+                        public List<Video> load(String key) throws DeException {
+                            logger.info("Caching and indexing video..");
+                            List<Video> videos = getVideosFromDM(key);
+                            submitAsyncIndexingTask(videos);
+                            return videos;
+                        }
+                        @Override
+                        public ListenableFuture<List<Video>> reload(final String channelId, List<Video> oldValue) throws Exception {
+                            logger.info("Reloading cache for key " + channelId);
+                            ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
+                            ListenableFuture<List<Video>> listenableFuture;
+                            try {
+                                listenableFuture = executor.submit(new Callable<List<Video>>() {
+                                    @Override
+                                    public List<Video> call() throws Exception {
+                                        List<Video> videos = getVideosFromDM(channelId);
+                                        submitAsyncIndexingTask(videos);
+                                        return videos;
+                                    }
+                                });
+                                return listenableFuture;
+                            } finally {
+                                executor.shutdown();
+                            }
+                        }
+                    });
 
 
     static {
@@ -94,12 +134,21 @@ public class ChannelProcessor extends VideoProcessor {
                 throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
             }
         }
-        logger.info("Num video responses:" + videoResponses.size());
-        logger.info("Num video responses:" + searchResponse.getHits().getHits().length);
-
-        if (DeHelper.isEmptyList(videoResponses)) {
-            List<Video> videos = getVideosFromDM(sq.getChannel());
-
+        /*
+         * User request first hits ES. If num positions are found, then done. Otherwise, look in the videoCache.
+         * If videoCache is empty, it is loaded with data from DM - this happens during cold start.
+         * If videoCache has non-stale data, it is returned.
+         * If videoCache has stale data (6 min since last write), then stale data is returned
+         * and fresh data is replaced into the cache asynchronously from DM and indexed to ES.
+         */
+        if (DeHelper.isEmptyList(videoResponses) || videoResponses.size() < positions) {
+            List<Video> videos = null;
+            try {
+                videos = videosCache.get(sq.getChannel());
+                logger.info("getting videos from cache");
+            } catch (ExecutionException e) {
+                throw new DeException(e.getCause(),HttpStatus.INTERNAL_SERVER_ERROR_500);
+            }
             int numVideos = videos.size();
             if (numVideos > positions) {
                 numVideos = positions;
@@ -115,23 +164,29 @@ public class ChannelProcessor extends VideoProcessor {
                 videoResponse.setVideoId(videos.get(i).getVideoId());
                 videoResponses.add(videoResponse);
             }
-            if (numVideos > 0) {
-                submitAsyncIndexingTask(videos);
-            }
         }
+        logger.info("Num video responses:" + videoResponses.size());
         return videoResponses;
     }
 
     private void submitAsyncIndexingTask(final List<Video> videos) {
-        ExecutorService executer = Executors.newSingleThreadExecutor();
+        ExecutorService executor = Executors.newSingleThreadExecutor();
         final ChannelProcessor cp = this;
-        Runnable task = new Runnable() {
-            @Override
-            public void run() {
-                new ChannelVideoBulkInsertCommand(cp, videos).execute();
-            }
-        };
-        executer.submit(task);
+        try {
+            executor.submit(new Runnable() {
+                @Override
+                public void run() {
+                    indexVideos(videos);
+                }
+            });
+        } finally {
+            executor.shutdown();
+        }
+    }
+
+    private void indexVideos(final List<Video> videos) {
+        final ChannelProcessor cp = this;
+        new ChannelVideoBulkInsertCommand(cp, videos).execute();
     }
 
     private List<Video> getVideosFromDM(@NotNull String channelId) throws DeException {
@@ -171,7 +226,7 @@ public class ChannelProcessor extends VideoProcessor {
         }
     }
 
-    private List<Video> getFilteredVideos(ChannelVideos channelVideos) {
+    private static List<Video> getFilteredVideos(ChannelVideos channelVideos) {
         List<Video> videos = new ArrayList<Video>();
         for (ChannelVideo channelVideo : channelVideos.getList()) {
             if (!filterVideo(channelVideo)) {
@@ -196,7 +251,7 @@ public class ChannelProcessor extends VideoProcessor {
         return videos;
     }
 
-    private Boolean filterVideo(ChannelVideo channelVideo) {
+    private static Boolean filterVideo(ChannelVideo channelVideo) {
         if (!channelVideo.getAllowEmbed()) {
             return true;
         }

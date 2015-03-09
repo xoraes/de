@@ -1,6 +1,7 @@
 package com.dailymotion.pixelle.deserver.servlets;
 
 import com.dailymotion.pixelle.deserver.processor.AdUnitProcessor;
+import com.dailymotion.pixelle.deserver.processor.ChannelProcessor;
 import com.dailymotion.pixelle.deserver.processor.DEProcessor;
 import com.dailymotion.pixelle.deserver.processor.VideoProcessor;
 import com.dailymotion.pixelle.deserver.providers.ESNodeClientProvider;
@@ -19,6 +20,7 @@ public class DeServletModule extends ServletModule {
         bind(Client.class).toProvider(ESNodeClientProvider.class).asEagerSingleton();
         bind(AdUnitProcessor.class).asEagerSingleton();
         bind(VideoProcessor.class).asEagerSingleton();
+        bind(ChannelProcessor.class).asEagerSingleton();
         bind(DEProcessor.class).asEagerSingleton();
         bind(DEServlet.class).asEagerSingleton();
         bind(HystrixMetricsStreamServlet.class).asEagerSingleton();
