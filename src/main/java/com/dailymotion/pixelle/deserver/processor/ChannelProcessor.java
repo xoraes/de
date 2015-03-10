@@ -15,6 +15,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
+import com.netflix.config.DynamicIntProperty;
+import com.netflix.config.DynamicLongProperty;
 import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.config.DynamicStringProperty;
 import org.apache.commons.lang3.StringUtils;
@@ -62,10 +64,13 @@ public class ChannelProcessor extends VideoProcessor {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final DynamicStringProperty dmUserVideoUrl = DynamicPropertyFactory.getInstance().getStringProperty("dm.video.url", "");
     private static final DynamicStringProperty listOfValidCategories = DynamicPropertyFactory.getInstance().getStringProperty("pixelle.channel.categories", "");
+    private static final DynamicLongProperty refreshAfterWriteMins = DynamicPropertyFactory.getInstance().getLongProperty("pixelle.channel.refresh.write.minutes", 4);
+    private static final DynamicIntProperty lruSize = DynamicPropertyFactory.getInstance().getIntProperty("pixelle.channel.lru.size", 1000);
+
     private static Logger logger = LoggerFactory.getLogger(ChannelProcessor.class);
     private static CloseableHttpClient httpclient = HttpClients.createDefault();
 
-    private LoadingCache<String, List<Video>> videosCache = CacheBuilder.newBuilder().maximumSize(1000).refreshAfterWrite(4, TimeUnit.MINUTES)
+    private LoadingCache<String, List<Video>> videosCache = CacheBuilder.newBuilder().maximumSize(lruSize.get()).refreshAfterWrite(refreshAfterWriteMins.get(), TimeUnit.MINUTES)
             .build(
                     new CacheLoader<String, List<Video>>() {
                         @Override
