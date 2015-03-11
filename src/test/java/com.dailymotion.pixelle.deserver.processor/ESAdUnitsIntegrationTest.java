@@ -27,8 +27,6 @@ import java.util.Map;
 public class ESAdUnitsIntegrationTest {
 
     private static final ObjectMapper mapper = new ObjectMapper();
-    private static Injector injector;
-    private static DEProcessor es;
 
     @BeforeClass
     public static void setUp() throws Exception {
@@ -42,24 +40,18 @@ public class ESAdUnitsIntegrationTest {
                 bind(Client.class).toProvider(ESTestNodeClientProvider.class).asEagerSingleton();
                 bind(AdUnitProcessor.class).asEagerSingleton();
                 bind(VideoProcessor.class).asEagerSingleton();
+                bind(ChannelProcessor.class).asEagerSingleton();
                 bind(DEProcessor.class).asEagerSingleton();
             }
         });
-        es = injector.getInstance(DEProcessor.class);
-
-    }
-
-    public static void setProcessor(DEProcessor deProcessor) {
-        es = deProcessor;
-
     }
 
     @AfterClass
     public static void tearDown() throws Exception {
         System.out.println("Deleting all known indices");
-        es.deleteIndex(DeHelper.organicIndex.get());
-        es.deleteIndex(DeHelper.promotedIndex.get());
-        injector = null;
+        DEProcessor.deleteIndex(DeHelper.organicIndex.get());
+        DEProcessor.deleteIndex(DeHelper.promotedIndex.get());
+
     }
 
     public static Map<String, Object> createAdUnitDataMap(String id, String cid) {
@@ -84,7 +76,6 @@ public class ESAdUnitsIntegrationTest {
         m.put("title", "title");
         m.put("description", "description");
         m.put("channel", "channel");
-        m.put("channel_url", "channel_url");
         m.put("channel_name", "channel_name");
         m.put("channel_id", "channel_id");
         m.put("start_date", "2014-11-01T00:00:00Z");
@@ -97,11 +88,6 @@ public class ESAdUnitsIntegrationTest {
         m.put("cpc", 10);
         m.put("cpv", 10);
         return m;
-    }
-
-    public static void loadAdUnitMaps(DEProcessor deProcessor, Map<String, Object>... map) throws Exception {
-        es = deProcessor;
-        loadAdUnitMaps(map);
     }
 
     public static void loadAdUnitMaps(Map<String, Object>... map) throws Exception {
@@ -118,21 +104,16 @@ public class ESAdUnitsIntegrationTest {
             if (json != null) {
                 //deserialize to adunit
                 unit = mapper.readValue(json, AdUnit.class);
-                new AdInsertCommand(es, unit).execute();
+                new AdInsertCommand(unit).execute();
             }
 
         }
         Thread.sleep(2000);
     }
 
-    public static void deleteAdUnitsByIds(DEProcessor deProcessor, String... ids) throws Exception {
-        es = deProcessor;
-        deleteAdUnitsByIds(ids);
-    }
-
     public static void deleteAdUnitsByIds(String... ids) throws Exception {
         for (String id : ids) {
-            Assert.assertTrue(es.deleteById(DeHelper.promotedIndex.get(), DeHelper.adunitsType.get(), id));
+            Assert.assertTrue(DEProcessor.deleteById(DeHelper.promotedIndex.get(), DeHelper.adunitsType.get(), id));
         }
     }
 
@@ -148,7 +129,7 @@ public class ESAdUnitsIntegrationTest {
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
 
-        ItemsResponse i = new QueryCommand(es, sq, 1, "promoted").execute();
+        ItemsResponse i = new QueryCommand(sq, 1, "promoted").execute();
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 1);
         AdUnitResponse adunit = (AdUnitResponse) i.getResponse().get(0);
@@ -156,7 +137,6 @@ public class ESAdUnitsIntegrationTest {
         Assert.assertTrue(adunit.getChannel().equals("channel"));
         Assert.assertTrue(adunit.getChannelId().equals("channel_id"));
         Assert.assertTrue(adunit.getChannelName().equals("channel_name"));
-        Assert.assertTrue(adunit.getChannelUrl().equals("channel_url"));
         Assert.assertTrue(adunit.getAccountId().equals("1"));
         Assert.assertTrue(adunit.getVideoId().equals("video_id"));
         Assert.assertTrue(adunit.getCampaignId().equals("1"));
@@ -187,7 +167,7 @@ public class ESAdUnitsIntegrationTest {
         sq.setLanguages(new ArrayList<String>(Arrays.asList("EN")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("US")));
 
-        ItemsResponse i = new QueryCommand(es, sq, 3, "promoted").execute();
+        ItemsResponse i = new QueryCommand(sq, 3, "promoted").execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 3);
@@ -201,7 +181,7 @@ public class ESAdUnitsIntegrationTest {
         Map m3 = createAdUnitDataMap("3", "1");
 
         loadAdUnitMaps(m1, m2, m3);
-        Assert.assertEquals(3, es.getAdUnitsByCampaign("1").size());
+        Assert.assertEquals(3, DEProcessor.getAdUnitsByCampaign("1").size());
         deleteAdUnitsByIds("1", "2", "3");
     }
 
@@ -218,7 +198,7 @@ public class ESAdUnitsIntegrationTest {
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
 
-        ItemsResponse i = new QueryCommand(es, sq, 10, null).execute();
+        ItemsResponse i = new QueryCommand(sq, 10, null).execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 1);
@@ -239,7 +219,7 @@ public class ESAdUnitsIntegrationTest {
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
 
         System.out.println("Search Query ====>" + sq.toString());
-        ItemsResponse i = new QueryCommand(es, sq, 10, null).execute();
+        ItemsResponse i = new QueryCommand(sq, 10, null).execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 1);
@@ -261,7 +241,7 @@ public class ESAdUnitsIntegrationTest {
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
 
         System.out.println("Search Query ====>" + sq.toString());
-        ItemsResponse i = new QueryCommand(es, sq, 10, null).execute();
+        ItemsResponse i = new QueryCommand(sq, 10, null).execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 1);
@@ -283,7 +263,7 @@ public class ESAdUnitsIntegrationTest {
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
 
         System.out.println("Search Query ====>" + sq.toString());
-        ItemsResponse i = new QueryCommand(es, sq, 10, null).execute();
+        ItemsResponse i = new QueryCommand(sq, 10, null).execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 0);
@@ -308,7 +288,7 @@ public class ESAdUnitsIntegrationTest {
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
 
         System.out.println("Search Query ====>" + sq.toString());
-        ItemsResponse i = new QueryCommand(es, sq, 10, null).execute();
+        ItemsResponse i = new QueryCommand(sq, 10, null).execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 0);
@@ -342,7 +322,7 @@ public class ESAdUnitsIntegrationTest {
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
 
         System.out.println("Search Query ====>" + sq.toString());
-        ItemsResponse i = new QueryCommand(es, sq, 10, null).execute();
+        ItemsResponse i = new QueryCommand(sq, 10, null).execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 4);
@@ -367,7 +347,7 @@ public class ESAdUnitsIntegrationTest {
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
 
         System.out.println("Search Query ====>" + sq.toString());
-        ItemsResponse i = new QueryCommand(es, sq, 10, null).execute();
+        ItemsResponse i = new QueryCommand(sq, 10, null).execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 2);

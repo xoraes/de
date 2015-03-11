@@ -26,8 +26,6 @@ public class Video {
     private String channelName;
     @JsonProperty("channel_id")
     private String channelId;
-    @JsonProperty("channel_url")
-    private String channelUrl;
     @JsonProperty("channel_tier")
     private String channelTier;
     @JsonProperty("tags")
@@ -97,14 +95,6 @@ public class Video {
 
     public void setChannelId(String channelId) {
         this.channelId = channelId;
-    }
-
-    public String getChannelUrl() {
-        return channelUrl;
-    }
-
-    public void setChannelUrl(String channelUrl) {
-        this.channelUrl = channelUrl;
     }
 
     public String getChannelTier() {
@@ -237,6 +227,4 @@ public class Video {
             throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
         }
     }
-
-
 }

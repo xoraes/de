@@ -26,10 +26,9 @@ public class AdQueryCommand extends HystrixCommand<List<AdUnitResponse>> {
     private static Logger logger = LoggerFactory.getLogger(AdQueryCommand.class);
     private SearchQueryRequest sq;
     private int positions;
-    private AdUnitProcessor processor;
 
 
-    public AdQueryCommand(AdUnitProcessor processor, SearchQueryRequest sq, int pos) {
+    public AdQueryCommand(SearchQueryRequest sq, int pos) {
 
         super(Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey("DecisioningEngine"))
                 .andCommandKey(HystrixCommandKey.Factory.asKey("AdQuery"))
@@ -39,12 +38,11 @@ public class AdQueryCommand extends HystrixCommand<List<AdUnitResponse>> {
 
         this.sq = sq;
         this.positions = pos;
-        this.processor = processor;
     }
 
     @Override
     protected List<AdUnitResponse> run() {
-        return processor.recommend(sq, positions);
+        return AdUnitProcessor.recommend(sq, positions);
     }
 
     @Override

@@ -67,7 +67,7 @@ public class AdUnitProcessor {
         client = esClient;
     }
 
-    public List<AdUnitResponse> recommend(SearchQueryRequest sq, Integer positions) throws DeException {
+    public static List<AdUnitResponse> recommend(SearchQueryRequest sq, Integer positions) throws DeException {
 
         List<AdUnitResponse> adUnitResponses = null;
         if (sq != null) {
@@ -145,7 +145,7 @@ public class AdUnitProcessor {
         return adUnitResponses;
     }
 
-    public List<AdUnit> getAdUnitsByCampaign(String cid) {
+    public static List<AdUnit> getAdUnitsByCampaign(String cid) {
         if (StringUtils.isBlank(cid)) {
             throw new DeException(new Throwable("no cid provided"), HttpStatus.BAD_REQUEST_400);
         }
@@ -174,14 +174,14 @@ public class AdUnitProcessor {
         return adUnits;
     }
 
-    public void insertAdUnit(AdUnit unit) throws DeException {
+    public static void insertAdUnit(AdUnit unit) throws DeException {
         if (unit == null) {
             throw new DeException(new Throwable("no adunit found in request body"), HttpStatus.BAD_REQUEST_400);
         }
         updateAdUnit(modifyAdUnitForInsert(unit));
     }
 
-    private AdUnit modifyAdUnitForInsert(AdUnit unit) {
+    private static AdUnit modifyAdUnitForInsert(AdUnit unit) {
         if (DeHelper.isEmptyList(unit.getLocations())) {
             unit.setLocations(Arrays.asList("all"));
         }
@@ -227,7 +227,7 @@ public class AdUnitProcessor {
         return unit;
     }
 
-    public void updateAdUnit(AdUnit unit) throws DeException {
+    public static void updateAdUnit(AdUnit unit) throws DeException {
         if (unit == null) {
             throw new DeException(new Throwable("no adunit found in request body"), HttpStatus.BAD_REQUEST_400);
         }
@@ -246,7 +246,7 @@ public class AdUnitProcessor {
         }
     }
 
-    public void insertAdUnitsInBulk(List<AdUnit> adUnits) throws DeException {
+    public static void insertAdUnitsInBulk(List<AdUnit> adUnits) throws DeException {
         if (DeHelper.isEmptyList(adUnits)) {
             return;
         }
@@ -289,7 +289,7 @@ public class AdUnitProcessor {
         }
     }
 
-    public AdUnit getAdUnitById(String id) throws DeException {
+    public static AdUnit getAdUnitById(String id) throws DeException {
         if (StringUtils.isBlank(id)) {
             throw new DeException(new Throwable("id cannot be blank"), HttpStatus.BAD_REQUEST_400);
         }
@@ -307,7 +307,7 @@ public class AdUnitProcessor {
         return unit;
     }
 
-    public List<AdUnit> getAllAdUnits() {
+    public static List<AdUnit> getAllAdUnits() {
         QueryBuilder qb = QueryBuilders.matchAllQuery();
 
         //TODO fix this later - we should do paging instead of getting all docs
@@ -334,7 +334,7 @@ public class AdUnitProcessor {
         return adUnits;
     }
 
-    private List<AdUnitResponse> removeDuplicateCampaigns(int positions, List<AdUnitResponse> units) {
+    private static List<AdUnitResponse> removeDuplicateCampaigns(int positions, List<AdUnitResponse> units) {
         int count = 1;
         Map<String, Integer> m = new HashMap<String, Integer>();
         List<AdUnitResponse> uniqueAds = new ArrayList<AdUnitResponse>();
@@ -352,11 +352,11 @@ public class AdUnitProcessor {
         return uniqueAds;
     }
 
-    private Boolean isHourSet(int hour, int mask) {
+    private static Boolean isHourSet(int hour, int mask) {
         return (mask & (1 << hour)) > 0;
     }
 
-    private List<String> convertSchedulesToTimeTable(Integer[] schedules) {
+    private static List<String> convertSchedulesToTimeTable(Integer[] schedules) {
         String day;
         Boolean hourSet;
         List<String> timeTable = null;

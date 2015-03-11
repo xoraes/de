@@ -6,7 +6,6 @@ import com.dailymotion.pixelle.deserver.model.Video;
 import com.dailymotion.pixelle.deserver.model.VideoResponse;
 import com.dailymotion.pixelle.deserver.processor.hystrix.QueryCommand;
 import com.dailymotion.pixelle.deserver.processor.hystrix.VideoBulkInsertCommand;
-import com.dailymotion.pixelle.deserver.processor.hystrix.VideoInsertCommand;
 import com.dailymotion.pixelle.deserver.providers.ESTestNodeClientProvider;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,7 +33,6 @@ import java.util.Map;
 public class ESVideoIntegrationTest {
     private static final ObjectMapper mapper = new ObjectMapper();
     private static Injector injector;
-    private static DEProcessor es;
     private static Logger logger = LoggerFactory.getLogger(ESVideoIntegrationTest.class);
 
     @BeforeClass
@@ -52,21 +50,19 @@ public class ESVideoIntegrationTest {
                 bind(DEProcessor.class).asEagerSingleton();
             }
         });
-        es = injector.getInstance(DEProcessor.class);
-
     }
 
     public static void deleteVideosByIds(String... ids) throws Exception {
         for (String id : ids) {
-            Assert.assertTrue(es.deleteById(DeHelper.organicIndex.get(), DeHelper.videosType.get(), id));
+            Assert.assertTrue(DEProcessor.deleteById(DeHelper.organicIndex.get(), DeHelper.videosType.get(), id));
         }
     }
 
     @AfterClass
     public static void tearDown() throws Exception {
         logger.info("Deleting all known indices");
-        es.deleteIndex(DeHelper.organicIndex.get());
-        es.deleteIndex(DeHelper.promotedIndex.get());
+        DEProcessor.deleteIndex(DeHelper.organicIndex.get());
+        DEProcessor.deleteIndex(DeHelper.promotedIndex.get());
         injector = null;
     }
 
@@ -88,7 +84,7 @@ public class ESVideoIntegrationTest {
                 videos.add(video);
             }
         }
-        new VideoBulkInsertCommand(es, videos).execute();
+        new VideoBulkInsertCommand(videos).execute();
         Thread.sleep(2000);
     }
 
@@ -105,7 +101,6 @@ public class ESVideoIntegrationTest {
         m.put("title", "title");
         m.put("description", "description");
         m.put("channel", "channel");
-        m.put("channel_url", "channel_url");
         m.put("channel_name", "channel_name");
         m.put("channel_id", "channel_id");
         m.put("channel_tier", "channel_tier");
@@ -125,7 +120,7 @@ public class ESVideoIntegrationTest {
         Map m4 = ESAdUnitsIntegrationTest.createAdUnitDataMap("1", "1");
         Map m5 = ESAdUnitsIntegrationTest.createAdUnitDataMap("2", "2");
         Map m6 = ESAdUnitsIntegrationTest.createAdUnitDataMap("3", "3");
-        ESAdUnitsIntegrationTest.loadAdUnitMaps(es, m4, m5, m6);
+        ESAdUnitsIntegrationTest.loadAdUnitMaps(m4, m5, m6);
 
 
         SearchQueryRequest sq = new SearchQueryRequest();
@@ -137,32 +132,32 @@ public class ESVideoIntegrationTest {
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
 
         System.out.println("Search Query ====>" + sq.toString());
-        ItemsResponse i = new QueryCommand(es, sq, 6, "promoted,organic").execute();
+        ItemsResponse i = new QueryCommand(sq, 6, "promoted,organic").execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 6);
 
         System.out.println("Search Query ====>" + sq.toString());
-        i = new QueryCommand(es, sq, 6, "promoted").execute();
+        i = new QueryCommand(sq, 6, "promoted").execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 3);
 
         System.out.println("Search Query ====>" + sq.toString());
-        i = new QueryCommand(es, sq, 6, "organic").execute();
+        i = new QueryCommand(sq, 6, "organic").execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 3);
 
         System.out.println("Search Query ====>" + sq.toString());
-        i = new QueryCommand(es, sq, 3, "promoted,organic").execute();
+        i = new QueryCommand(sq, 3, "promoted,organic").execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         System.out.println(i.getResponse().get(2).getClass().getName());
         Assert.assertTrue(i.getResponse().get(2).getClass().getCanonicalName().contains("AdUnit"));
 
         deleteVideosByIds("1", "2", "3");
-        ESAdUnitsIntegrationTest.deleteAdUnitsByIds(es, "1", "2", "3");
+        ESAdUnitsIntegrationTest.deleteAdUnitsByIds("1", "2", "3");
     }
 
     @Test
@@ -174,7 +169,7 @@ public class ESVideoIntegrationTest {
         loadVideoMaps(m1, m2, m3, m4);
 
         Map m5 = ESAdUnitsIntegrationTest.createAdUnitDataMap("1", "1");
-        ESAdUnitsIntegrationTest.loadAdUnitMaps(es, m5);
+        ESAdUnitsIntegrationTest.loadAdUnitMaps(m5);
 
 
         SearchQueryRequest sq = new SearchQueryRequest();
@@ -186,13 +181,13 @@ public class ESVideoIntegrationTest {
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
 
         System.out.println("Search Query ====>" + sq.toString());
-        ItemsResponse i = new QueryCommand(es, sq, 5, "promoted,organic").execute();
+        ItemsResponse i = new QueryCommand(sq, 5, "promoted,organic").execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 5);
 
         deleteVideosByIds("1", "2", "3", "4");
-        ESAdUnitsIntegrationTest.deleteAdUnitsByIds(es, "1");
+        ESAdUnitsIntegrationTest.deleteAdUnitsByIds("1");
     }
 
     @Test
@@ -203,7 +198,7 @@ public class ESVideoIntegrationTest {
         loadVideoMaps(m1, m2, m3);
 
         Map m4 = ESAdUnitsIntegrationTest.createAdUnitDataMap("1", "1");
-        ESAdUnitsIntegrationTest.loadAdUnitMaps(es, m4);
+        ESAdUnitsIntegrationTest.loadAdUnitMaps(m4);
 
 
         SearchQueryRequest sq = new SearchQueryRequest();
@@ -215,12 +210,12 @@ public class ESVideoIntegrationTest {
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
 
         System.out.println("Search Query ====>" + sq.toString());
-        ItemsResponse i = new QueryCommand(es, sq, 6, "promoted,organic").execute();
+        ItemsResponse i = new QueryCommand(sq, 6, "promoted,organic").execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 3);
         deleteVideosByIds("1", "2", "3");
-        ESAdUnitsIntegrationTest.deleteAdUnitsByIds(es, "1");
+        ESAdUnitsIntegrationTest.deleteAdUnitsByIds("1");
     }
 
     @Test
@@ -235,7 +230,7 @@ public class ESVideoIntegrationTest {
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
 
-        ItemsResponse i = new QueryCommand(es, sq, 1, "organic").execute();
+        ItemsResponse i = new QueryCommand(sq, 1, "organic").execute();
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 1);
         VideoResponse video = (VideoResponse) i.getResponse().get(0);
@@ -244,7 +239,6 @@ public class ESVideoIntegrationTest {
         Assert.assertTrue(video.getChannel().equals("channel"));
         Assert.assertTrue(video.getChannelId().equals("channel_id"));
         Assert.assertTrue(video.getChannelName().equals("channel_name"));
-        Assert.assertTrue(video.getChannelUrl().equals("channel_url"));
         Assert.assertTrue(video.getContentType().equals("organic"));
         Assert.assertTrue(video.getDescription().equals("description"));
         Assert.assertTrue(video.getTitle().equals("title"));
@@ -257,7 +251,7 @@ public class ESVideoIntegrationTest {
     @Test
     public void testNullField() throws Exception {
         Map m1 = createVideoDataMap("1");
-        m1.put("channel_url", null);
+        m1.put("channel_name", null);
         loadVideoMaps(m1);
         SearchQueryRequest sq = new SearchQueryRequest();
         sq.setCategories(new ArrayList(Arrays.asList("cat1")));
@@ -267,11 +261,11 @@ public class ESVideoIntegrationTest {
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
 
-        ItemsResponse i = new QueryCommand(es, sq, 1, "organic").execute();
+        ItemsResponse i = new QueryCommand(sq, 1, "organic").execute();
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 1);
         VideoResponse video = (VideoResponse) i.getResponse().get(0);
-        Assert.assertNull(video.getChannelUrl());
+        Assert.assertNull(video.getChannelName());
         deleteVideosByIds("1");
     }
 
@@ -291,7 +285,7 @@ public class ESVideoIntegrationTest {
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
 
         System.out.println("Search Query ====>" + sq.toString());
-        ItemsResponse i = new QueryCommand(es, sq, 10, "organic").execute();
+        ItemsResponse i = new QueryCommand(sq, 10, "organic").execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 3);
@@ -317,7 +311,7 @@ public class ESVideoIntegrationTest {
         sq.setDebugEnabled(true);
 
         System.out.println("Search Query ====>" + sq.toString());
-        ItemsResponse i = new QueryCommand(es, sq, 10, "organic").execute();
+        ItemsResponse i = new QueryCommand(sq, 10, "organic").execute();
         System.out.println("Language Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 3);
@@ -347,7 +341,7 @@ public class ESVideoIntegrationTest {
         sq.setLocations(new ArrayList<String>(Arrays.asList("fr")));
 
         System.out.println("Search Query ====>" + sq.toString());
-        ItemsResponse i = new QueryCommand(es, sq, 10, "organic").execute();
+        ItemsResponse i = new QueryCommand(sq, 10, "organic").execute();
         System.out.println("Language Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 2);

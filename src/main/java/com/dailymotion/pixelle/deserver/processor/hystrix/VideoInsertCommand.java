@@ -1,7 +1,7 @@
 package com.dailymotion.pixelle.deserver.processor.hystrix;
 
 import com.dailymotion.pixelle.deserver.model.Video;
-import com.dailymotion.pixelle.deserver.processor.DEProcessor;
+import com.dailymotion.pixelle.deserver.processor.VideoProcessor;
 import com.netflix.config.DynamicIntProperty;
 import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.hystrix.HystrixCommand;
@@ -18,10 +18,8 @@ public class VideoInsertCommand extends HystrixCommand<Void> {
 
     private static Logger logger = LoggerFactory.getLogger(VideoInsertCommand.class);
     private Video video;
-    private DEProcessor processor;
 
-    public VideoInsertCommand(DEProcessor processor, Video video) {
-
+    public VideoInsertCommand(Video video) {
         super(Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey("DecisioningEngine"))
                 .andCommandKey(HystrixCommandKey.Factory.asKey("VideoInsert"))
                 .andCommandPropertiesDefaults(HystrixCommandProperties.Setter()
@@ -29,13 +27,11 @@ public class VideoInsertCommand extends HystrixCommand<Void> {
                         .withExecutionIsolationSemaphoreMaxConcurrentRequests(semaphoreCount.get())));
 
         this.video = video;
-        this.processor = processor;
-
     }
 
     @Override
     protected Void run() {
-        processor.insertVideo(video);
+        VideoProcessor.insertVideo(video);
         return null;
     }
 }

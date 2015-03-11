@@ -1,7 +1,7 @@
 package com.dailymotion.pixelle.deserver.processor.hystrix;
 
 import com.dailymotion.pixelle.deserver.model.AdUnit;
-import com.dailymotion.pixelle.deserver.processor.DEProcessor;
+import com.dailymotion.pixelle.deserver.processor.AdUnitProcessor;
 import com.netflix.config.DynamicIntProperty;
 import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.hystrix.HystrixCommand;
@@ -23,21 +23,19 @@ public class AdUnitBulkInsertCommand extends HystrixCommand<Void> {
             DynamicPropertyFactory.getInstance().getIntProperty("adunitbulkinsert.semaphore.count", 10);
 
     private List<AdUnit> adUnits;
-    private DEProcessor processor;
 
-    public AdUnitBulkInsertCommand(DEProcessor deProcessor, List<AdUnit> adUnits) {
+    public AdUnitBulkInsertCommand(List<AdUnit> adUnits) {
         super(HystrixCommand.Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey("DecisioningEngine"))
                 .andCommandKey(HystrixCommandKey.Factory.asKey("AdUnitBulkInsert"))
                 .andCommandPropertiesDefaults(HystrixCommandProperties.Setter()
                         .withExecutionIsolationStrategy(HystrixCommandProperties.ExecutionIsolationStrategy.SEMAPHORE)
                         .withExecutionIsolationSemaphoreMaxConcurrentRequests(semaphoreCount.get())));
         this.adUnits = adUnits;
-        this.processor = deProcessor;
     }
 
     @Override
     protected Void run() {
-        processor.insertAdUnitsInBulk(adUnits);
+        AdUnitProcessor.insertAdUnitsInBulk(adUnits);
         return null;
     }
 }

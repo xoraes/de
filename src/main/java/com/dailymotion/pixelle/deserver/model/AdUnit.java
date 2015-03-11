@@ -33,8 +33,6 @@ public class AdUnit {
     private String channelName;
     @JsonProperty("channel_id")
     private String channelId;
-    @JsonProperty("channel_url")
-    private String channelUrl;
     @JsonProperty("account")
     private String accountId;
     @JsonProperty("languages")
@@ -146,14 +144,6 @@ public class AdUnit {
 
     public void setChannelId(String channelId) {
         this.channelId = channelId;
-    }
-
-    public String getChannelUrl() {
-        return channelUrl;
-    }
-
-    public void setChannelUrl(String channelUrl) {
-        this.channelUrl = channelUrl;
     }
 
     public String getAccountId() {

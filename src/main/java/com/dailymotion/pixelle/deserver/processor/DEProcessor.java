@@ -60,7 +60,7 @@ public class DEProcessor {
     }
 
 
-    public ItemsResponse recommend(SearchQueryRequest sq, Integer positions, String allowedTypes) throws DeException {
+    public static ItemsResponse recommend(SearchQueryRequest sq, Integer positions, String allowedTypes) throws DeException {
         List<VideoResponse> targetedVideos = null;
         List<AdUnitResponse> ads = null;
         List<? extends ItemsResponse> mergedList = null;
@@ -73,7 +73,7 @@ public class DEProcessor {
         if (at == null || at.length == 0) {
             stopwatch = adsTimer.start();
             try {
-                ads = new AdQueryCommand(adUnitProcessor, sq, positions).execute();
+                ads = new AdQueryCommand(sq, positions).execute();
                 itemsResponse.setResponse(ads);
             } finally {
                 adsTimer.record(stopwatch.getDuration(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);
@@ -84,7 +84,7 @@ public class DEProcessor {
         if (at.length == 1 && StringUtils.containsIgnoreCase(at[0], "promoted")) {
             stopwatch = adsTimer.start();
             try {
-                ads = new AdQueryCommand(adUnitProcessor, sq, positions).execute();
+                ads = new AdQueryCommand(sq, positions).execute();
                 itemsResponse.setResponse(ads);
             } finally {
                 adsTimer.record(stopwatch.getDuration(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);
@@ -95,7 +95,7 @@ public class DEProcessor {
         if (at.length == 1 && StringUtils.containsIgnoreCase(at[0], "organic")) {
             stopwatch = videosTimer.start();
             try {
-                targetedVideos = new VideoQueryCommand(videoProcessor, sq, positions).execute();
+                targetedVideos = new VideoQueryCommand(sq, positions).execute();
 
                 if (targetedVideos != null && targetedVideos.size() >= positions) {
 
@@ -119,8 +119,8 @@ public class DEProcessor {
                 Future<List<AdUnitResponse>> adsFuture;
                 Future<List<VideoResponse>> targetedVideosFuture;
 
-                adsFuture = new AdQueryCommand(adUnitProcessor, sq, positions).queue();
-                targetedVideosFuture = new ChannelQueryCommand(channelProcessor, sq, positions).queue();
+                adsFuture = new AdQueryCommand(sq, positions).queue();
+                targetedVideosFuture = new ChannelQueryCommand(sq, positions).queue();
 
                 try {
                     ads = adsFuture.get();
@@ -158,8 +158,8 @@ public class DEProcessor {
                 Future<List<AdUnitResponse>> adsFuture;
                 Future<List<VideoResponse>> targetedVideosFuture;
 
-                adsFuture = new AdQueryCommand(adUnitProcessor, sq, positions).queue();
-                targetedVideosFuture = new VideoQueryCommand(videoProcessor, sq, positions).queue();
+                adsFuture = new AdQueryCommand(sq, positions).queue();
+                targetedVideosFuture = new VideoQueryCommand(sq, positions).queue();
 
                 try {
                     ads = adsFuture.get();
@@ -192,32 +192,22 @@ public class DEProcessor {
     }
 
 
-    public List<AdUnit> getAdUnitsByCampaign(String cid) {
+    public static List<AdUnit> getAdUnitsByCampaign(String cid) {
         return adUnitProcessor.getAdUnitsByCampaign(cid);
     }
 
 
-    public void insertAdUnit(AdUnit unit) throws DeException {
-        adUnitProcessor.insertAdUnit(unit);
-    }
-
-
-    public void updateAdUnit(AdUnit unit) throws DeException {
-        adUnitProcessor.updateAdUnit(unit);
-    }
-
-
-    public AdUnit getAdUnitById(String id) {
+    public static AdUnit getAdUnitById(String id) {
         return adUnitProcessor.getAdUnitById(id);
     }
 
 
-    public Video getVideoById(String id) throws DeException {
+    public static Video getVideoById(String id) throws DeException {
         return videoProcessor.getVideoById(id);
     }
 
 
-    public List<AdUnit> getAllAdUnits() {
+    public static List<AdUnit> getAllAdUnits() {
         return adUnitProcessor.getAllAdUnits();
     }
 
@@ -227,7 +217,7 @@ public class DEProcessor {
     }
 
 
-    public void updateVideo(Video video) throws DeException {
+    public static void updateVideo(Video video) throws DeException {
         videoProcessor.updateVideo(video);
     }
 
@@ -271,14 +261,14 @@ public class DEProcessor {
     }
 
 
-    public boolean deleteById(String indexName, String type, String id) throws DeException {
+    public static boolean deleteById(String indexName, String type, String id) throws DeException {
         if (StringUtils.isBlank(indexName) || StringUtils.isBlank(type) || StringUtils.isBlank(id)) {
             return false;
         }
         return client.prepareDelete(indexName, type, id).execute().actionGet().isFound();
     }
 
-    public List<? extends ItemsResponse> mergeAndFillList(final List<AdUnitResponse> ads,
+    public static List<? extends ItemsResponse> mergeAndFillList(final List<AdUnitResponse> ads,
                                                           final List<VideoResponse> targetedVideos,
                                                           final List<VideoResponse> untargetedVideos,
                                                           final Integer positions) {
@@ -307,26 +297,19 @@ public class DEProcessor {
         return items;
     }
 
-    public void insertAdUnitsInBulk(List<AdUnit> adUnits) throws DeException {
-        adUnitProcessor.insertAdUnitsInBulk(adUnits);
-    }
-
-    public void insertVideoInBulk(List<Video> videos) throws DeException {
+    public static void insertVideoInBulk(List<Video> videos) throws DeException {
         videoProcessor.insertVideoInBulk(videos);
     }
 
-    public void insertChannelVideoInBulk(List<Video> videos) throws DeException {
-        videoProcessor.insertChannelVideoInBulk(videos);
-    }
 
-    protected void deleteIndex(String indexName) {
+    protected static void deleteIndex(String indexName) {
         if (client.admin().indices().prepareExists(indexName).execute().actionGet().isExists()
                 && client.admin().indices().prepareDelete(indexName).execute().actionGet().isAcknowledged()) {
             logger.info("successfully deleted index: " + DeHelper.promotedIndex.get());
         }
     }
 
-    private SearchQueryRequest modifySearchQueryReq(SearchQueryRequest sq) {
+    private static SearchQueryRequest modifySearchQueryReq(SearchQueryRequest sq) {
         if (sq != null) {
             if (DeHelper.isEmptyList(sq.getCategories())) {
                 sq.setCategories(Arrays.asList("all"));

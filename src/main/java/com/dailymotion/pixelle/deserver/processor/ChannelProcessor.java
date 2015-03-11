@@ -70,7 +70,7 @@ public class ChannelProcessor extends VideoProcessor {
     private static Logger logger = LoggerFactory.getLogger(ChannelProcessor.class);
     private static CloseableHttpClient httpclient = HttpClients.createDefault();
 
-    private LoadingCache<String, List<Video>> videosCache = CacheBuilder.newBuilder().maximumSize(lruSize.get()).refreshAfterWrite(refreshAfterWriteMins.get(), TimeUnit.MINUTES)
+    private static LoadingCache<String, List<Video>> videosCache = CacheBuilder.newBuilder().maximumSize(lruSize.get()).refreshAfterWrite(refreshAfterWriteMins.get(), TimeUnit.MINUTES)
             .build(
                     new CacheLoader<String, List<Video>>() {
                         @Override
@@ -111,7 +111,7 @@ public class ChannelProcessor extends VideoProcessor {
         super(esClient);
     }
 
-    public List<VideoResponse> recommend(SearchQueryRequest sq, Integer positions) throws DeException {
+    public static List<VideoResponse> recommend(SearchQueryRequest sq, Integer positions) throws DeException {
 
         List<VideoResponse> videoResponses = null;
         BoolFilterBuilder fb = FilterBuilders.boolFilter();
@@ -147,6 +147,7 @@ public class ChannelProcessor extends VideoProcessor {
          * and fresh data is replaced into the cache asynchronously from DM and indexed to ES.
          */
         if (DeHelper.isEmptyList(videoResponses) || videoResponses.size() < positions) {
+            videoResponses = new ArrayList<VideoResponse>();
             List<Video> videos = null;
             try {
                 videos = videosCache.get(sq.getChannel());
@@ -174,27 +175,27 @@ public class ChannelProcessor extends VideoProcessor {
         return videoResponses;
     }
 
-    private void submitAsyncIndexingTask(final List<Video> videos) {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        final ChannelProcessor cp = this;
-        try {
-            executor.submit(new Runnable() {
-                @Override
-                public void run() {
-                    indexVideos(videos);
-                }
-            });
-        } finally {
-            executor.shutdown();
+    private static void submitAsyncIndexingTask(final List<Video> videos) {
+        if (!DeHelper.isEmptyList(videos)) {
+            ExecutorService executor = Executors.newSingleThreadExecutor();
+            try {
+                executor.submit(new Runnable() {
+                    @Override
+                    public void run() {
+                        indexVideos(videos);
+                    }
+                });
+            } finally {
+                executor.shutdown();
+            }
         }
     }
 
-    private void indexVideos(final List<Video> videos) {
-        final ChannelProcessor cp = this;
-        new ChannelVideoBulkInsertCommand(cp, videos).execute();
+    private static void indexVideos(final List<Video> videos) {
+        new ChannelVideoBulkInsertCommand(videos).execute();
     }
 
-    private List<Video> getVideosFromDM(@NotNull String channelId) throws DeException {
+    private static List<Video> getVideosFromDM(@NotNull String channelId) throws DeException {
         if (StringUtils.isBlank(channelId)) {
             throw new DeException(new Throwable("No channel id provided"), HttpStatus.BAD_REQUEST_400);
         }
@@ -250,6 +251,7 @@ public class ChannelProcessor extends VideoProcessor {
                 video.setCategories(Arrays.asList(channelVideo.getChannel()));
                 video.setTags(channelVideo.getTags());
                 video.setId(channelVideo.getVideoId());
+                video.setVideoId(channelVideo.getVideoId());
                 videos.add(video);
             }
         }

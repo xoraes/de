@@ -22,22 +22,19 @@ public class VideoUpdateCommand extends HystrixCommand<Void> {
             DynamicPropertyFactory.getInstance().getIntProperty("videoupdate.semaphore.count", 10);
     private static Logger logger = LoggerFactory.getLogger(VideoUpdateCommand.class);
     private Video video;
-    private DEProcessor processor;
 
-    public VideoUpdateCommand(DEProcessor processor, Video video) {
-
+    public VideoUpdateCommand(Video video) {
         super(Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey("DecisioningEngine"))
                 .andCommandKey(HystrixCommandKey.Factory.asKey("VideoUpdate"))
                 .andCommandPropertiesDefaults(HystrixCommandProperties.Setter()
                         .withExecutionIsolationStrategy(HystrixCommandProperties.ExecutionIsolationStrategy.SEMAPHORE)
                         .withExecutionIsolationSemaphoreMaxConcurrentRequests(semaphoreCount.get())));
         this.video = video;
-        this.processor = processor;
     }
 
     @Override
     protected Void run() {
-        processor.updateVideo(video);
+        DEProcessor.updateVideo(video);
         return null;
     }
 }

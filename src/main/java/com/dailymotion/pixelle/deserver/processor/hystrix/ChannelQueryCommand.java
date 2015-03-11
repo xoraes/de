@@ -24,9 +24,8 @@ public class ChannelQueryCommand extends HystrixCommand<List<VideoResponse>> {
     private static Logger logger = LoggerFactory.getLogger(ChannelQueryCommand.class);
     private SearchQueryRequest sq;
     private int positions;
-    private ChannelProcessor processor;
 
-    public ChannelQueryCommand(ChannelProcessor channelProcessor, SearchQueryRequest sq, Integer positions) {
+    public ChannelQueryCommand(SearchQueryRequest sq, Integer positions) {
 
         super(HystrixCommand.Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey("DecisioningEngine"))
                 .andCommandKey(HystrixCommandKey.Factory.asKey("ChannelQuery"))
@@ -36,11 +35,10 @@ public class ChannelQueryCommand extends HystrixCommand<List<VideoResponse>> {
 
         this.sq = sq;
         this.positions = positions;
-        this.processor = channelProcessor;
     }
 
     @Override
     protected List<VideoResponse> run() throws Exception {
-        return processor.recommend(sq, positions);
+        return ChannelProcessor.recommend(sq, positions);
     }
 }

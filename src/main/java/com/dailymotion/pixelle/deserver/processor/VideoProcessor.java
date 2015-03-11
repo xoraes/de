@@ -93,7 +93,7 @@ public class VideoProcessor {
         client = esClient;
     }
 
-    public Video getVideoById(String id) throws DeException {
+    public static Video getVideoById(String id) throws DeException {
         if (StringUtils.isBlank(id)) {
             throw new DeException(new Throwable("id cannot be blank"), HttpStatus.BAD_REQUEST_400);
         }
@@ -111,7 +111,7 @@ public class VideoProcessor {
         return video;
     }
 
-    public void insertVideo(Video video) throws DeException {
+    public static void insertVideo(Video video) throws DeException {
 
         if (video == null) {
             throw new DeException(new Throwable("no video found in request body"), HttpStatus.BAD_REQUEST_400);
@@ -123,7 +123,7 @@ public class VideoProcessor {
      * @param video - should not be null
      * @return a modified video
      */
-    protected Video modifyVideoForInsert(@NotNull Video video) {
+    protected static Video modifyVideoForInsert(@NotNull Video video) {
 
         if (video == null) return video;
 
@@ -142,7 +142,7 @@ public class VideoProcessor {
         return video;
     }
 
-    public void updateVideo(Video video) throws DeException {
+    public static void updateVideo(Video video) throws DeException {
         if (video == null) {
             throw new DeException(new Throwable("no video found in request body"), HttpStatus.BAD_REQUEST_400);
         }
@@ -165,15 +165,15 @@ public class VideoProcessor {
         }
     }
 
-    public void insertVideoInBulk(List<Video> videos) throws DeException {
+    public static void insertVideoInBulk(List<Video> videos) throws DeException {
         insertVideoInBulk(videos, DeHelper.organicIndex.get());
     }
 
-    public void insertChannelVideoInBulk(List<Video> videos) throws DeException {
+    public static void insertChannelVideoInBulk(List<Video> videos) throws DeException {
         insertVideoInBulk(videos, DeHelper.channelIndex.get());
     }
 
-    private void insertVideoInBulk(List<Video> videos, String index) {
+    private static void insertVideoInBulk(List<Video> videos, String index) {
         if (DeHelper.isEmptyList(videos)) {
             return;
         }
@@ -207,7 +207,7 @@ public class VideoProcessor {
         }
     }
 
-    public List<VideoResponse> recommend(@Nullable SearchQueryRequest sq, Integer positions, @Nullable List<String> excludedIds) {
+    public static List<VideoResponse> recommend(@Nullable SearchQueryRequest sq, Integer positions, @Nullable List<String> excludedIds) {
 
         List<VideoResponse> videoResponses = null;
         BoolFilterBuilder fb = FilterBuilders.boolFilter();
@@ -284,7 +284,7 @@ public class VideoProcessor {
         return videoResponses;
     }
 
-    public List<VideoResponse> getUntargetedVideos(List<VideoResponse> targetedVideo, int positions, SearchQueryRequest sq) {
+    public static List<VideoResponse> getUntargetedVideos(List<VideoResponse> targetedVideo, int positions, SearchQueryRequest sq) {
 
         List<String> languages = sq.getLanguages();
         if (DeHelper.isEmptyList(languages)) {

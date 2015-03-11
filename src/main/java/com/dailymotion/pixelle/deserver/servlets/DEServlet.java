@@ -149,7 +149,7 @@ public class DEServlet {
         } else {
             sq.setDebugEnabled(isDebugEnabled);
         }
-        ItemsResponse i = new QueryCommand(deProcessor, sq, pos, allowedTypes).execute();
+        ItemsResponse i = new QueryCommand(sq, pos, allowedTypes).execute();
         return Response.ok(i).build();
     }
 
@@ -166,7 +166,7 @@ public class DEServlet {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
     public void insertAdUnitsBulk(List<AdUnit> adUnits, @Suspended final AsyncResponse ar) throws DeException {
-        ar.resume(new AdUnitBulkInsertCommand(deProcessor, adUnits).execute());
+        ar.resume(new AdUnitBulkInsertCommand(adUnits).execute());
     }
 
     /**
@@ -182,7 +182,7 @@ public class DEServlet {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
     public void update(AdUnit adunit, @Suspended final AsyncResponse ar) throws DeException {
-        ar.resume(new AdUpdateCommand(deProcessor, adunit).execute());
+        ar.resume(new AdUpdateCommand(adunit).execute());
     }
 
     /**
@@ -198,7 +198,7 @@ public class DEServlet {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
     public void insert(AdUnit adunit, @Suspended final AsyncResponse ar) throws DeException {
-        ar.resume(new AdInsertCommand(deProcessor, adunit).execute());
+        ar.resume(new AdInsertCommand(adunit).execute());
     }
 
     /**
@@ -214,7 +214,7 @@ public class DEServlet {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
     public void updateBulk(List<Video> videos, @Suspended final AsyncResponse ar) throws DeException {
-        ar.resume(new VideoBulkInsertCommand(deProcessor, videos).execute());
+        ar.resume(new VideoBulkInsertCommand(videos).execute());
     }
 
     /**
@@ -230,7 +230,7 @@ public class DEServlet {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
     public void insertVideosBulk(List<Video> videos, @Suspended final AsyncResponse ar) throws DeException {
-        ar.resume(new VideoBulkInsertCommand(deProcessor, videos).execute());
+        ar.resume(new VideoBulkInsertCommand(videos).execute());
     }
 
     /**
@@ -246,7 +246,7 @@ public class DEServlet {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
     public void update(Video video, @Suspended final AsyncResponse ar) throws DeException {
-        ar.resume(new VideoUpdateCommand(deProcessor, video).execute());
+        ar.resume(new VideoUpdateCommand(video).execute());
     }
 
     /**
@@ -263,7 +263,7 @@ public class DEServlet {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
     public void insert(Video video, @Suspended final AsyncResponse ar) throws DeException {
-        ar.resume(new VideoInsertCommand(deProcessor, video).execute());
+        ar.resume(new VideoInsertCommand(video).execute());
     }
 
     /**

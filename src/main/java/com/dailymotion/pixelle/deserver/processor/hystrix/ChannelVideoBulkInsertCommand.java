@@ -27,21 +27,21 @@ public class ChannelVideoBulkInsertCommand extends HystrixCommand<Void> {
             DynamicPropertyFactory.getInstance().getIntProperty("channel.videobulkbinsert.semaphore.count", 10);
 
     private List<Video> videos;
-    private ChannelProcessor processor;
 
-    public ChannelVideoBulkInsertCommand(ChannelProcessor processor, List<Video> videos) {
+
+    public ChannelVideoBulkInsertCommand(List<Video> videos) {
         super(HystrixCommand.Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey("DecisioningEngine"))
                 .andCommandKey(HystrixCommandKey.Factory.asKey("ChannelVideoBulkInsert"))
                 .andCommandPropertiesDefaults(HystrixCommandProperties.Setter()
                         .withExecutionIsolationStrategy(HystrixCommandProperties.ExecutionIsolationStrategy.SEMAPHORE)
                         .withExecutionIsolationSemaphoreMaxConcurrentRequests(semaphoreCount.get())));
         this.videos = videos;
-        this.processor = processor;
+
     }
 
     @Override
     protected Void run() throws Exception {
-        processor.insertChannelVideoInBulk(videos);
+        ChannelProcessor.insertChannelVideoInBulk(videos);
         return null;
     }
 }

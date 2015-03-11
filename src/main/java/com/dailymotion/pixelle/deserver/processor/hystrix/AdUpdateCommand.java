@@ -2,7 +2,7 @@ package com.dailymotion.pixelle.deserver.processor.hystrix;
 
 
 import com.dailymotion.pixelle.deserver.model.AdUnit;
-import com.dailymotion.pixelle.deserver.processor.DEProcessor;
+import com.dailymotion.pixelle.deserver.processor.AdUnitProcessor;
 import com.netflix.config.DynamicIntProperty;
 import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.hystrix.HystrixCommand;
@@ -22,9 +22,8 @@ public class AdUpdateCommand extends HystrixCommand<Void> {
             DynamicPropertyFactory.getInstance().getIntProperty("adupdate.semaphore.count", 10);
     private static Logger logger = LoggerFactory.getLogger(AdUpdateCommand.class);
     private AdUnit unit;
-    private DEProcessor processor;
 
-    public AdUpdateCommand(DEProcessor processor, AdUnit unit) {
+    public AdUpdateCommand(AdUnit unit) {
 
         super(Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey("DecisioningEngine"))
                 .andCommandKey(HystrixCommandKey.Factory.asKey("AdUpdate"))
@@ -32,12 +31,11 @@ public class AdUpdateCommand extends HystrixCommand<Void> {
                         .withExecutionIsolationStrategy(HystrixCommandProperties.ExecutionIsolationStrategy.SEMAPHORE)
                         .withExecutionIsolationSemaphoreMaxConcurrentRequests(semaphoreCount.get())));
         this.unit = unit;
-        this.processor = processor;
     }
 
     @Override
     protected Void run() {
-        processor.updateAdUnit(unit);
+        AdUnitProcessor.updateAdUnit(unit);
         return null;
     }
 }

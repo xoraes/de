@@ -23,8 +23,6 @@ public class VideoResponse extends ItemsResponse {
     private String channelName;
     @JsonProperty("channel_id")
     private String channelId;
-    @JsonProperty("channel_url")
-    private String channelUrl;
     @JsonProperty("channel_tier")
     private String channelTier;
     @JsonProperty("thumbnail_url")
@@ -81,14 +79,6 @@ public class VideoResponse extends ItemsResponse {
 
     public void setChannelId(String channelId) {
         this.channelId = channelId;
-    }
-
-    public String getChannelUrl() {
-        return channelUrl;
-    }
-
-    public void setChannelUrl(String channelUrl) {
-        this.channelUrl = channelUrl;
     }
 
     public String getChannelTier() {
