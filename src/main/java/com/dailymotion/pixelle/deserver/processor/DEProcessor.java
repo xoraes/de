@@ -211,14 +211,83 @@ public class DEProcessor {
         return adUnitProcessor.getAllAdUnits();
     }
 
+    public static void updateVideo(Video video) throws DeException {
+        videoProcessor.updateVideo(video);
+    }
+
+    public static boolean deleteById(String indexName, String type, String id) throws DeException {
+        if (StringUtils.isBlank(indexName) || StringUtils.isBlank(type) || StringUtils.isBlank(id)) {
+            return false;
+        }
+        return client.prepareDelete(indexName, type, id).execute().actionGet().isFound();
+    }
+
+    public static List<? extends ItemsResponse> mergeAndFillList(final List<AdUnitResponse> ads,
+                                                                 final List<VideoResponse> targetedVideos,
+                                                                 final List<VideoResponse> untargetedVideos,
+                                                                 final Integer positions) {
+
+        String pattern = DeHelper.widgetPattern.get();
+        int len = pattern.length();
+
+        List<ItemsResponse> items = new ArrayList<ItemsResponse>();
+        int adIter = 0, videoIter = 0, untargetedVideoIter = 0, patternIter = 0;
+
+        for (int positionsFilled = 0; positionsFilled < positions; patternIter++, positionsFilled++) {
+            if (ads != null && ads.size() > adIter && (pattern.charAt(patternIter % len) == 'P' || pattern.charAt(patternIter % len) == 'p')) {
+                items.add(ads.get(adIter++));
+            } else if (targetedVideos != null && targetedVideos.size() > videoIter && (pattern.charAt(patternIter % len) == 'O' || pattern.charAt(patternIter % len) == 'o')) {
+                items.add(targetedVideos.get(videoIter++));
+            } else if (targetedVideos != null && targetedVideos.size() > videoIter) { // not enough ads, so fill with all available targeted videos
+                items.add(targetedVideos.get(videoIter++));
+            } else if (untargetedVideos != null && untargetedVideos.size() > untargetedVideoIter) { //not enough targeted videos, so fill it with un-targeted videos
+                items.add(untargetedVideos.get(untargetedVideoIter++));
+            } else if (ads != null && ads.size() > adIter) { //not enough targeted videos, so fill with targeted ads - rare case
+                items.add(ads.get(adIter++));
+            } else { // don't bother filling with un-targeted ads
+                break;
+            }
+        }
+        return items;
+    }
+
+    public static void insertVideoInBulk(List<Video> videos) throws DeException {
+        videoProcessor.insertVideoInBulk(videos);
+    }
+
+    protected static void deleteIndex(String indexName) {
+        if (client.admin().indices().prepareExists(indexName).execute().actionGet().isExists()
+                && client.admin().indices().prepareDelete(indexName).execute().actionGet().isAcknowledged()) {
+            logger.info("successfully deleted index: " + DeHelper.promotedIndex.get());
+        }
+    }
+
+    private static SearchQueryRequest modifySearchQueryReq(SearchQueryRequest sq) {
+        if (sq != null) {
+            if (DeHelper.isEmptyList(sq.getCategories())) {
+                sq.setCategories(Arrays.asList("all"));
+            } else {
+                sq.getCategories().add("all");
+            }
+            if (DeHelper.isEmptyList(sq.getLocations())) {
+                sq.setLocations(Arrays.asList("all"));
+            } else {
+                sq.getLocations().add("all");
+            }
+            if (DeHelper.isEmptyList(sq.getLanguages())) {
+                sq.setLanguages(Arrays.asList("all"));
+            } else {
+                sq.getLanguages().add("all");
+            }
+            if (StringUtils.isBlank(sq.getTime())) {
+                sq.setTime(DeHelper.timeToISO8601String(DeHelper.currentUTCTime()));
+            }
+        }
+        return sq;
+    }
 
     public void insertVideo(Video video) throws DeException {
         videoProcessor.insertVideo(video);
-    }
-
-
-    public static void updateVideo(Video video) throws DeException {
-        videoProcessor.updateVideo(video);
     }
 
     public ClusterHealthResponse getHealthCheck() throws DeException {
@@ -258,78 +327,5 @@ public class DEProcessor {
         } else {
             throw new DeException(new Throwable("index or type does not exist"), HttpStatus.INTERNAL_SERVER_ERROR_500);
         }
-    }
-
-
-    public static boolean deleteById(String indexName, String type, String id) throws DeException {
-        if (StringUtils.isBlank(indexName) || StringUtils.isBlank(type) || StringUtils.isBlank(id)) {
-            return false;
-        }
-        return client.prepareDelete(indexName, type, id).execute().actionGet().isFound();
-    }
-
-    public static List<? extends ItemsResponse> mergeAndFillList(final List<AdUnitResponse> ads,
-                                                          final List<VideoResponse> targetedVideos,
-                                                          final List<VideoResponse> untargetedVideos,
-                                                          final Integer positions) {
-
-        String pattern = DeHelper.widgetPattern.get();
-        int len = pattern.length();
-
-        List<ItemsResponse> items = new ArrayList<ItemsResponse>();
-        int adIter = 0, videoIter = 0, untargetedVideoIter = 0, patternIter = 0;
-
-        for (int positionsFilled = 0; positionsFilled < positions; patternIter++, positionsFilled++) {
-            if (ads != null && ads.size() > adIter && (pattern.charAt(patternIter % len) == 'P' || pattern.charAt(patternIter % len) == 'p')) {
-                items.add(ads.get(adIter++));
-            } else if (targetedVideos != null && targetedVideos.size() > videoIter && (pattern.charAt(patternIter % len) == 'O' || pattern.charAt(patternIter % len) == 'o')) {
-                items.add(targetedVideos.get(videoIter++));
-            } else if (targetedVideos != null && targetedVideos.size() > videoIter) { // not enough ads, so fill with all available targeted videos
-                items.add(targetedVideos.get(videoIter++));
-            } else if (untargetedVideos != null && untargetedVideos.size() > untargetedVideoIter) { //not enough targeted videos, so fill it with un-targeted videos
-                items.add(untargetedVideos.get(untargetedVideoIter++));
-            } else if (ads != null && ads.size() > adIter) { //not enough targeted videos, so fill with targeted ads - rare case
-                items.add(ads.get(adIter++));
-            } else { // don't bother filling with un-targeted ads
-                break;
-            }
-        }
-        return items;
-    }
-
-    public static void insertVideoInBulk(List<Video> videos) throws DeException {
-        videoProcessor.insertVideoInBulk(videos);
-    }
-
-
-    protected static void deleteIndex(String indexName) {
-        if (client.admin().indices().prepareExists(indexName).execute().actionGet().isExists()
-                && client.admin().indices().prepareDelete(indexName).execute().actionGet().isAcknowledged()) {
-            logger.info("successfully deleted index: " + DeHelper.promotedIndex.get());
-        }
-    }
-
-    private static SearchQueryRequest modifySearchQueryReq(SearchQueryRequest sq) {
-        if (sq != null) {
-            if (DeHelper.isEmptyList(sq.getCategories())) {
-                sq.setCategories(Arrays.asList("all"));
-            } else {
-                sq.getCategories().add("all");
-            }
-            if (DeHelper.isEmptyList(sq.getLocations())) {
-                sq.setLocations(Arrays.asList("all"));
-            } else {
-                sq.getLocations().add("all");
-            }
-            if (DeHelper.isEmptyList(sq.getLanguages())) {
-                sq.setLanguages(Arrays.asList("all"));
-            } else {
-                sq.getLanguages().add("all");
-            }
-            if (StringUtils.isBlank(sq.getTime())) {
-                sq.setTime(DeHelper.timeToISO8601String(DeHelper.currentUTCTime()));
-            }
-        }
-        return sq;
     }
 }

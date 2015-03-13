@@ -244,12 +244,14 @@ public class VideoProcessor {
                 .scoreMode(scoreMode.getValue());
 
         SearchRequestBuilder srb1 = client.prepareSearch(DeHelper.organicIndex.get())
+                .setQuery(qb)
                 .setTypes(DeHelper.videosType.get())
                 .setSearchType(SearchType.QUERY_THEN_FETCH)
-                .setQuery(qb)
-                .setExplain(sq.getDebugEnabled())
                 .setSize(positions);
 
+        if (sq.isDebugEnabled()) {
+            srb1.setExplain(true);
+        }
         logger.info(ctrScriptFunction.getName() + " : " + ctrScriptFunction.getValue());
         logger.info(ctrScriptLang.getName() + " : " + ctrScriptLang.getValue());
         logger.info(goldPartnerWeight.getName() + " : " + goldPartnerWeight.getValue());
@@ -266,7 +268,7 @@ public class VideoProcessor {
         for (SearchHit hit : searchResponse.getHits().getHits()) {
             try {
                 VideoResponse video = OBJECT_MAPPER.readValue(hit.getSourceAsString(), VideoResponse.class);
-                if (sq.getDebugEnabled() == Boolean.TRUE) {
+                if (sq.isDebugEnabled()) {
                     Explanation ex = new Explanation();
                     ex.setValue(hit.getScore());
                     ex.setDescription("Source ====>" + hit.getSourceAsString());
@@ -298,7 +300,7 @@ public class VideoProcessor {
 
         SearchQueryRequest sq1 = new SearchQueryRequest();
         sq1.setLanguages(languages);
-        sq1.setDebugEnabled(sq.getDebugEnabled());
+        sq1.setDebugEnabled(sq.isDebugEnabled());
 
         int reqVideosSize = positions;
         if (!DeHelper.isEmptyList(targetedVideo)) {

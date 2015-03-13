@@ -30,7 +30,7 @@ public class VideoInsertCommand extends HystrixCommand<Void> {
     }
 
     @Override
-    protected Void run() {
+    protected Void run() throws Exception {
         VideoProcessor.insertVideo(video);
         return null;
     }

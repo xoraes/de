@@ -13,6 +13,11 @@ public class DeException extends WebApplicationException {
 
     public DeException(Throwable throwable, int statusCode) {
         super(throwable, statusCode);
-        logger.error(throwable.getMessage());
+        logger.error(String.valueOf(statusCode), throwable);
+    }
+
+    public DeException(String cause, Throwable throwable) {
+        super(cause, throwable);
+        logger.error(cause, throwable);
     }
 }

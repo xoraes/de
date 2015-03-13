@@ -143,11 +143,9 @@ public class DEServlet {
     public Response query(SearchQueryRequest sq,
                           @QueryParam("positions") Integer pos,
                           @QueryParam("type") String allowedTypes,
-                          @QueryParam("debug") Boolean isDebugEnabled) throws DeException {
-        if (isDebugEnabled == null) {
-            sq.setDebugEnabled(false);
-        } else {
-            sq.setDebugEnabled(isDebugEnabled);
+                          @QueryParam("debug") boolean isDebugEnabled) throws DeException {
+        if (isDebugEnabled) {
+            sq.setDebugEnabled(true);
         }
         ItemsResponse i = new QueryCommand(sq, pos, allowedTypes).execute();
         return Response.ok(i).build();

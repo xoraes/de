@@ -38,7 +38,7 @@ public class VideoBulkInsertCommand extends HystrixCommand<Void> {
     }
 
     @Override
-    protected Void run() {
+    protected Void run() throws Exception {
         DEProcessor.insertVideoInBulk(videos);
         return null;
     }

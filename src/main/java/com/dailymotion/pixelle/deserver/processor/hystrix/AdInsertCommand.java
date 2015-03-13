@@ -35,7 +35,7 @@ public class AdInsertCommand extends HystrixCommand<Void> {
     }
 
     @Override
-    protected Void run() {
+    protected Void run() throws Exception {
         AdUnitProcessor.insertAdUnit(unit);
         return null;
     }

@@ -37,7 +37,7 @@ public class VideoQueryCommand extends HystrixCommand<List<VideoResponse>> {
     }
 
     @Override
-    protected List<VideoResponse> run() {
+    protected List<VideoResponse> run() throws Exception {
         return VideoProcessor.recommend(sq, positions, null);
     }
 }

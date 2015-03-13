@@ -21,6 +21,8 @@ import org.glassfish.hk2.api.ServiceLocator;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.DispatcherType;
 import java.io.IOException;
@@ -28,6 +30,7 @@ import java.util.Arrays;
 import java.util.EnumSet;
 
 public final class StartServer {
+    private static Logger logger = LoggerFactory.getLogger(DEServlet.class);
 
     private StartServer() {
     }
@@ -41,22 +44,19 @@ public final class StartServer {
             System.setProperty("archaius.deployment.environment", env);
         }
         ConfigurationManager.loadCascadedPropertiesFromResources("de");
-        HystrixPlugins.getInstance().registerMetricsPublisher(HystrixServoMetricsPublisher.getInstance());
 
+        HystrixPlugins.getInstance().registerMetricsPublisher(HystrixServoMetricsPublisher.getInstance());
 
         ServiceLocator locator = BootstrapUtils.newServiceLocator();
         BootstrapUtils.newInjector(locator, Arrays.asList(new DeServletModule()));
-
         BootstrapUtils.install(locator);
 
         ResourceConfig config = new ResourceConfig();
-
         config.register(MultiPartFeature.class);
         config.register(DEServlet.class);
 
 
         ServletContainer servletContainer = new ServletContainer(config);
-
         ServletHolder sh = new ServletHolder(servletContainer);
         Server server = new Server(DeHelper.getPort());
         ServletContextHandler context = new ServletContextHandler(server, "/");

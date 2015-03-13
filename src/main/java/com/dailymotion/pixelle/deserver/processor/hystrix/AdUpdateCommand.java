@@ -34,7 +34,7 @@ public class AdUpdateCommand extends HystrixCommand<Void> {
     }
 
     @Override
-    protected Void run() {
+    protected Void run() throws Exception {
         AdUnitProcessor.updateAdUnit(unit);
         return null;
     }

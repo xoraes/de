@@ -34,7 +34,7 @@ public class QueryCommand extends HystrixCommand<ItemsResponse> {
     }
 
     @Override
-    protected ItemsResponse run() {
+    protected ItemsResponse run() throws Exception {
         return DEProcessor.recommend(sq, positions, allowedTypes);
     }
 }

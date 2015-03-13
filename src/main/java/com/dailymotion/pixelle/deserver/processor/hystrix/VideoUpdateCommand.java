@@ -33,7 +33,7 @@ public class VideoUpdateCommand extends HystrixCommand<Void> {
     }
 
     @Override
-    protected Void run() {
+    protected Void run() throws Exception {
         DEProcessor.updateVideo(video);
         return null;
     }

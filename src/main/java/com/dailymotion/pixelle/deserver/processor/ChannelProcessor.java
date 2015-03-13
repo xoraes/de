@@ -6,6 +6,7 @@ import com.dailymotion.pixelle.deserver.model.SearchQueryRequest;
 import com.dailymotion.pixelle.deserver.model.Video;
 import com.dailymotion.pixelle.deserver.model.VideoResponse;
 import com.dailymotion.pixelle.deserver.processor.hystrix.ChannelVideoBulkInsertCommand;
+import com.dailymotion.pixelle.deserver.processor.hystrix.DMApiQueryCommand;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.cache.CacheBuilder;
@@ -76,10 +77,11 @@ public class ChannelProcessor extends VideoProcessor {
                         @Override
                         public List<Video> load(String key) throws DeException {
                             logger.info("Caching and indexing video..");
-                            List<Video> videos = getVideosFromDM(key);
+                            List<Video> videos = new DMApiQueryCommand(key).execute();
                             submitAsyncIndexingTask(videos);
                             return videos;
                         }
+
                         @Override
                         public ListenableFuture<List<Video>> reload(final String channelId, List<Video> oldValue) throws Exception {
                             logger.info("Reloading cache for key " + channelId);
@@ -89,7 +91,7 @@ public class ChannelProcessor extends VideoProcessor {
                                 listenableFuture = executor.submit(new Callable<List<Video>>() {
                                     @Override
                                     public List<Video> call() throws Exception {
-                                        List<Video> videos = getVideosFromDM(channelId);
+                                        List<Video> videos = new DMApiQueryCommand(channelId).execute();
                                         submitAsyncIndexingTask(videos);
                                         return videos;
                                     }
@@ -153,7 +155,7 @@ public class ChannelProcessor extends VideoProcessor {
                 videos = videosCache.get(sq.getChannel());
                 logger.info("getting videos from cache");
             } catch (ExecutionException e) {
-                throw new DeException(e.getCause(),HttpStatus.INTERNAL_SERVER_ERROR_500);
+                throw new DeException(e.getCause(), HttpStatus.INTERNAL_SERVER_ERROR_500);
             }
             int numVideos = videos.size();
             if (numVideos > positions) {
@@ -195,7 +197,7 @@ public class ChannelProcessor extends VideoProcessor {
         new ChannelVideoBulkInsertCommand(videos).execute();
     }
 
-    private static List<Video> getVideosFromDM(@NotNull String channelId) throws DeException {
+    public static List<Video> getVideosFromDM(@NotNull String channelId) throws DeException {
         if (StringUtils.isBlank(channelId)) {
             throw new DeException(new Throwable("No channel id provided"), HttpStatus.BAD_REQUEST_400);
         }

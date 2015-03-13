@@ -52,6 +52,7 @@ public class ESChannelVideoIntegrationTest {
             }
         });
     }
+
     @AfterClass
     public static void tearDown() throws Exception {
         logger.info("Deleting all known indices");
@@ -60,6 +61,58 @@ public class ESChannelVideoIntegrationTest {
         DEProcessor.deleteIndex(DeHelper.channelIndex.get());
         injector = null;
     }
+
+    public static void loadVideoMaps(Map<String, Object>... map) throws Exception {
+        String json;
+        Video video;
+        List<Video> videos = new ArrayList<Video>();
+        for (Map m : map) {
+            try {
+                //serialize to json
+                json = mapper.writeValueAsString(m);
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+                throw new Exception("failed parsing json", e);
+            }
+            if (json != null) {
+                //deserialize to adunit
+                video = mapper.readValue(json, Video.class);
+                videos.add(video);
+            }
+        }
+        new ChannelVideoBulkInsertCommand(videos).execute();
+        Thread.sleep(2000);
+    }
+
+    public static Map<String, Object> createVideoDataMap(String id) {
+        String timeNow = DeHelper.currentUTCTimeString();
+        Map<String, Object> m = new HashMap<String, Object>();
+        m.put("_id", id);
+        m.put("video_id", id);
+        m.put("_updated", timeNow);
+        m.put("_created", timeNow);
+        m.put("publication_date", timeNow);
+        m.put("categories", new ArrayList<String>(Arrays.asList("cat1", "cat2")));
+        m.put("languages", new ArrayList<String>(Arrays.asList("en", "fr")));
+        m.put("tags", new ArrayList<String>(Arrays.asList("tag1", "tag2")));
+        m.put("title", "title");
+        m.put("description", "description");
+        m.put("channel", "channel");
+        m.put("channel_name", "channel_name");
+        m.put("channel_id", "channel_id");
+        m.put("resizable_thumbnail_url", "resizable_thumbnail_url");
+        m.put("thumbnail_url", "thumbnail_url");
+        m.put("duration", 123);
+        return m;
+    }
+
+    public static void deleteVideosByIds(String... ids) throws Exception {
+        for (String id : ids) {
+            System.out.println("Deleting Video Id: " + id);
+            Assert.assertTrue(DEProcessor.deleteById(DeHelper.channelIndex.get(), DeHelper.videosType.get(), id));
+        }
+    }
+
     @Test
     public void testCheckAllVideoFields() throws Exception {
         Map m1 = createVideoDataMap("1");
@@ -121,56 +174,5 @@ public class ESChannelVideoIntegrationTest {
 
         deleteVideosByIds("1", "2", "3");
         ESAdUnitsIntegrationTest.deleteAdUnitsByIds("1");
-    }
-
-    public static void loadVideoMaps(Map<String, Object>... map) throws Exception {
-        String json;
-        Video video;
-        List<Video> videos = new ArrayList<Video>();
-        for (Map m : map) {
-            try {
-                //serialize to json
-                json = mapper.writeValueAsString(m);
-            } catch (JsonProcessingException e) {
-                e.printStackTrace();
-                throw new Exception("failed parsing json", e);
-            }
-            if (json != null) {
-                //deserialize to adunit
-                video = mapper.readValue(json, Video.class);
-                videos.add(video);
-            }
-        }
-        new ChannelVideoBulkInsertCommand(videos).execute();
-        Thread.sleep(2000);
-    }
-
-    public static Map<String, Object> createVideoDataMap(String id) {
-        String timeNow = DeHelper.currentUTCTimeString();
-        Map<String, Object> m = new HashMap<String, Object>();
-        m.put("_id", id);
-        m.put("video_id", id);
-        m.put("_updated", timeNow);
-        m.put("_created", timeNow);
-        m.put("publication_date", timeNow);
-        m.put("categories", new ArrayList<String>(Arrays.asList("cat1", "cat2")));
-        m.put("languages", new ArrayList<String>(Arrays.asList("en", "fr")));
-        m.put("tags", new ArrayList<String>(Arrays.asList("tag1", "tag2")));
-        m.put("title", "title");
-        m.put("description", "description");
-        m.put("channel", "channel");
-        m.put("channel_name", "channel_name");
-        m.put("channel_id", "channel_id");
-        m.put("resizable_thumbnail_url", "resizable_thumbnail_url");
-        m.put("thumbnail_url", "thumbnail_url");
-        m.put("duration", 123);
-        return m;
-    }
-
-    public static void deleteVideosByIds(String... ids) throws Exception {
-        for (String id : ids) {
-            System.out.println("Deleting Video Id: " + id);
-            Assert.assertTrue(DEProcessor.deleteById(DeHelper.channelIndex.get(), DeHelper.videosType.get(), id));
-        }
     }
 }
