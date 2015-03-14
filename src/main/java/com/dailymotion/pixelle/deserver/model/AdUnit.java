@@ -43,8 +43,6 @@ public class AdUnit {
     private List<String> formats;
     @JsonProperty("video_id")
     private String videoId;
-    @JsonProperty("thumbnail_url")
-    private String thumbnailUrl;
     @JsonProperty("description")
     private String description;
     @JsonProperty("title")

@@ -128,7 +128,7 @@ public class DEProcessor {
                 } catch (InterruptedException e) {
                     throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
                 } catch (ExecutionException e) {
-                    throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
+                    throw new DeException(e.getCause(), HttpStatus.INTERNAL_SERVER_ERROR_500);
                 }
 
                 //if we have enough ads and videos, merge and send

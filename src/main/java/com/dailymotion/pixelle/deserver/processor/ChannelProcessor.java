@@ -16,19 +16,18 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
+import com.netflix.config.DynamicBooleanProperty;
 import com.netflix.config.DynamicIntProperty;
 import com.netflix.config.DynamicLongProperty;
 import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.config.DynamicStringProperty;
+import feign.Feign;
+import feign.Retryer;
+import feign.jackson.JacksonDecoder;
+import feign.jackson.JacksonEncoder;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.ResponseHandler;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
 import org.eclipse.jetty.http.HttpStatus;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
@@ -46,6 +45,7 @@ import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -53,7 +53,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -63,10 +62,17 @@ import java.util.concurrent.TimeUnit;
 public class ChannelProcessor extends VideoProcessor {
     private static final Integer MAX_RANDOM = 100;
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-    private static final DynamicStringProperty dmUserVideoUrl = DynamicPropertyFactory.getInstance().getStringProperty("dm.video.url", "");
+
+    private static final DynamicStringProperty dmApiUrl = DynamicPropertyFactory.getInstance().getStringProperty("dm.api.url", "https://api.dailymotion.com");
+    private static final DynamicLongProperty retryPeriod = DynamicPropertyFactory.getInstance().getLongProperty("dm.api.retry.period", 100);
+    private static final DynamicLongProperty retryMaxPeriod = DynamicPropertyFactory.getInstance().getLongProperty("dm.api.retry.max.period", 1);
+    private static final DynamicIntProperty retryMaxAttempts = DynamicPropertyFactory.getInstance().getIntProperty("dm.api.retry.max.attempts", 5);
+
     private static final DynamicStringProperty listOfValidCategories = DynamicPropertyFactory.getInstance().getStringProperty("pixelle.channel.categories", "");
     private static final DynamicLongProperty refreshAfterWriteMins = DynamicPropertyFactory.getInstance().getLongProperty("pixelle.channel.refresh.write.minutes", 4);
     private static final DynamicIntProperty lruSize = DynamicPropertyFactory.getInstance().getIntProperty("pixelle.channel.lru.size", 1000);
+    private static final DynamicBooleanProperty persistChanneltoES = DynamicPropertyFactory.getInstance().getBooleanProperty("pixelle.channel.es.persist", false);
+
 
     private static Logger logger = LoggerFactory.getLogger(ChannelProcessor.class);
     private static CloseableHttpClient httpclient = HttpClients.createDefault();
@@ -135,8 +141,8 @@ public class ChannelProcessor extends VideoProcessor {
 
         for (SearchHit hit : searchResponse.getHits().getHits()) {
             try {
-                VideoResponse video = OBJECT_MAPPER.readValue(hit.getSourceAsString(), VideoResponse.class);
-                videoResponses.add(video);
+                VideoResponse videoResponse = OBJECT_MAPPER.readValue(hit.getSourceAsString(), VideoResponse.class);
+                videoResponses.add(videoResponse);
             } catch (IOException e) {
                 throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
             }
@@ -150,12 +156,12 @@ public class ChannelProcessor extends VideoProcessor {
          */
         if (DeHelper.isEmptyList(videoResponses) || videoResponses.size() < positions) {
             videoResponses = new ArrayList<VideoResponse>();
-            List<Video> videos = null;
+            List<Video> videos;
             try {
                 videos = videosCache.get(sq.getChannel());
                 logger.info("getting videos from cache");
             } catch (ExecutionException e) {
-                throw new DeException(e.getCause(), HttpStatus.INTERNAL_SERVER_ERROR_500);
+                throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
             }
             int numVideos = videos.size();
             if (numVideos > positions) {
@@ -167,7 +173,7 @@ public class ChannelProcessor extends VideoProcessor {
                 videoResponse.setChannelId(videos.get(i).getChannelId());
                 videoResponse.setDescription(videos.get(i).getDescription());
                 videoResponse.setTitle(videos.get(i).getTitle());
-                videoResponse.setThumbnailUrl(videos.get(i).getThumbnailUrl());
+                videoResponse.setResizableThumbnailUrl(videos.get(i).getResizableThumbnailUrl());
                 videoResponse.setDuration(videos.get(i).getDuration());
                 videoResponse.setVideoId(videos.get(i).getVideoId());
                 videoResponses.add(videoResponse);
@@ -177,61 +183,34 @@ public class ChannelProcessor extends VideoProcessor {
         return videoResponses;
     }
 
-    private static void submitAsyncIndexingTask(final List<Video> videos) {
-        if (!DeHelper.isEmptyList(videos)) {
-            ExecutorService executor = Executors.newSingleThreadExecutor();
-            try {
-                executor.submit(new Runnable() {
-                    @Override
-                    public void run() {
-                        indexVideos(videos);
-                    }
-                });
-            } finally {
-                executor.shutdown();
-            }
+    @Nullable
+    private static String getResizableThumbnailUrl(@Nullable String thumbnailUrl) {
+        if (StringUtils.isBlank(thumbnailUrl)) {
+            return thumbnailUrl;
         }
+        String id = thumbnailUrl.substring(thumbnailUrl.lastIndexOf("/") + 1, thumbnailUrl.lastIndexOf("."));
+        if (StringUtils.isBlank(id)) {
+            return null;
+        }
+        return "//i.".concat(DeHelper.domain.get()).concat("/channel-").concat(id).concat("-thumbnail-1");
     }
 
-    private static void indexVideos(final List<Video> videos) {
-        new ChannelVideoBulkInsertCommand(videos).execute();
+    private static void submitAsyncIndexingTask(final List<Video> videos) {
+        if (!DeHelper.isEmptyList(videos) && persistChanneltoES.get()) {
+            new ChannelVideoBulkInsertCommand(videos).queue();
+        }
     }
 
     public static List<Video> getVideosFromDM(@NotNull String channelId) throws DeException {
         if (StringUtils.isBlank(channelId)) {
             throw new DeException(new Throwable("No channel id provided"), HttpStatus.BAD_REQUEST_400);
         }
-        try {
-            HttpGet httpget = new HttpGet(dmUserVideoUrl.get().replace("{name}", channelId));
-
-            logger.info("Executing request " + httpget.getRequestLine());
-
-            // Create a custom response handler
-            ResponseHandler<String> responseHandler = new ResponseHandler<String>() {
-
-                public String handleResponse(
-                        final HttpResponse response) throws ClientProtocolException, IOException {
-                    int status = response.getStatusLine().getStatusCode();
-                    if (HttpStatus.isSuccess(status)) {
-                        HttpEntity entity = response.getEntity();
-                        return entity != null ? EntityUtils.toString(entity) : null;
-                    } else {
-                        throw new ClientProtocolException("Unexpected response status: " + status);
-                    }
-                }
-
-            };
-            String responseBody = httpclient.execute(httpget, responseHandler);
-            logger.info("----------------------------------------");
-            logger.info(responseBody);
-            ChannelVideos channelVideos = OBJECT_MAPPER.readValue(responseBody, ChannelVideos.class);
-            return getFilteredVideos(channelVideos);
-
-        } catch (ClientProtocolException e) {
-            throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
-        } catch (IOException e) {
-            throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
-        }
+        DMApiService dmApi = Feign.builder()
+                .retryer(new Retryer.Default(retryPeriod.get(), TimeUnit.SECONDS.toMillis(retryMaxPeriod.get()), retryMaxAttempts.get()))
+                .decoder(new JacksonDecoder())
+                .encoder(new JacksonEncoder())
+                .target(DMApiService.class, dmApiUrl.get());
+        return getFilteredVideos(dmApi.getVideos(channelId));
     }
 
     private static List<Video> getFilteredVideos(ChannelVideos channelVideos) {
@@ -241,7 +220,7 @@ public class ChannelProcessor extends VideoProcessor {
 
                 Video video = new Video();
                 video.setLanguages(Arrays.asList(channelVideo.getLanguage()));
-                video.setThumbnailUrl(channelVideo.getThumbnailUrl());
+                video.setResizableThumbnailUrl(getResizableThumbnailUrl(channelVideo.getThumbnailUrl()));
                 video.setTitle(channelVideo.getTitle());
                 video.setDescription(channelVideo.getDescription());
                 video.setDuration(channelVideo.getDuration());

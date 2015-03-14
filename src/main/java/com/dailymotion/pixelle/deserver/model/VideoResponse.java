@@ -25,8 +25,6 @@ public class VideoResponse extends ItemsResponse {
     private String channelId;
     @JsonProperty("channel_tier")
     private String channelTier;
-    @JsonProperty("thumbnail_url")
-    private String thumbnailUrl;
     @JsonProperty("description")
     private String description;
     @JsonProperty("title")

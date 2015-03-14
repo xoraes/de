@@ -125,7 +125,9 @@ public class VideoProcessor {
      */
     protected static Video modifyVideoForInsert(@NotNull Video video) {
 
-        if (video == null) return video;
+        if (video == null) {
+            return video;
+        }
 
         if (DeHelper.isEmptyList(video.getLanguages())) {
             video.setLanguages(Arrays.asList("all"));

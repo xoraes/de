@@ -101,7 +101,6 @@ public class ESChannelVideoIntegrationTest {
         m.put("channel_name", "channel_name");
         m.put("channel_id", "channel_id");
         m.put("resizable_thumbnail_url", "resizable_thumbnail_url");
-        m.put("thumbnail_url", "thumbnail_url");
         m.put("duration", 123);
         return m;
     }
@@ -139,10 +138,33 @@ public class ESChannelVideoIntegrationTest {
         Assert.assertTrue(video.getDescription().equals("description"));
         Assert.assertTrue(video.getTitle().equals("title"));
         Assert.assertTrue(video.getDuration() == 123);
-        Assert.assertTrue(video.getThumbnailUrl().equals("thumbnail_url"));
         Assert.assertTrue(video.getResizableThumbnailUrl().equals("resizable_thumbnail_url"));
         deleteVideosByIds("1");
     }
+
+    @Test
+    public void testDmApiCall() throws Exception {
+        SearchQueryRequest sq = new SearchQueryRequest();
+        sq.setChannel("rs");
+
+        ItemsResponse i = new QueryCommand(sq, 1, "promoted,channel").execute();
+        Assert.assertNotNull(i);
+        Assert.assertTrue(i.getResponse().size() == 1);
+        VideoResponse video = (VideoResponse) i.getResponse().get(0);
+        System.out.println("Video" + video.toString());
+        Assert.assertNotNull(video.getVideoId());
+        Assert.assertNotNull(video.getChannel());
+        Assert.assertNotNull(video.getChannelId());
+
+        Assert.assertNotNull(video.getContentType());
+        Assert.assertNotNull(video.getDescription());
+        Assert.assertNotNull(video.getTitle());
+        Assert.assertNotNull(video.getDuration());
+        Assert.assertNotNull(video.getResizableThumbnailUrl());
+
+
+    }
+
 
     @Test
     public void testGetAdsAndVideos() throws Exception {

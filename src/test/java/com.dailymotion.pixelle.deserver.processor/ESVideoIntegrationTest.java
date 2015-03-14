@@ -105,7 +105,6 @@ public class ESVideoIntegrationTest {
         m.put("channel_id", "channel_id");
         m.put("channel_tier", "channel_tier");
         m.put("resizable_thumbnail_url", "resizable_thumbnail_url");
-        m.put("thumbnail_url", "thumbnail_url");
         m.put("duration", 123);
         return m;
     }
@@ -243,7 +242,6 @@ public class ESVideoIntegrationTest {
         Assert.assertTrue(video.getDescription().equals("description"));
         Assert.assertTrue(video.getTitle().equals("title"));
         Assert.assertTrue(video.getDuration() == 123);
-        Assert.assertTrue(video.getThumbnailUrl().equals("thumbnail_url"));
         Assert.assertTrue(video.getResizableThumbnailUrl().equals("resizable_thumbnail_url"));
         deleteVideosByIds("1");
     }

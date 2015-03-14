@@ -30,6 +30,8 @@ public final class DeHelper {
             DynamicPropertyFactory.getInstance().getStringProperty("clusterName", "pixelle");
     public static DynamicStringProperty nodeName =
             DynamicPropertyFactory.getInstance().getStringProperty("nodeName", "pixellenode");
+    public static DynamicStringProperty domain =
+            DynamicPropertyFactory.getInstance().getStringProperty("domain", "pxlad.io");
     public static DynamicStringProperty dataDirectory =
             DynamicPropertyFactory.getInstance().getStringProperty("datadir", "/data/es");
     public static DynamicIntProperty dePort =
@@ -40,6 +42,7 @@ public final class DeHelper {
             DynamicPropertyFactory.getInstance().getIntProperty("adunits.retryOnConflict", 5);
     public static DynamicIntProperty retryOnConflictVideos =
             DynamicPropertyFactory.getInstance().getIntProperty("videos.retryOnConflict", 5);
+
     private static Logger logger = LoggerFactory.getLogger(DeHelper.class);
 
 

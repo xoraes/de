@@ -32,8 +32,6 @@ public class AdUnitResponse extends ItemsResponse {
     private String accountId;
     @JsonProperty("video_id")
     private String videoId;
-    @JsonProperty("thumbnail_url")
-    private String thumbnailUrl;
     @JsonProperty("description")
     private String description;
     @JsonProperty("title")

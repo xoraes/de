@@ -30,8 +30,6 @@ public class Video {
     private List<String> tags;
     @JsonProperty("languages")
     private List<String> languages;
-    @JsonProperty("thumbnail_url")
-    private String thumbnailUrl;
     @JsonProperty("description")
     private String description;
     @JsonProperty("title")
