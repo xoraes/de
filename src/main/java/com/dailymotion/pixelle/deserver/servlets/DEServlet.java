@@ -42,7 +42,7 @@ import java.util.List;
 @WebServlet(asyncSupported = true)
 public class DEServlet {
     private static Logger logger = LoggerFactory.getLogger(DEServlet.class);
-    private DEProcessor deProcessor;
+    private final DEProcessor deProcessor;
 
     @Inject
     public DEServlet(DEProcessor deProcessor) {
@@ -86,7 +86,7 @@ public class DEServlet {
     @Path("/adunit")
     @Produces(MediaType.APPLICATION_JSON)
     public AdUnit getAdUnitById(@QueryParam("id") String id) throws DeException {
-        return deProcessor.getAdUnitById(id);
+        return DEProcessor.getAdUnitById(id);
     }
 
     /**
@@ -101,9 +101,9 @@ public class DEServlet {
     @Produces(MediaType.APPLICATION_JSON)
     public List<AdUnit> getAdUnitsByCampaign(@QueryParam("cid") String cid) throws DeException {
         if (StringUtils.isBlank(cid)) {
-            return deProcessor.getAllAdUnits();
+            return DEProcessor.getAllAdUnits();
         }
-        return deProcessor.getAdUnitsByCampaign(cid);
+        return DEProcessor.getAdUnitsByCampaign(cid);
     }
 
     /**
@@ -116,7 +116,7 @@ public class DEServlet {
     @DELETE
     @Path("/adunit")
     public Response deleteAdUnit(@QueryParam("id") String id) throws DeException {
-        if (deProcessor.deleteById(DeHelper.promotedIndex.get(), DeHelper.adunitsType.get(), id)) {
+        if (DEProcessor.deleteById(DeHelper.promotedIndex.get(), DeHelper.adunitsType.get(), id)) {
             return Response.noContent().build();
         } else {
             return Response.ok(id + " not found").build();
@@ -275,7 +275,7 @@ public class DEServlet {
     @Path("/video")
     @Produces(MediaType.APPLICATION_JSON)
     public Video getVideoById(@QueryParam("id") String id) throws DeException {
-        return deProcessor.getVideoById(id);
+        return DEProcessor.getVideoById(id);
     }
 
     /**
@@ -288,7 +288,7 @@ public class DEServlet {
     @DELETE
     @Path("/video")
     public Response deleteVideoById(@QueryParam("id") String id) throws DeException {
-        if (deProcessor.deleteById(DeHelper.organicIndex.get(), DeHelper.videosType.get(), id)) {
+        if (DEProcessor.deleteById(DeHelper.organicIndex.get(), DeHelper.videosType.get(), id)) {
             return Response.noContent().build();
         } else {
             return Response.ok(id + " not found").build();

@@ -29,7 +29,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.EnumSet;
 
-public final class StartServer {
+final class StartServer {
     private static Logger logger = LoggerFactory.getLogger(DEServlet.class);
 
     private StartServer() {

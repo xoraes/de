@@ -17,9 +17,9 @@ import java.io.IOException;
 /**
  * Created by n.dhupia on 11/19/14.
  */
-public final class ESIndexTypeFactory {
-    private static Logger logger = LoggerFactory.getLogger(ESIndexTypeFactory.class);
-    private static DynamicIntProperty channelTtl =
+final class ESIndexTypeFactory {
+    private static final Logger logger = LoggerFactory.getLogger(ESIndexTypeFactory.class);
+    private static final DynamicIntProperty channelTtl =
             DynamicPropertyFactory.getInstance().getIntProperty("channel.index.ttl", 300000); // 5 minutes
 
 
@@ -37,7 +37,7 @@ public final class ESIndexTypeFactory {
      */
     public static void createIndex(Client client, String indexName, Settings settings, String typeName) throws DeException {
 
-        boolean ack = false;
+        boolean ack;
         try {
             // create the index if it does not already exist. If it exists don't do anything.
 

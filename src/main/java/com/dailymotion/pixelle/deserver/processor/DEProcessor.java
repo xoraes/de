@@ -33,16 +33,12 @@ import java.util.concurrent.TimeUnit;
  * Created by n.dhupia on 12/10/14.
  */
 public class DEProcessor {
-    private static Logger logger = LoggerFactory.getLogger(DEProcessor.class);
+    private static final Logger logger = LoggerFactory.getLogger(DEProcessor.class);
     private static Client client;
-    private static AdUnitProcessor adUnitProcessor;
-    private static VideoProcessor videoProcessor;
-    private static ChannelProcessor channelProcessor;
-
-    private static StatsTimer adsTimer = new StatsTimer(MonitorConfig.builder("adsQuery_statsTimer").build(), new StatsConfig.Builder().withPublishMean(true).build());
-    private static StatsTimer videosTimer = new StatsTimer(MonitorConfig.builder("videosQuery_statsTimer").build(), new StatsConfig.Builder().withPublishMean(true).build());
-    private static StatsTimer openWidgetTimer = new StatsTimer(MonitorConfig.builder("openWidgetQuery_statsTimer").build(), new StatsConfig.Builder().withPublishMean(true).build());
-    private static StatsTimer channelWidgetTimer = new StatsTimer(MonitorConfig.builder("myWidgetTimerQuery_statsTimer").build(), new StatsConfig.Builder().withPublishMean(true).build());
+    private static final StatsTimer adsTimer = new StatsTimer(MonitorConfig.builder("adsQuery_statsTimer").build(), new StatsConfig.Builder().withPublishMean(true).build());
+    private static final StatsTimer videosTimer = new StatsTimer(MonitorConfig.builder("videosQuery_statsTimer").build(), new StatsConfig.Builder().withPublishMean(true).build());
+    private static final StatsTimer openWidgetTimer = new StatsTimer(MonitorConfig.builder("openWidgetQuery_statsTimer").build(), new StatsConfig.Builder().withPublishMean(true).build());
+    private static final StatsTimer channelWidgetTimer = new StatsTimer(MonitorConfig.builder("myWidgetTimerQuery_statsTimer").build(), new StatsConfig.Builder().withPublishMean(true).build());
 
     static {
         DefaultMonitorRegistry.getInstance().register(adsTimer);
@@ -52,18 +48,15 @@ public class DEProcessor {
     }
 
     @Inject
-    public DEProcessor(Client esClient, AdUnitProcessor adUnitProcessor, VideoProcessor videoProcessor, ChannelProcessor channelProcessor) {
+    public DEProcessor(Client esClient) {
         client = esClient;
-        DEProcessor.adUnitProcessor = adUnitProcessor;
-        DEProcessor.videoProcessor = videoProcessor;
-        DEProcessor.channelProcessor = channelProcessor;
     }
 
 
     public static ItemsResponse recommend(SearchQueryRequest sq, Integer positions, String allowedTypes) throws DeException {
-        List<VideoResponse> targetedVideos = null;
-        List<AdUnitResponse> ads = null;
-        List<? extends ItemsResponse> mergedList = null;
+        List<VideoResponse> targetedVideos;
+        List<AdUnitResponse> ads;
+        List<? extends ItemsResponse> mergedList;
         Stopwatch stopwatch;
 
         ItemsResponse itemsResponse = new ItemsResponse();
@@ -102,7 +95,7 @@ public class DEProcessor {
                     itemsResponse.setResponse(targetedVideos);
                     return itemsResponse;
                 } else {
-                    List<VideoResponse> untargetedVideos = videoProcessor.getUntargetedVideos(targetedVideos, positions, sq);
+                    List<VideoResponse> untargetedVideos = VideoProcessor.getUntargetedVideos(targetedVideos, positions, sq);
                     mergedList = mergeAndFillList(null, targetedVideos, untargetedVideos, positions);
                     itemsResponse.setResponse(mergedList);
                     return itemsResponse;
@@ -140,7 +133,7 @@ public class DEProcessor {
                     itemsResponse.setResponse(targetedVideos);
                     return itemsResponse;
                 } else { //fill with untargetged videos
-                    List<VideoResponse> untargetedVideos = videoProcessor.getUntargetedVideos(targetedVideos, positions, sq);
+                    List<VideoResponse> untargetedVideos = VideoProcessor.getUntargetedVideos(targetedVideos, positions, sq);
                     mergedList = mergeAndFillList(ads, targetedVideos, untargetedVideos, positions);
                     itemsResponse.setResponse(mergedList);
                     return itemsResponse;
@@ -179,7 +172,7 @@ public class DEProcessor {
                     itemsResponse.setResponse(targetedVideos);
                     return itemsResponse;
                 } else { //fill with untargetged videos
-                    List<VideoResponse> untargetedVideos = videoProcessor.getUntargetedVideos(targetedVideos, positions, sq);
+                    List<VideoResponse> untargetedVideos = VideoProcessor.getUntargetedVideos(targetedVideos, positions, sq);
                     mergedList = mergeAndFillList(ads, targetedVideos, untargetedVideos, positions);
                     itemsResponse.setResponse(mergedList);
                     return itemsResponse;
@@ -193,26 +186,26 @@ public class DEProcessor {
 
 
     public static List<AdUnit> getAdUnitsByCampaign(String cid) {
-        return adUnitProcessor.getAdUnitsByCampaign(cid);
+        return AdUnitProcessor.getAdUnitsByCampaign(cid);
     }
 
 
     public static AdUnit getAdUnitById(String id) {
-        return adUnitProcessor.getAdUnitById(id);
+        return AdUnitProcessor.getAdUnitById(id);
     }
 
 
     public static Video getVideoById(String id) throws DeException {
-        return videoProcessor.getVideoById(id);
+        return VideoProcessor.getVideoById(id);
     }
 
 
     public static List<AdUnit> getAllAdUnits() {
-        return adUnitProcessor.getAllAdUnits();
+        return AdUnitProcessor.getAllAdUnits();
     }
 
     public static void updateVideo(Video video) throws DeException {
-        videoProcessor.updateVideo(video);
+        VideoProcessor.updateVideo(video);
     }
 
     public static boolean deleteById(String indexName, String type, String id) throws DeException {
@@ -222,10 +215,10 @@ public class DEProcessor {
         return client.prepareDelete(indexName, type, id).execute().actionGet().isFound();
     }
 
-    public static List<? extends ItemsResponse> mergeAndFillList(final List<AdUnitResponse> ads,
-                                                                 final List<VideoResponse> targetedVideos,
-                                                                 final List<VideoResponse> untargetedVideos,
-                                                                 final Integer positions) {
+    private static List<? extends ItemsResponse> mergeAndFillList(final List<AdUnitResponse> ads,
+                                                                  final List<VideoResponse> targetedVideos,
+                                                                  final List<VideoResponse> untargetedVideos,
+                                                                  final Integer positions) {
 
         String pattern = DeHelper.widgetPattern.get();
         int len = pattern.length();
@@ -252,10 +245,10 @@ public class DEProcessor {
     }
 
     public static void insertVideoInBulk(List<Video> videos) throws DeException {
-        videoProcessor.insertVideoInBulk(videos);
+        VideoProcessor.insertVideoInBulk(videos);
     }
 
-    protected static void deleteIndex(String indexName) {
+    static void deleteIndex(String indexName) {
         if (client.admin().indices().prepareExists(indexName).execute().actionGet().isExists()
                 && client.admin().indices().prepareDelete(indexName).execute().actionGet().isAcknowledged()) {
             logger.info("successfully deleted index: " + DeHelper.promotedIndex.get());
@@ -287,7 +280,7 @@ public class DEProcessor {
     }
 
     public void insertVideo(Video video) throws DeException {
-        videoProcessor.insertVideo(video);
+        VideoProcessor.insertVideo(video);
     }
 
     public ClusterHealthResponse getHealthCheck() throws DeException {

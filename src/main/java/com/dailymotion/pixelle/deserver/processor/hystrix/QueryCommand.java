@@ -15,11 +15,11 @@ import com.netflix.hystrix.HystrixCommandProperties;
  */
 public class QueryCommand extends HystrixCommand<ItemsResponse> {
 
-    private static DynamicIntProperty semaphoreCount =
+    private static final DynamicIntProperty semaphoreCount =
             DynamicPropertyFactory.getInstance().getIntProperty("query.semaphore.count", 100);
-    private SearchQueryRequest sq;
-    private String allowedTypes;
-    private Integer positions;
+    private final SearchQueryRequest sq;
+    private final String allowedTypes;
+    private final Integer positions;
 
     public QueryCommand(SearchQueryRequest sq, Integer positions, String allowedTypes) {
 

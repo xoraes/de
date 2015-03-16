@@ -50,11 +50,11 @@ public class AdUnitProcessor {
     private static final Integer MAX_YEARS = 100;
     private static final Integer MAX_RANDOM = 100;
     private static final Integer SIZ_MULTIPLIER = 4;
-    private static Logger logger = LoggerFactory.getLogger(AdUnitProcessor.class);
+    private static final Logger logger = LoggerFactory.getLogger(AdUnitProcessor.class);
     private static Client client;
 
     // JMX: com.netflix.servo.COUNTER.TotalAdsRequestsServed
-    private static Counter totalAdsRequestsServed = new BasicCounter(MonitorConfig
+    private static final Counter totalAdsRequestsServed = new BasicCounter(MonitorConfig
             .builder("TotalAdsRequestsServed").build());
 
     static {
@@ -137,9 +137,9 @@ public class AdUnitProcessor {
 
         }
         if (DeHelper.isEmptyList(adUnitResponses)) {
-            logger.info("No ads returned =======> " + sq.toString());
+            logger.info("No ads returned =======> " + (sq != null ? sq.toString() : null));
         } else {
-            logger.info("Success =======> " + adUnitResponses.toString());
+            logger.info("Success =======> " + (adUnitResponses != null ? adUnitResponses.toString() : null));
             totalAdsRequestsServed.increment();
         }
         return adUnitResponses;
@@ -296,7 +296,7 @@ public class AdUnitProcessor {
         GetResponse response = client.prepareGet(DeHelper.promotedIndex.get(), DeHelper.adunitsType.get(), id).execute().actionGet();
         AdUnit unit = null;
         byte[] responseSourceAsBytes = response.getSourceAsBytes();
-        if (response != null && responseSourceAsBytes != null) {
+        if (responseSourceAsBytes != null) {
             try {
                 unit = OBJECT_MAPPER.readValue(responseSourceAsBytes, AdUnit.class);
             } catch (IOException e) {

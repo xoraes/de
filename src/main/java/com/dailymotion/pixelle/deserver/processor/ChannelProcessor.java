@@ -74,10 +74,10 @@ public class ChannelProcessor extends VideoProcessor {
     private static final DynamicBooleanProperty persistChanneltoES = DynamicPropertyFactory.getInstance().getBooleanProperty("pixelle.channel.es.persist", false);
 
 
-    private static Logger logger = LoggerFactory.getLogger(ChannelProcessor.class);
+    private static final Logger logger = LoggerFactory.getLogger(ChannelProcessor.class);
     private static CloseableHttpClient httpclient = HttpClients.createDefault();
 
-    private static LoadingCache<String, List<Video>> videosCache = CacheBuilder.newBuilder().maximumSize(lruSize.get()).refreshAfterWrite(refreshAfterWriteMins.get(), TimeUnit.MINUTES)
+    private static final LoadingCache<String, List<Video>> videosCache = CacheBuilder.newBuilder().maximumSize(lruSize.get()).refreshAfterWrite(refreshAfterWriteMins.get(), TimeUnit.MINUTES)
             .build(
                     new CacheLoader<String, List<Video>>() {
                         @Override
@@ -121,7 +121,7 @@ public class ChannelProcessor extends VideoProcessor {
 
     public static List<VideoResponse> recommend(SearchQueryRequest sq, Integer positions) throws DeException {
 
-        List<VideoResponse> videoResponses = null;
+        List<VideoResponse> videoResponses;
         BoolFilterBuilder fb = FilterBuilders.boolFilter();
         fb.must(FilterBuilders.termFilter("channel", sq.getChannel()));
 
@@ -267,10 +267,7 @@ public class ChannelProcessor extends VideoProcessor {
         if (!channelVideo.getStatus().equalsIgnoreCase("published")) {
             return true;
         }
-        if (!listOfValidCategories.get().contains(channelVideo.getChannel().toLowerCase())) {
-            return true;
-        }
-        return false;
+        return !listOfValidCategories.get().contains(channelVideo.getChannel().toLowerCase());
     }
 }
 

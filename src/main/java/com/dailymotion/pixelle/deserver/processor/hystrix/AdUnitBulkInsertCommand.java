@@ -19,10 +19,10 @@ import java.util.List;
 public class AdUnitBulkInsertCommand extends HystrixCommand<Void> {
     private static Logger logger = LoggerFactory.getLogger(AdUnitBulkInsertCommand.class);
 
-    private static DynamicIntProperty semaphoreCount =
+    private static final DynamicIntProperty semaphoreCount =
             DynamicPropertyFactory.getInstance().getIntProperty("adunitbulkinsert.semaphore.count", 10);
 
-    private List<AdUnit> adUnits;
+    private final List<AdUnit> adUnits;
 
     public AdUnitBulkInsertCommand(List<AdUnit> adUnits) {
         super(HystrixCommand.Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey("DecisioningEngine"))

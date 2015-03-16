@@ -18,12 +18,12 @@ import java.util.List;
  * Created by n.dhupia on 3/2/15.
  */
 public class ChannelQueryCommand extends HystrixCommand<List<VideoResponse>> {
-    private static DynamicIntProperty semaphoreCount =
+    private static final DynamicIntProperty semaphoreCount =
             DynamicPropertyFactory.getInstance().getIntProperty("channelquery.semaphore.count", 100);
 
     private static Logger logger = LoggerFactory.getLogger(ChannelQueryCommand.class);
-    private SearchQueryRequest sq;
-    private int positions;
+    private final SearchQueryRequest sq;
+    private final int positions;
 
     public ChannelQueryCommand(SearchQueryRequest sq, Integer positions) {
 

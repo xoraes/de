@@ -18,9 +18,9 @@ import java.util.List;
  * Created by n.dhupia on 3/2/15.
  */
 public class DMApiQueryCommand extends HystrixCommand<List<Video>> {
-    static final DynamicIntProperty timeout = DynamicPropertyFactory.getInstance().getIntProperty("hystrix.dm.api.timeout", 5000);
+    private static final DynamicIntProperty timeout = DynamicPropertyFactory.getInstance().getIntProperty("hystrix.dm.api.timeout", 5000);
     private static Logger logger = LoggerFactory.getLogger(DMApiQueryCommand.class);
-    private String channelId;
+    private final String channelId;
 
     public DMApiQueryCommand(String channel) {
 

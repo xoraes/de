@@ -23,10 +23,10 @@ import java.util.List;
 public class ChannelVideoBulkInsertCommand extends HystrixCommand<Void> {
     private static Logger logger = LoggerFactory.getLogger(ChannelVideoBulkInsertCommand.class);
 
-    private static DynamicIntProperty semaphoreCount =
+    private static final DynamicIntProperty semaphoreCount =
             DynamicPropertyFactory.getInstance().getIntProperty("channel.videobulkbinsert.semaphore.count", 10);
 
-    private List<Video> videos;
+    private final List<Video> videos;
 
 
     public ChannelVideoBulkInsertCommand(List<Video> videos) {

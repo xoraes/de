@@ -15,14 +15,14 @@ import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
  * Created by n.dhupia on 10/29/14.
  */
 public class ESNodeClientProvider implements Provider<Client> {
-    private static DynamicBooleanProperty resetOrganic =
+    private static final DynamicBooleanProperty resetOrganic =
             DynamicPropertyFactory.getInstance().getBooleanProperty("index.organic.reset", false);
-    private static DynamicBooleanProperty resetPromoted =
+    private static final DynamicBooleanProperty resetPromoted =
             DynamicPropertyFactory.getInstance().getBooleanProperty("index.promoted.reset", false);
-    private static DynamicBooleanProperty resetChannel =
+    private static final DynamicBooleanProperty resetChannel =
             DynamicPropertyFactory.getInstance().getBooleanProperty("index.channel.reset", false);
 
-    private static Logger logger = LoggerFactory.getLogger(ESNodeClientProvider.class);
+    private static final Logger logger = LoggerFactory.getLogger(ESNodeClientProvider.class);
 
     /**
      * Provider that creates the indices, mapping and then returns the client for use in the application.

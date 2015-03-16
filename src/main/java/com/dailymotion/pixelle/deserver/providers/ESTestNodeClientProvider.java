@@ -13,7 +13,7 @@ import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
  * Created by n.dhupia on 10/29/14.
  */
 public final class ESTestNodeClientProvider implements Provider<Client> {
-    private static Logger logger = LoggerFactory.getLogger(ESTestNodeClientProvider.class);
+    private static final Logger logger = LoggerFactory.getLogger(ESTestNodeClientProvider.class);
 
     protected ESTestNodeClientProvider() {
     }
@@ -24,7 +24,6 @@ public final class ESTestNodeClientProvider implements Provider<Client> {
      * @return es client
      */
     public Client get() {
-        boolean ack;
         ImmutableSettings.Builder elasticsearchSettings = ImmutableSettings.settingsBuilder()
                 .put("node.name", DeHelper.nodeName.get())
                 .put("index.store.type", "memory")

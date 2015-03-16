@@ -17,11 +17,11 @@ import org.slf4j.LoggerFactory;
  */
 public class AdInsertCommand extends HystrixCommand<Void> {
 
-    private static DynamicIntProperty semaphoreCount =
+    private static final DynamicIntProperty semaphoreCount =
             DynamicPropertyFactory.getInstance().getIntProperty("adinsert.semaphore.count", 10);
 
     private static Logger logger = LoggerFactory.getLogger(AdInsertCommand.class);
-    private AdUnit unit;
+    private final AdUnit unit;
 
     public AdInsertCommand(AdUnit unit) {
 

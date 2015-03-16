@@ -13,11 +13,11 @@ import org.slf4j.LoggerFactory;
 
 public class VideoInsertCommand extends HystrixCommand<Void> {
 
-    private static DynamicIntProperty semaphoreCount =
+    private static final DynamicIntProperty semaphoreCount =
             DynamicPropertyFactory.getInstance().getIntProperty("videoinsert.semaphore.count", 10);
 
     private static Logger logger = LoggerFactory.getLogger(VideoInsertCommand.class);
-    private Video video;
+    private final Video video;
 
     public VideoInsertCommand(Video video) {
         super(Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey("DecisioningEngine"))

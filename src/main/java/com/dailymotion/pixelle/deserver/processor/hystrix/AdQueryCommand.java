@@ -20,12 +20,12 @@ import java.util.List;
  * Created by n.dhupia on 12/1/14.
  */
 public class AdQueryCommand extends HystrixCommand<List<AdUnitResponse>> {
-    private static DynamicIntProperty semaphoreCount =
+    private static final DynamicIntProperty semaphoreCount =
             DynamicPropertyFactory.getInstance().getIntProperty("adquery.semaphore.count", 100);
 
     private static Logger logger = LoggerFactory.getLogger(AdQueryCommand.class);
-    private SearchQueryRequest sq;
-    private int positions;
+    private final SearchQueryRequest sq;
+    private final int positions;
 
 
     public AdQueryCommand(SearchQueryRequest sq, int pos) {

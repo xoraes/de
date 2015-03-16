@@ -33,7 +33,7 @@ import java.util.Map;
 public class ESVideoIntegrationTest {
     private static final ObjectMapper mapper = new ObjectMapper();
     private static Injector injector;
-    private static Logger logger = LoggerFactory.getLogger(ESVideoIntegrationTest.class);
+    private static final Logger logger = LoggerFactory.getLogger(ESVideoIntegrationTest.class);
 
     @BeforeClass
     public static void setUp() throws Exception {
@@ -52,7 +52,7 @@ public class ESVideoIntegrationTest {
         });
     }
 
-    public static void deleteVideosByIds(String... ids) throws Exception {
+    private static void deleteVideosByIds(String... ids) {
         for (String id : ids) {
             Assert.assertTrue(DEProcessor.deleteById(DeHelper.organicIndex.get(), DeHelper.videosType.get(), id));
         }
@@ -66,7 +66,7 @@ public class ESVideoIntegrationTest {
         injector = null;
     }
 
-    public static void loadVideoMaps(Map<String, Object>... map) throws Exception {
+    private static void loadVideoMaps(Map<String, Object>... map) throws Exception {
         String json;
         Video video;
         List<Video> videos = new ArrayList<Video>();
@@ -88,7 +88,7 @@ public class ESVideoIntegrationTest {
         Thread.sleep(2000);
     }
 
-    public static Map<String, Object> createVideoDataMap(String id) {
+    private static Map<String, Object> createVideoDataMap(String id) {
         String timeNow = DeHelper.currentUTCTimeString();
         Map<String, Object> m = new HashMap<String, Object>();
         m.put("_id", id);

@@ -16,31 +16,31 @@ import java.util.List;
  */
 public final class DeHelper {
     private static final String DATETIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ssZ";
-    public static DynamicStringProperty organicIndex =
+    public static final DynamicStringProperty organicIndex =
             DynamicPropertyFactory.getInstance().getStringProperty("organicIndex", "organic");
-    public static DynamicStringProperty promotedIndex =
+    public static final DynamicStringProperty promotedIndex =
             DynamicPropertyFactory.getInstance().getStringProperty("promotedIndex", "promoted");
-    public static DynamicStringProperty channelIndex =
+    public static final DynamicStringProperty channelIndex =
             DynamicPropertyFactory.getInstance().getStringProperty("channelIndex", "channel");
-    public static DynamicStringProperty adunitsType =
+    public static final DynamicStringProperty adunitsType =
             DynamicPropertyFactory.getInstance().getStringProperty("adunitsType", "adunits");
-    public static DynamicStringProperty videosType =
+    public static final DynamicStringProperty videosType =
             DynamicPropertyFactory.getInstance().getStringProperty("videosType", "videos");
-    public static DynamicStringProperty clusterName =
+    public static final DynamicStringProperty clusterName =
             DynamicPropertyFactory.getInstance().getStringProperty("clusterName", "pixelle");
-    public static DynamicStringProperty nodeName =
+    public static final DynamicStringProperty nodeName =
             DynamicPropertyFactory.getInstance().getStringProperty("nodeName", "pixellenode");
-    public static DynamicStringProperty domain =
+    public static final DynamicStringProperty domain =
             DynamicPropertyFactory.getInstance().getStringProperty("domain", "pxlad.io");
-    public static DynamicStringProperty dataDirectory =
+    public static final DynamicStringProperty dataDirectory =
             DynamicPropertyFactory.getInstance().getStringProperty("datadir", "/data/es");
-    public static DynamicIntProperty dePort =
+    private static final DynamicIntProperty dePort =
             DynamicPropertyFactory.getInstance().getIntProperty("port", 8080);
-    public static DynamicStringProperty widgetPattern =
+    public static final DynamicStringProperty widgetPattern =
             DynamicPropertyFactory.getInstance().getStringProperty("widget.pattern", "oop");
-    public static DynamicIntProperty retryOnConflictAdUnits =
+    public static final DynamicIntProperty retryOnConflictAdUnits =
             DynamicPropertyFactory.getInstance().getIntProperty("adunits.retryOnConflict", 5);
-    public static DynamicIntProperty retryOnConflictVideos =
+    public static final DynamicIntProperty retryOnConflictVideos =
             DynamicPropertyFactory.getInstance().getIntProperty("videos.retryOnConflict", 5);
 
     private static Logger logger = LoggerFactory.getLogger(DeHelper.class);
@@ -60,11 +60,8 @@ public final class DeHelper {
         return listStr;
     }
 
-    public static Boolean isEmptyList(List<? extends Object> cList) {
-        if (cList == null || cList.isEmpty()) {
-            return true;
-        }
-        return false;
+    public static Boolean isEmptyList(List<?> cList) {
+        return cList == null || cList.isEmpty();
     }
 
     public static DateTime currentUTCTime() {

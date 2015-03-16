@@ -21,7 +21,6 @@ import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
-import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.BoolFilterBuilder;
 import org.elasticsearch.index.query.FilterBuilders;
@@ -54,38 +53,38 @@ public class VideoProcessor {
     private static final String GOLD = "gold";
     private static final String BRONZE = "bronze";
     private static final String SILVER = "silver";
-    protected static Client client;
-    private static Logger logger = LoggerFactory.getLogger(VideoProcessor.class);
-    private static DynamicFloatProperty goldPartnerWeight =
+    static Client client;
+    private static final Logger logger = LoggerFactory.getLogger(VideoProcessor.class);
+    private static final DynamicFloatProperty goldPartnerWeight =
             DynamicPropertyFactory.getInstance().getFloatProperty("goldPartner.weightPercent", 0.5f);
 
-    private static DynamicFloatProperty silverPartnerWeight =
+    private static final DynamicFloatProperty silverPartnerWeight =
             DynamicPropertyFactory.getInstance().getFloatProperty("silverPartner.weightPercent", 0.25f);
 
-    private static DynamicFloatProperty maxBoost =
+    private static final DynamicFloatProperty maxBoost =
             DynamicPropertyFactory.getInstance().getFloatProperty("maxboost", 10.0f);
 
-    private static DynamicFloatProperty bronzePartnerWeight =
+    private static final DynamicFloatProperty bronzePartnerWeight =
             DynamicPropertyFactory.getInstance().getFloatProperty("bronzePartner.weightPercent", 0.01f);
 
-    private static DynamicDoubleProperty pubDateDecay =
+    private static final DynamicDoubleProperty pubDateDecay =
             DynamicPropertyFactory.getInstance().getDoubleProperty("publicationDate.decay", 0.25d);
 
-    private static DynamicStringProperty pubDateScale =
+    private static final DynamicStringProperty pubDateScale =
             DynamicPropertyFactory.getInstance().getStringProperty("publicationDate.scale", "180d");
 
-    private static DynamicStringProperty pubDateOffset =
+    private static final DynamicStringProperty pubDateOffset =
             DynamicPropertyFactory.getInstance().getStringProperty("publicationDate.offset", "5d");
 
-    private static DynamicStringProperty scoreMode =
+    private static final DynamicStringProperty scoreMode =
             DynamicPropertyFactory.getInstance().getStringProperty("score.mode", "multiply");
 
-    private static DynamicStringProperty boostMode =
+    private static final DynamicStringProperty boostMode =
             DynamicPropertyFactory.getInstance().getStringProperty("boost.mode", "replace");
 
-    private static DynamicStringProperty ctrScriptFunction =
+    private static final DynamicStringProperty ctrScriptFunction =
             DynamicPropertyFactory.getInstance().getStringProperty("ctr.script.code", "");
-    private static DynamicStringProperty ctrScriptLang =
+    private static final DynamicStringProperty ctrScriptLang =
             DynamicPropertyFactory.getInstance().getStringProperty("ctr.script.lang", "groovy");
 
     @Inject
@@ -100,7 +99,7 @@ public class VideoProcessor {
         GetResponse response = client.prepareGet(DeHelper.organicIndex.get(), DeHelper.videosType.get(), id).execute().actionGet();
         Video video = null;
         byte[] responseSourceAsBytes = response.getSourceAsBytes();
-        if (response != null && responseSourceAsBytes != null) {
+        if (responseSourceAsBytes != null) {
             try {
                 video = OBJECT_MAPPER.readValue(responseSourceAsBytes, Video.class);
             } catch (IOException e) {
@@ -123,10 +122,10 @@ public class VideoProcessor {
      * @param video - should not be null
      * @return a modified video
      */
-    protected static Video modifyVideoForInsert(@NotNull Video video) {
+    private static Video modifyVideoForInsert(@NotNull Video video) {
 
         if (video == null) {
-            return video;
+            return null;
         }
 
         if (DeHelper.isEmptyList(video.getLanguages())) {
@@ -149,9 +148,8 @@ public class VideoProcessor {
             throw new DeException(new Throwable("no video found in request body"), HttpStatus.BAD_REQUEST_400);
         }
         logger.info(video.toString());
-        UpdateResponse response;
         try {
-            response = client.prepareUpdate(DeHelper.organicIndex.get(), DeHelper.videosType.get(), video.getId())
+            client.prepareUpdate(DeHelper.organicIndex.get(), DeHelper.videosType.get(), video.getId())
                     .setDoc(OBJECT_MAPPER.writeValueAsString(video))
                     .setDocAsUpsert(true)
                     .setRetryOnConflict(DeHelper.retryOnConflictVideos.get())
@@ -211,7 +209,7 @@ public class VideoProcessor {
 
     public static List<VideoResponse> recommend(@Nullable SearchQueryRequest sq, Integer positions, @Nullable List<String> excludedIds) {
 
-        List<VideoResponse> videoResponses = null;
+        List<VideoResponse> videoResponses;
         BoolFilterBuilder fb = FilterBuilders.boolFilter();
         if (sq != null) {
             if (!DeHelper.isEmptyList(sq.getCategories())) {
