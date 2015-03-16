@@ -221,6 +221,12 @@ public class ESAdUnitsIntegrationTest {
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 1);
+
+        sq.setTime("2015-03-16T01:00:00Z");//Monday
+        i = new QueryCommand(sq, 10, null).execute();
+        System.out.println("Response ====>:" + i.toString());
+        Assert.assertTrue(i.getResponse().size() == 0);
+
         deleteAdUnitsByIds("1");
     }
 

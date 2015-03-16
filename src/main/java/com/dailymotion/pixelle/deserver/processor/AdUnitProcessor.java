@@ -75,10 +75,10 @@ public class AdUnitProcessor {
             //If withOffsetParsed() is not used then everything is converted to local time
             //resulting in dayOfWeek and HourOfDay to be incorrect
             DateTime dt = df.withOffsetParsed().parseDateTime(sq.getTime());
-            String timetable = dt.dayOfWeek().getAsText().toLowerCase() + ":" + dt.getHourOfDay() + ":" + "true";
+            String timetable = dt.dayOfWeek().getAsText().toLowerCase() + ":" + dt.getHourOfDay() + ":" + "false";
 
             BoolFilterBuilder fb = FilterBuilders.boolFilter();
-            fb.must(FilterBuilders.termFilter("timetable", timetable));
+            fb.mustNot(FilterBuilders.termFilter("timetable", timetable));
             fb.must(FilterBuilders.termsFilter("categories", DeHelper.toLowerCase(sq.getCategories())));
             fb.must(FilterBuilders.termsFilter("languages", DeHelper.toLowerCase(sq.getLanguages())));
             fb.must(FilterBuilders.termsFilter("locations", DeHelper.toLowerCase(sq.getLocations())));
@@ -372,7 +372,9 @@ public class AdUnitProcessor {
                 day = date.dayOfWeek().getAsText().toLowerCase();
                 for (int j = 0; j < 24; j++) {
                     hourSet = isHourSet(j, schedules[i]);
-                    timeTable.add(day + ":" + j + ":" + hourSet.toString());
+                    if (!hourSet) {
+                        timeTable.add(day + ":" + j + ":" + hourSet.toString());
+                    }
                 }
             }
         }
