@@ -323,7 +323,7 @@ public class DEProcessor {
         if (adIndexExists && videoIndexExists && adUnitTypeExists && videoTypeExists) {
 
             CountResponse countResponse;
-            countResponse = client.prepareCount(DeHelper.promotedIndex.get()).setTypes(DeHelper.adunitsType.get()).execute().actionGet();
+            countResponse = client.prepareCount(DeHelper.organicIndex.get()).setTypes(DeHelper.videosType.get()).execute().actionGet();
             videoCount.set(countResponse.getCount());
             countResponse = client.prepareCount(DeHelper.promotedIndex.get()).setTypes(DeHelper.adunitsType.get()).execute().actionGet();
             adunitCount.set(countResponse.getCount());
