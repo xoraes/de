@@ -11,6 +11,9 @@ import com.dailymotion.pixelle.deserver.processor.hystrix.ChannelQueryCommand;
 import com.dailymotion.pixelle.deserver.processor.hystrix.VideoQueryCommand;
 import com.google.inject.Inject;
 import com.netflix.servo.DefaultMonitorRegistry;
+import com.netflix.servo.monitor.BasicGauge;
+import com.netflix.servo.monitor.Gauge;
+import com.netflix.servo.monitor.LongGauge;
 import com.netflix.servo.monitor.MonitorConfig;
 import com.netflix.servo.monitor.StatsTimer;
 import com.netflix.servo.monitor.Stopwatch;
@@ -18,6 +21,7 @@ import com.netflix.servo.stats.StatsConfig;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.http.HttpStatus;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
+import org.elasticsearch.action.count.CountResponse;
 import org.elasticsearch.client.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -39,12 +44,16 @@ public class DEProcessor {
     private static final StatsTimer videosTimer = new StatsTimer(MonitorConfig.builder("videosQuery_statsTimer").build(), new StatsConfig.Builder().withPublishMean(true).build());
     private static final StatsTimer openWidgetTimer = new StatsTimer(MonitorConfig.builder("openWidgetQuery_statsTimer").build(), new StatsConfig.Builder().withPublishMean(true).build());
     private static final StatsTimer channelWidgetTimer = new StatsTimer(MonitorConfig.builder("myWidgetTimerQuery_statsTimer").build(), new StatsConfig.Builder().withPublishMean(true).build());
+    private static final LongGauge videoCount = new LongGauge(MonitorConfig.builder("numVideos_gauge").build());
+    private static final LongGauge adunitCount = new LongGauge(MonitorConfig.builder("numadUnits_gauge").build());
 
     static {
         DefaultMonitorRegistry.getInstance().register(adsTimer);
         DefaultMonitorRegistry.getInstance().register(videosTimer);
         DefaultMonitorRegistry.getInstance().register(openWidgetTimer);
         DefaultMonitorRegistry.getInstance().register(channelWidgetTimer);
+        DefaultMonitorRegistry.getInstance().register(videoCount);
+        DefaultMonitorRegistry.getInstance().register(adunitCount);
     }
 
     @Inject
@@ -312,6 +321,13 @@ public class DEProcessor {
                 .isExists();
 
         if (adIndexExists && videoIndexExists && adUnitTypeExists && videoTypeExists) {
+
+            CountResponse countResponse;
+            countResponse = client.prepareCount(DeHelper.promotedIndex.get()).setTypes(DeHelper.adunitsType.get()).execute().actionGet();
+            videoCount.set(countResponse.getCount());
+            countResponse = client.prepareCount(DeHelper.promotedIndex.get()).setTypes(DeHelper.adunitsType.get()).execute().actionGet();
+            adunitCount.set(countResponse.getCount());
+
             return client.admin()
                     .cluster()
                     .prepareHealth(DeHelper.promotedIndex.get(), DeHelper.organicIndex.get())
