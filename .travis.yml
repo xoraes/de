@@ -1,6 +1,6 @@
 language: java
 jdk:
-- sunjdk8
+- oraclejdk8
 
 script:
 - ./gradlew -q check jar de distTar
