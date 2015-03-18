@@ -11,6 +11,7 @@ import com.netflix.config.ConfigurationManager;
 import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.hystrix.contrib.servopublisher.HystrixServoMetricsPublisher;
 import com.netflix.hystrix.strategy.HystrixPlugins;
+import com.netflix.servo.DefaultMonitorRegistry;
 import com.netflix.servo.monitor.DoubleGauge;
 import com.netflix.servo.monitor.LongGauge;
 import com.netflix.servo.monitor.MonitorConfig;
@@ -46,6 +47,15 @@ final class StartServer {
     private static Logger logger = LoggerFactory.getLogger(DEServlet.class);
 
     private StartServer() {
+    }
+
+    static {
+        DefaultMonitorRegistry.getInstance().register(videoCacheHitRate);
+        DefaultMonitorRegistry.getInstance().register(channelCacheHitRate);
+        DefaultMonitorRegistry.getInstance().register(channelCacheLoadExceptionRate);
+        DefaultMonitorRegistry.getInstance().register(videoCacheLoadExceptionRate);
+        DefaultMonitorRegistry.getInstance().register(videoCacheEvictionCount);
+        DefaultMonitorRegistry.getInstance().register(channelCacheEvictionCount);
     }
 
     public static void main(String[] args) throws Exception {
