@@ -54,10 +54,12 @@ public class AdUnitProcessor {
     // JMX: com.netflix.servo.COUNTER.TotalAdsRequestsServed
     private static final Counter totalAdsRequestsServed = new BasicCounter(MonitorConfig
             .builder("TotalAdsRequestsServed").build());
+
     static {
         OBJECT_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         DefaultMonitorRegistry.getInstance().register(totalAdsRequestsServed);
     }
+
     private static Client client;
 
     @Inject

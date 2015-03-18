@@ -39,11 +39,10 @@ public final class DeHelper {
             DynamicPropertyFactory.getInstance().getIntProperty("adunits.retryOnConflict", 5);
     public static final DynamicIntProperty retryOnConflictVideos =
             DynamicPropertyFactory.getInstance().getIntProperty("videos.retryOnConflict", 5);
-    private static final String DATETIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ssZ";
-    private static final DynamicIntProperty dePort =
+    public static final DynamicIntProperty dePort =
             DynamicPropertyFactory.getInstance().getIntProperty("port", 8080);
+    private static final String DATETIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ssZ";
     private static Logger logger = LoggerFactory.getLogger(DeHelper.class);
-
 
     private DeHelper() {
     }
@@ -73,11 +72,6 @@ public final class DeHelper {
 
     public static String timeToISO8601String(DateTime dt) {
         return dt.withZone(DateTimeZone.UTC).toString("yyyy-MM-dd'T'HH:mm:ssZZ");
-    }
-
-    public static int getPort() {
-
-        return dePort.get();
     }
 
     public static String getDateTimeFormatString() {

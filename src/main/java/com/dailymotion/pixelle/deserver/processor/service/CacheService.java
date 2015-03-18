@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -34,8 +35,11 @@ public class CacheService {
     private static final DynamicIntProperty channelLruSize = DynamicPropertyFactory.getInstance().getIntProperty("pixelle.channel.lru.size", 1000);
     private static final DynamicIntProperty videoLruSize = DynamicPropertyFactory.getInstance().getIntProperty("pixelle.organic.lru.size", 1000);
     private static final DynamicIntProperty maxVideosToCache = DynamicPropertyFactory.getInstance().getIntProperty("pixelle.organic.cache.max", 20);
+    //exiting service makes sure the thread terminates 120 secs after jvm shutdown
+    private static final ListeningExecutorService cacheMaintainer = MoreExecutors.listeningDecorator(MoreExecutors.getExitingExecutorService((ThreadPoolExecutor) Executors.newCachedThreadPool()));
 
     private static final LoadingCache<String, List<Video>> channelVideosCache = CacheBuilder.newBuilder()
+            .recordStats()
             .maximumSize(channelLruSize.get()).refreshAfterWrite(chanRefreshAfterWriteMins.get(), TimeUnit.MINUTES)
             .build(
                     new CacheLoader<String, List<Video>>() {
@@ -51,23 +55,19 @@ public class CacheService {
                         @Override
                         public ListenableFuture<List<Video>> reload(final String channelId, List<Video> oldValue) throws Exception {
                             logger.info("Reloading cache for key " + channelId);
-                            ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
-                            ListenableFuture<List<Video>> listenableFuture;
-                            try {
-                                listenableFuture = executor.submit(() -> {
-                                    ChannelVideos cVideos = new DMApiQueryCommand(channelId).execute();
-                                    List<Video> videos = ChannelProcessor.getFilteredVideos(cVideos);
-                                    ChannelProcessor.submitAsyncIndexingTask(videos);
-                                    return videos;
-                                });
-                                return listenableFuture;
-                            } finally {
-                                executor.shutdown();
-                            }
+                            ListenableFuture<List<Video>> listenableFuture = cacheMaintainer.submit(() -> {
+                                ChannelVideos cVideos = new DMApiQueryCommand(channelId).execute();
+                                List<Video> videos = ChannelProcessor.getFilteredVideos(cVideos);
+                                ChannelProcessor.submitAsyncIndexingTask(videos);
+                                return videos;
+                            });
+                            return listenableFuture;
+
                         }
                     });
 
     private static final LoadingCache<SearchQueryRequest, List<VideoResponse>> organicVideosCache = CacheBuilder.newBuilder()
+            .recordStats()
             .maximumSize(videoLruSize.get()).refreshAfterWrite(videoRefreshAfterWriteMins.get(), TimeUnit.MINUTES)
             .build(
                     new CacheLoader<SearchQueryRequest, List<VideoResponse>>() {

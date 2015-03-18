@@ -45,7 +45,7 @@ public class ChannelProcessor extends VideoProcessor {
     private static final Integer MAX_RANDOM = 100;
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final DynamicStringProperty listOfValidCategories = DynamicPropertyFactory.getInstance().getStringProperty("pixelle.channel.categories", "");
-    private static final DynamicBooleanProperty persistChanneltoES = DynamicPropertyFactory.getInstance().getBooleanProperty("pixelle.channel.es.persist", false);
+    private static final DynamicBooleanProperty persistChanneltoES = DynamicPropertyFactory.getInstance().getBooleanProperty("pixelle.channel.es.store", false);
     private static final Logger logger = LoggerFactory.getLogger(ChannelProcessor.class);
 
     static {
