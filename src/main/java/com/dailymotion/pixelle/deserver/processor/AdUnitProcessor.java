@@ -51,16 +51,14 @@ public class AdUnitProcessor {
     private static final Integer MAX_RANDOM = 100;
     private static final Integer SIZ_MULTIPLIER = 4;
     private static final Logger logger = LoggerFactory.getLogger(AdUnitProcessor.class);
-    private static Client client;
-
     // JMX: com.netflix.servo.COUNTER.TotalAdsRequestsServed
     private static final Counter totalAdsRequestsServed = new BasicCounter(MonitorConfig
             .builder("TotalAdsRequestsServed").build());
-
     static {
         OBJECT_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         DefaultMonitorRegistry.getInstance().register(totalAdsRequestsServed);
     }
+    private static Client client;
 
     @Inject
     public AdUnitProcessor(Client esClient) {

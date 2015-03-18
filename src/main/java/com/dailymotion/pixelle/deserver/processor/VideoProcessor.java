@@ -8,6 +8,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
+import com.netflix.config.DynamicBooleanProperty;
 import com.netflix.config.DynamicDoubleProperty;
 import com.netflix.config.DynamicFloatProperty;
 import com.netflix.config.DynamicPropertyFactory;
@@ -55,39 +56,33 @@ public class VideoProcessor {
     private static final String GOLD = "gold";
     private static final String BRONZE = "bronze";
     private static final String SILVER = "silver";
-    static Client client;
     private static final Logger logger = LoggerFactory.getLogger(VideoProcessor.class);
     private static final DynamicFloatProperty goldPartnerWeight =
             DynamicPropertyFactory.getInstance().getFloatProperty("goldPartner.weightPercent", 0.5f);
-
     private static final DynamicFloatProperty silverPartnerWeight =
             DynamicPropertyFactory.getInstance().getFloatProperty("silverPartner.weightPercent", 0.25f);
-
     private static final DynamicFloatProperty maxBoost =
             DynamicPropertyFactory.getInstance().getFloatProperty("maxboost", 10.0f);
-
     private static final DynamicFloatProperty bronzePartnerWeight =
             DynamicPropertyFactory.getInstance().getFloatProperty("bronzePartner.weightPercent", 0.01f);
-
     private static final DynamicDoubleProperty pubDateDecay =
             DynamicPropertyFactory.getInstance().getDoubleProperty("publicationDate.decay", 0.25d);
-
     private static final DynamicStringProperty pubDateScale =
             DynamicPropertyFactory.getInstance().getStringProperty("publicationDate.scale", "180d");
-
     private static final DynamicStringProperty pubDateOffset =
             DynamicPropertyFactory.getInstance().getStringProperty("publicationDate.offset", "5d");
-
     private static final DynamicStringProperty scoreMode =
             DynamicPropertyFactory.getInstance().getStringProperty("score.mode", "multiply");
-
     private static final DynamicStringProperty boostMode =
             DynamicPropertyFactory.getInstance().getStringProperty("boost.mode", "replace");
-
     private static final DynamicStringProperty ctrScriptFunction =
             DynamicPropertyFactory.getInstance().getStringProperty("ctr.script.code", "");
     private static final DynamicStringProperty ctrScriptLang =
             DynamicPropertyFactory.getInstance().getStringProperty("ctr.script.lang", "groovy");
+    private static final DynamicBooleanProperty useVideoCaching =
+            DynamicPropertyFactory.getInstance().getBooleanProperty("videoquery.usecache", false);
+    static Client client;
+
 
     @Inject
     public VideoProcessor(Client esClient) {
@@ -209,7 +204,20 @@ public class VideoProcessor {
         }
     }
 
+    /**
+     * By default, caching is off so units tests can pass. In prod env, we se it to true.
+     *
+     * @param sq
+     * @param positions
+     * @param excludedIds
+     * @return list of videos
+     */
     public static List<VideoResponse> recommendUsingCache(@Nullable SearchQueryRequest sq, Integer positions, @Nullable List<String> excludedIds) {
+
+        if (false == useVideoCaching.get()) {
+            return recommend(sq, positions, excludedIds);
+        }
+
         try {
             List<VideoResponse> vr = CacheService.getOrganicVideosCache().get(sq);
             if (vr.size() > positions) {
@@ -220,6 +228,15 @@ public class VideoProcessor {
             throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
         }
     }
+
+    /**
+     * Return a list of videos based on search query using elasticsearch.
+     *
+     * @param sq
+     * @param positions
+     * @param excludedIds
+     * @return list of videos.
+     */
     public static List<VideoResponse> recommend(@Nullable SearchQueryRequest sq, Integer positions, @Nullable List<String> excludedIds) {
 
         List<VideoResponse> videoResponses;

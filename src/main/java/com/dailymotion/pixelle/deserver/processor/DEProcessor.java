@@ -36,14 +36,12 @@ import java.util.concurrent.TimeUnit;
  */
 public class DEProcessor {
     private static final Logger logger = LoggerFactory.getLogger(DEProcessor.class);
-    private static Client client;
     private static final StatsTimer adsTimer = new StatsTimer(MonitorConfig.builder("adsQuery_statsTimer").build(), new StatsConfig.Builder().withPublishMean(true).build());
     private static final StatsTimer videosTimer = new StatsTimer(MonitorConfig.builder("videosQuery_statsTimer").build(), new StatsConfig.Builder().withPublishMean(true).build());
     private static final StatsTimer openWidgetTimer = new StatsTimer(MonitorConfig.builder("openWidgetQuery_statsTimer").build(), new StatsConfig.Builder().withPublishMean(true).build());
     private static final StatsTimer channelWidgetTimer = new StatsTimer(MonitorConfig.builder("myWidgetTimerQuery_statsTimer").build(), new StatsConfig.Builder().withPublishMean(true).build());
     private static final LongGauge videoCount = new LongGauge(MonitorConfig.builder("numVideos_gauge").build());
     private static final LongGauge adunitCount = new LongGauge(MonitorConfig.builder("numadUnits_gauge").build());
-
     static {
         DefaultMonitorRegistry.getInstance().register(adsTimer);
         DefaultMonitorRegistry.getInstance().register(videosTimer);
@@ -52,6 +50,7 @@ public class DEProcessor {
         DefaultMonitorRegistry.getInstance().register(videoCount);
         DefaultMonitorRegistry.getInstance().register(adunitCount);
     }
+    private static Client client;
 
     @Inject
     public DEProcessor(Client esClient) {

@@ -29,7 +29,7 @@ public final class ESTestNodeClientProvider implements Provider<Client> {
                 .put("index.store.type", "memory")
                 .put("index.number_of_shards", 1)
                 .put("index.number_of_replicas", 0)
-                .put("index.refresh_interval", "1ms");
+                .put("index.refresh_interval", "1s");
 
 
         Client client = nodeBuilder()

@@ -17,7 +17,7 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY) //this will ensure only non-null values are included in the serialized json
 @Data
-@EqualsAndHashCode(of={"languages","categories"})
+@EqualsAndHashCode(of = {"languages", "categories"})
 public class SearchQueryRequest {
     private static Logger logger = LoggerFactory.getLogger(SearchQueryRequest.class);
     @JsonProperty("languages")

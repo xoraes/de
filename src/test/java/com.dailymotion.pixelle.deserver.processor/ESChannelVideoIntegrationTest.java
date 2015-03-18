@@ -32,14 +32,13 @@ import java.util.Map;
  */
 public class ESChannelVideoIntegrationTest {
     private static final ObjectMapper mapper = new ObjectMapper();
-    private static Injector injector;
     private static final Logger logger = LoggerFactory.getLogger(ESChannelVideoIntegrationTest.class);
+    private static Injector injector;
 
     @BeforeClass
     public static void setUp() throws Exception {
         ConfigurationManager.loadCascadedPropertiesFromResources("de");
         System.out.println("Running Setup");
-
         Injector injector = Guice.createInjector(new AbstractModule() {
 
             @Override

@@ -15,7 +15,6 @@ import java.util.List;
  * Created by n.dhupia on 11/6/14.
  */
 public final class DeHelper {
-    private static final String DATETIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ssZ";
     public static final DynamicStringProperty organicIndex =
             DynamicPropertyFactory.getInstance().getStringProperty("organicIndex", "organic");
     public static final DynamicStringProperty promotedIndex =
@@ -34,15 +33,15 @@ public final class DeHelper {
             DynamicPropertyFactory.getInstance().getStringProperty("domain", "pxlad.io");
     public static final DynamicStringProperty dataDirectory =
             DynamicPropertyFactory.getInstance().getStringProperty("datadir", "/data/es");
-    private static final DynamicIntProperty dePort =
-            DynamicPropertyFactory.getInstance().getIntProperty("port", 8080);
     public static final DynamicStringProperty widgetPattern =
             DynamicPropertyFactory.getInstance().getStringProperty("widget.pattern", "oop");
     public static final DynamicIntProperty retryOnConflictAdUnits =
             DynamicPropertyFactory.getInstance().getIntProperty("adunits.retryOnConflict", 5);
     public static final DynamicIntProperty retryOnConflictVideos =
             DynamicPropertyFactory.getInstance().getIntProperty("videos.retryOnConflict", 5);
-
+    private static final String DATETIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ssZ";
+    private static final DynamicIntProperty dePort =
+            DynamicPropertyFactory.getInstance().getIntProperty("port", 8080);
     private static Logger logger = LoggerFactory.getLogger(DeHelper.class);
 
 

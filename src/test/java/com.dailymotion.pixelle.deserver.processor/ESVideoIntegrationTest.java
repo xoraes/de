@@ -32,16 +32,14 @@ import java.util.Map;
  */
 public class ESVideoIntegrationTest {
     private static final ObjectMapper mapper = new ObjectMapper();
-    private static Injector injector;
     private static final Logger logger = LoggerFactory.getLogger(ESVideoIntegrationTest.class);
+    private static Injector injector;
 
     @BeforeClass
     public static void setUp() throws Exception {
         ConfigurationManager.loadCascadedPropertiesFromResources("de");
         System.out.println("Running Setup");
-
         Injector injector = Guice.createInjector(new AbstractModule() {
-
             @Override
             protected void configure() {
                 bind(Client.class).toProvider(ESTestNodeClientProvider.class).asEagerSingleton();
@@ -233,16 +231,16 @@ public class ESVideoIntegrationTest {
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 1);
         VideoResponse video = (VideoResponse) i.getResponse().get(0);
-        Assert.assertTrue(video.getVideoId().equalsIgnoreCase("1"));
-        Assert.assertTrue(video.getChannelTier().equalsIgnoreCase("channel_tier"));
-        Assert.assertTrue(video.getChannel().equals("channel"));
-        Assert.assertTrue(video.getChannelId().equals("channel_id"));
-        Assert.assertTrue(video.getChannelName().equals("channel_name"));
-        Assert.assertTrue(video.getContentType().equals("organic"));
-        Assert.assertTrue(video.getDescription().equals("description"));
-        Assert.assertTrue(video.getTitle().equals("title"));
+        Assert.assertEquals("1", video.getVideoId());
+        Assert.assertEquals("channel_tier", video.getChannelTier());
+        Assert.assertEquals("channel", video.getChannel());
+        Assert.assertEquals("channel_id", video.getChannelId());
+        Assert.assertEquals("channel_name", video.getChannelName());
+        Assert.assertEquals("organic", video.getContentType());
+        Assert.assertEquals("description", video.getDescription());
+        Assert.assertEquals("title", video.getTitle());
         Assert.assertTrue(video.getDuration() == 123);
-        Assert.assertTrue(video.getResizableThumbnailUrl().equals("resizable_thumbnail_url"));
+        Assert.assertEquals("resizable_thumbnail_url", video.getResizableThumbnailUrl());
         deleteVideosByIds("1");
     }
 

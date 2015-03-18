@@ -21,11 +21,9 @@ import java.util.List;
  * Created by n.dhupia on 2/4/15.
  */
 public class VideoBulkInsertCommand extends HystrixCommand<Void> {
-    private static Logger logger = LoggerFactory.getLogger(VideoBulkInsertCommand.class);
-
     private static final DynamicIntProperty semaphoreCount =
             DynamicPropertyFactory.getInstance().getIntProperty("videobulkbinsert.semaphore.count", 10);
-
+    private static Logger logger = LoggerFactory.getLogger(VideoBulkInsertCommand.class);
     private final List<Video> videos;
 
     public VideoBulkInsertCommand(List<Video> videos) {

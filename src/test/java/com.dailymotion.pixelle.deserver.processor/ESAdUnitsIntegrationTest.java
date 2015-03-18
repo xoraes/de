@@ -32,7 +32,6 @@ public class ESAdUnitsIntegrationTest {
     public static void setUp() throws Exception {
         ConfigurationManager.loadCascadedPropertiesFromResources("de");
         System.out.println("Running Setup");
-
         Injector injector = Guice.createInjector(new AbstractModule() {
 
             @Override

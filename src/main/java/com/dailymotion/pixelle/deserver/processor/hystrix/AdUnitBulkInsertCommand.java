@@ -17,11 +17,9 @@ import java.util.List;
  * Created by n.dhupia on 2/6/15.
  */
 public class AdUnitBulkInsertCommand extends HystrixCommand<Void> {
-    private static Logger logger = LoggerFactory.getLogger(AdUnitBulkInsertCommand.class);
-
     private static final DynamicIntProperty semaphoreCount =
             DynamicPropertyFactory.getInstance().getIntProperty("adunitbulkinsert.semaphore.count", 10);
-
+    private static Logger logger = LoggerFactory.getLogger(AdUnitBulkInsertCommand.class);
     private final List<AdUnit> adUnits;
 
     public AdUnitBulkInsertCommand(List<AdUnit> adUnits) {
