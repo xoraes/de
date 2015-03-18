@@ -3,6 +3,7 @@ package com.dailymotion.pixelle.deserver.processor;
 import com.dailymotion.pixelle.deserver.model.SearchQueryRequest;
 import com.dailymotion.pixelle.deserver.model.Video;
 import com.dailymotion.pixelle.deserver.model.VideoResponse;
+import com.dailymotion.pixelle.deserver.processor.service.CacheService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,6 +39,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Created by n.dhupia on 12/10/14.
@@ -207,6 +209,17 @@ public class VideoProcessor {
         }
     }
 
+    public static List<VideoResponse> recommendUsingCache(@Nullable SearchQueryRequest sq, Integer positions, @Nullable List<String> excludedIds) {
+        try {
+            List<VideoResponse> vr = CacheService.getOrganicVideosCache().get(sq);
+            if (vr.size() > positions) {
+                vr = vr.subList(0, positions);
+            }
+            return vr;
+        } catch (ExecutionException e) {
+            throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
+        }
+    }
     public static List<VideoResponse> recommend(@Nullable SearchQueryRequest sq, Integer positions, @Nullable List<String> excludedIds) {
 
         List<VideoResponse> videoResponses;

@@ -6,28 +6,14 @@ import com.dailymotion.pixelle.deserver.model.SearchQueryRequest;
 import com.dailymotion.pixelle.deserver.model.Video;
 import com.dailymotion.pixelle.deserver.model.VideoResponse;
 import com.dailymotion.pixelle.deserver.processor.hystrix.ChannelVideoBulkInsertCommand;
-import com.dailymotion.pixelle.deserver.processor.hystrix.DMApiQueryCommand;
+import com.dailymotion.pixelle.deserver.processor.service.CacheService;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import com.netflix.config.DynamicBooleanProperty;
-import com.netflix.config.DynamicIntProperty;
-import com.netflix.config.DynamicLongProperty;
 import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.config.DynamicStringProperty;
-import feign.Feign;
-import feign.Retryer;
-import feign.jackson.JacksonDecoder;
-import feign.jackson.JacksonEncoder;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.eclipse.jetty.http.HttpStatus;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
@@ -46,15 +32,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Created by n.dhupia on 2/27/15.
@@ -62,54 +44,9 @@ import java.util.concurrent.TimeUnit;
 public class ChannelProcessor extends VideoProcessor {
     private static final Integer MAX_RANDOM = 100;
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-
-    private static final DynamicStringProperty dmApiUrl = DynamicPropertyFactory.getInstance().getStringProperty("dm.api.url", "https://api.dailymotion.com");
-    private static final DynamicLongProperty retryPeriod = DynamicPropertyFactory.getInstance().getLongProperty("dm.api.retry.period", 100);
-    private static final DynamicLongProperty retryMaxPeriod = DynamicPropertyFactory.getInstance().getLongProperty("dm.api.retry.max.period", 1);
-    private static final DynamicIntProperty retryMaxAttempts = DynamicPropertyFactory.getInstance().getIntProperty("dm.api.retry.max.attempts", 5);
-
     private static final DynamicStringProperty listOfValidCategories = DynamicPropertyFactory.getInstance().getStringProperty("pixelle.channel.categories", "");
-    private static final DynamicLongProperty refreshAfterWriteMins = DynamicPropertyFactory.getInstance().getLongProperty("pixelle.channel.refresh.write.minutes", 4);
-    private static final DynamicIntProperty lruSize = DynamicPropertyFactory.getInstance().getIntProperty("pixelle.channel.lru.size", 1000);
     private static final DynamicBooleanProperty persistChanneltoES = DynamicPropertyFactory.getInstance().getBooleanProperty("pixelle.channel.es.persist", false);
-
-
     private static final Logger logger = LoggerFactory.getLogger(ChannelProcessor.class);
-    private static CloseableHttpClient httpclient = HttpClients.createDefault();
-
-    private static final LoadingCache<String, List<Video>> videosCache = CacheBuilder.newBuilder().maximumSize(lruSize.get()).refreshAfterWrite(refreshAfterWriteMins.get(), TimeUnit.MINUTES)
-            .build(
-                    new CacheLoader<String, List<Video>>() {
-                        @Override
-                        public List<Video> load(String key) throws DeException {
-                            logger.info("Caching and indexing video..");
-                            List<Video> videos = new DMApiQueryCommand(key).execute();
-                            submitAsyncIndexingTask(videos);
-                            return videos;
-                        }
-
-                        @Override
-                        public ListenableFuture<List<Video>> reload(final String channelId, List<Video> oldValue) throws Exception {
-                            logger.info("Reloading cache for key " + channelId);
-                            ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
-                            ListenableFuture<List<Video>> listenableFuture;
-                            try {
-                                listenableFuture = executor.submit(new Callable<List<Video>>() {
-                                    @Override
-                                    public List<Video> call() throws Exception {
-                                        List<Video> videos = new DMApiQueryCommand(channelId).execute();
-                                        submitAsyncIndexingTask(videos);
-                                        return videos;
-                                    }
-                                });
-                                return listenableFuture;
-                            } finally {
-                                executor.shutdown();
-                            }
-                        }
-                    });
-
-
     static {
         OBJECT_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
@@ -137,7 +74,7 @@ public class ChannelProcessor extends VideoProcessor {
         logger.info(srb1.toString());
 
         SearchResponse searchResponse = srb1.execute().actionGet();
-        videoResponses = new ArrayList<VideoResponse>();
+        videoResponses = new ArrayList<>();
 
         for (SearchHit hit : searchResponse.getHits().getHits()) {
             try {
@@ -155,10 +92,10 @@ public class ChannelProcessor extends VideoProcessor {
          * and fresh data is replaced into the cache asynchronously from DM and indexed to ES.
          */
         if (DeHelper.isEmptyList(videoResponses) || videoResponses.size() < positions) {
-            videoResponses = new ArrayList<VideoResponse>();
+            videoResponses = new ArrayList<>();
             List<Video> videos;
             try {
-                videos = videosCache.get(sq.getChannel());
+                videos = CacheService.getChannelVideosCache().get(sq.getChannel());
                 logger.info("getting videos from cache");
             } catch (ExecutionException e) {
                 throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
@@ -195,29 +132,16 @@ public class ChannelProcessor extends VideoProcessor {
         return "//i.".concat(DeHelper.domain.get()).concat("/channel-").concat(id).concat("-thumbnail-1");
     }
 
-    private static void submitAsyncIndexingTask(final List<Video> videos) {
+    public static void submitAsyncIndexingTask(final List<Video> videos) {
         if (!DeHelper.isEmptyList(videos) && persistChanneltoES.get()) {
             new ChannelVideoBulkInsertCommand(videos).queue();
         }
     }
 
-    public static List<Video> getVideosFromDM(@NotNull String channelId) throws DeException {
-        if (StringUtils.isBlank(channelId)) {
-            throw new DeException(new Throwable("No channel id provided"), HttpStatus.BAD_REQUEST_400);
-        }
-        DMApiService dmApi = Feign.builder()
-                .retryer(new Retryer.Default(retryPeriod.get(), TimeUnit.SECONDS.toMillis(retryMaxPeriod.get()), retryMaxAttempts.get()))
-                .decoder(new JacksonDecoder())
-                .encoder(new JacksonEncoder())
-                .target(DMApiService.class, dmApiUrl.get());
-        return getFilteredVideos(dmApi.getVideos(channelId));
-    }
-
-    private static List<Video> getFilteredVideos(ChannelVideos channelVideos) {
-        List<Video> videos = new ArrayList<Video>();
+    public static List<Video> getFilteredVideos(ChannelVideos channelVideos) {
+        List<Video> videos = new ArrayList<>();
         for (ChannelVideo channelVideo : channelVideos.getList()) {
             if (!filterVideo(channelVideo)) {
-
                 Video video = new Video();
                 video.setLanguages(Arrays.asList(channelVideo.getLanguage()));
                 video.setResizableThumbnailUrl(getResizableThumbnailUrl(channelVideo.getThumbnailUrl()));
