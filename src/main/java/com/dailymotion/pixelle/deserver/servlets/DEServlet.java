@@ -14,8 +14,6 @@ import com.dailymotion.pixelle.deserver.processor.hystrix.AdUnitBulkInsertComman
 import com.dailymotion.pixelle.deserver.processor.hystrix.AdUpdateCommand;
 import com.dailymotion.pixelle.deserver.processor.hystrix.QueryCommand;
 import com.dailymotion.pixelle.deserver.processor.hystrix.VideoBulkInsertCommand;
-import com.dailymotion.pixelle.deserver.processor.hystrix.VideoInsertCommand;
-import com.dailymotion.pixelle.deserver.processor.hystrix.VideoUpdateCommand;
 import org.apache.commons.lang.StringUtils;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.glassfish.jersey.server.ManagedAsync;
@@ -229,39 +227,6 @@ public class DEServlet {
     @Produces(MediaType.TEXT_PLAIN)
     public void insertVideosBulk(List<Video> videos, @Suspended final AsyncResponse ar) throws DeException {
         ar.resume(new VideoBulkInsertCommand(videos).execute());
-    }
-
-    /**
-     * Asynchronously, updates/indexes a video to ES.
-     *
-     * @param video
-     * @param ar
-     * @throws DeException
-     */
-    @PUT
-    @Path("/video")
-    @ManagedAsync
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.TEXT_PLAIN)
-    public void update(Video video, @Suspended final AsyncResponse ar) throws DeException {
-        ar.resume(new VideoUpdateCommand(video).execute());
-    }
-
-    /**
-     * Asynchronously, inserts/indexes a video to ES.
-     *
-     * @param video
-     * @param ar
-     * @throws DeException
-     */
-
-    @POST
-    @ManagedAsync
-    @Path("/video")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.TEXT_PLAIN)
-    public void insert(Video video, @Suspended final AsyncResponse ar) throws DeException {
-        ar.resume(new VideoInsertCommand(video).execute());
     }
 
     /**

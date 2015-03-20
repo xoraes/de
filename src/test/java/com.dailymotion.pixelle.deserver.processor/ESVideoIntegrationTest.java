@@ -266,6 +266,27 @@ public class ESVideoIntegrationTest {
     }
 
     @Test
+    public void testNullResizeThumbnailUrl() throws Exception {
+        Map m1 = createVideoDataMap("1");
+        m1.put("resizable_thumbnail_url", null);
+        loadVideoMaps(m1);
+        SearchQueryRequest sq = new SearchQueryRequest();
+        sq.setCategories(new ArrayList(Arrays.asList("cat1")));
+        sq.setDevice("dev1");
+        sq.setFormat("fmt1");
+        sq.setTime("2014-11-21T01:00:00Z");
+        sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
+        sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
+
+        ItemsResponse i = new QueryCommand(sq, 1, "organic").execute();
+        Assert.assertNotNull(i);
+        Assert.assertTrue(i.getResponse().size() == 0);
+        if (i.getResponse().size() > 0) {
+            deleteVideosByIds("1");
+        }
+    }
+
+    @Test
     public void testGetMultipleVideos() throws Exception {
         Map m1 = createVideoDataMap("1");
         Map m2 = createVideoDataMap("2");

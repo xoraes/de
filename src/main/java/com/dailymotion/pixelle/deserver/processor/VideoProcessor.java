@@ -16,7 +16,6 @@ import com.netflix.config.DynamicStringProperty;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.search.Explanation;
 import org.eclipse.jetty.http.HttpStatus;
-import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.get.GetResponse;
@@ -107,15 +106,9 @@ public class VideoProcessor {
         return video;
     }
 
-    public static void insertVideo(Video video) throws DeException {
-
-        if (video == null) {
-            throw new DeException(new Throwable("no video found in request body"), HttpStatus.BAD_REQUEST_400);
-        }
-        updateVideo(modifyVideoForInsert(video));
-    }
-
     /**
+     * Modifies video for ES purposes.
+     *
      * @param video - should not be null
      * @return a modified video
      */
@@ -140,28 +133,6 @@ public class VideoProcessor {
         return video;
     }
 
-    public static void updateVideo(Video video) throws DeException {
-        if (video == null) {
-            throw new DeException(new Throwable("no video found in request body"), HttpStatus.BAD_REQUEST_400);
-        }
-        logger.info(video.toString());
-        try {
-            client.prepareUpdate(DeHelper.organicIndex.get(), DeHelper.videosType.get(), video.getId())
-                    .setDoc(OBJECT_MAPPER.writeValueAsString(video))
-                    .setDocAsUpsert(true)
-                    .setRetryOnConflict(DeHelper.retryOnConflictVideos.get())
-                    .execute()
-                    .actionGet();
-
-
-        } catch (JsonProcessingException e) {
-            logger.error("Error converting video to string", e);
-            throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
-        } catch (ElasticsearchException e) {
-            throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
-        }
-    }
-
     public static void insertVideoInBulk(List<Video> videos) throws DeException {
         insertVideoInBulk(videos, DeHelper.organicIndex.get());
     }
@@ -178,30 +149,40 @@ public class VideoProcessor {
 
         logger.info("Bulk loading:" + videos.size() + " videos");
         for (Video video : videos) {
+            if (!filterVideo(video)) {
+                video = modifyVideoForInsert(video);
+                logger.info("Loading video to " + index + " : " + video.toString());
 
-            video = modifyVideoForInsert(video);
-            logger.info("Loading video to " + index + " : " + video.toString());
-
-            try {
-                bulkRequest.add(client.prepareUpdate(index, DeHelper.videosType.get(), video.getId())
-                        .setDoc(OBJECT_MAPPER.writeValueAsString(video))
-                        .setRetryOnConflict(DeHelper.retryOnConflictVideos.get())
-                        .setDocAsUpsert(true));
-            } catch (JsonProcessingException e) {
-                logger.error("Error converting video to string", e);
-                throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
+                try {
+                    bulkRequest.add(client.prepareUpdate(index, DeHelper.videosType.get(), video.getId())
+                            .setDoc(OBJECT_MAPPER.writeValueAsString(video))
+                            .setRetryOnConflict(DeHelper.retryOnConflictVideos.get())
+                            .setDocAsUpsert(true));
+                } catch (JsonProcessingException e) {
+                    logger.error("Error converting video to string", e);
+                    throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
+                }
             }
         }
-        BulkResponse bulkResponse;
-        try {
-            bulkResponse = bulkRequest.execute().actionGet();
-        } catch (Exception e) {
-            throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
+        if (bulkRequest.numberOfActions() > 0) {
+            BulkResponse bulkResponse;
+            try {
+                bulkResponse = bulkRequest.execute().actionGet();
+            } catch (Exception e) {
+                throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
+            }
+            if (bulkResponse != null && bulkResponse.hasFailures()) {
+                // process failures by iterating through each bulk response item
+                throw new DeException(new Throwable("Error inserting videos in Bulk"), HttpStatus.INTERNAL_SERVER_ERROR_500);
+            }
         }
-        if (bulkResponse != null && bulkResponse.hasFailures()) {
-            // process failures by iterating through each bulk response item
-            throw new DeException(new Throwable("Error inserting videos in Bulk"), HttpStatus.INTERNAL_SERVER_ERROR_500);
+    }
+
+    private static boolean filterVideo(Video video) {
+        if (StringUtils.isBlank(video.getResizableThumbnailUrl())) {
+            return true;
         }
+        return false;
     }
 
     /**

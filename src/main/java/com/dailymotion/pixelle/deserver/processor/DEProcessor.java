@@ -211,10 +211,6 @@ public class DEProcessor {
         return AdUnitProcessor.getAllAdUnits();
     }
 
-    public static void updateVideo(Video video) throws DeException {
-        VideoProcessor.updateVideo(video);
-    }
-
     public static boolean deleteById(String indexName, String type, String id) throws DeException {
         if (StringUtils.isBlank(indexName) || StringUtils.isBlank(type) || StringUtils.isBlank(id)) {
             return false;
@@ -284,10 +280,6 @@ public class DEProcessor {
             }
         }
         return sq;
-    }
-
-    public void insertVideo(Video video) throws DeException {
-        VideoProcessor.insertVideo(video);
     }
 
     public ClusterHealthResponse getHealthCheck() throws DeException {
