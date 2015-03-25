@@ -195,19 +195,19 @@ public class VideoProcessor {
      */
     public static List<VideoResponse> recommendUsingCache(@Nullable SearchQueryRequest sq, Integer positions, @Nullable List<String> excludedIds) {
 
-        if (false == useVideoCaching.get()) {
-            return recommend(sq, positions, excludedIds);
-        }
-
-        try {
-            List<VideoResponse> vr = CacheService.getOrganicVideosCache().get(sq);
-            if (vr.size() > positions) {
-                vr = vr.subList(0, positions);
+        if (useVideoCaching.get()) {
+            try {
+                List<VideoResponse> vr = CacheService.getOrganicVideosCache().get(sq);
+                if (vr.size() > positions) {
+                    return vr.subList(0, positions);
+                }
+                return vr;
+            } catch (ExecutionException e) {
+                logger.warn("execution exception while getting data form video cache...will send from es directly", e.getCause());
+                return recommend(sq, positions, excludedIds);
             }
-            return vr;
-        } catch (ExecutionException e) {
-            throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
         }
+        return recommend(sq, positions, excludedIds);
     }
 
     /**
