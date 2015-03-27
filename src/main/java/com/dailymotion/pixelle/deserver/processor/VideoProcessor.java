@@ -178,10 +178,7 @@ public class VideoProcessor {
     }
 
     private static boolean filterVideo(Video video) {
-        if (StringUtils.isBlank(video.getResizableThumbnailUrl())) {
-            return true;
-        }
-        return false;
+        return StringUtils.isBlank(video.getResizableThumbnailUrl());
     }
 
     /**
@@ -221,10 +218,8 @@ public class VideoProcessor {
         List<VideoResponse> videoResponses;
         BoolFilterBuilder fb = FilterBuilders.boolFilter();
         if (sq != null) {
-            if (!DeHelper.isEmptyList(sq.getCategories())) {
-                if (!(sq.getCategories().size() == 1 && sq.getCategories().indexOf("all") == 0)) {
-                    fb.must(FilterBuilders.termsFilter("categories", DeHelper.toLowerCase(sq.getCategories())));
-                }
+            if (!DeHelper.isEmptyList(sq.getCategories()) && !(sq.getCategories().size() == 1 && sq.getCategories().indexOf("all") == 0)) {
+                fb.must(FilterBuilders.termsFilter("categories", DeHelper.toLowerCase(sq.getCategories())));
             }
             if (!DeHelper.isEmptyList(sq.getLanguages())) {
                 fb.must(FilterBuilders.termsFilter("languages", DeHelper.toLowerCase(sq.getLanguages())));
