@@ -17,6 +17,7 @@ public class QueryCommand extends HystrixCommand<ItemsResponse> {
 
     private static final DynamicIntProperty semaphoreCount =
             DynamicPropertyFactory.getInstance().getIntProperty("query.semaphore.count", 100);
+    private static final DynamicIntProperty timeout = DynamicPropertyFactory.getInstance().getIntProperty("hystrix.query.timeout", 5000);
     private final SearchQueryRequest sq;
     private final String allowedTypes;
     private final Integer positions;
@@ -27,7 +28,8 @@ public class QueryCommand extends HystrixCommand<ItemsResponse> {
                 .andCommandKey(HystrixCommandKey.Factory.asKey("Query"))
                 .andCommandPropertiesDefaults(HystrixCommandProperties.Setter()
                         .withExecutionIsolationStrategy(HystrixCommandProperties.ExecutionIsolationStrategy.SEMAPHORE)
-                        .withExecutionIsolationSemaphoreMaxConcurrentRequests(semaphoreCount.get())));
+                        .withExecutionIsolationSemaphoreMaxConcurrentRequests(semaphoreCount.get())
+                        .withExecutionTimeoutInMilliseconds(timeout.get())));
         this.sq = sq;
         this.allowedTypes = allowedTypes;
         this.positions = positions;

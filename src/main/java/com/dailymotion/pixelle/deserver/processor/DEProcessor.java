@@ -42,6 +42,7 @@ public class DEProcessor {
     private static final StatsTimer channelWidgetTimer = new StatsTimer(MonitorConfig.builder("myWidgetTimerQuery_statsTimer").build(), new StatsConfig.Builder().withPublishMean(true).build());
     private static final LongGauge videoCount = new LongGauge(MonitorConfig.builder("numVideos_gauge").build());
     private static final LongGauge adunitCount = new LongGauge(MonitorConfig.builder("numadUnits_gauge").build());
+    private static Client client;
 
     static {
         DefaultMonitorRegistry.getInstance().register(adsTimer);
@@ -51,8 +52,6 @@ public class DEProcessor {
         DefaultMonitorRegistry.getInstance().register(videoCount);
         DefaultMonitorRegistry.getInstance().register(adunitCount);
     }
-
-    private static Client client;
 
     @Inject
     public DEProcessor(Client esClient) {
@@ -90,9 +89,7 @@ public class DEProcessor {
                 adsTimer.record(stopwatch.getDuration(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);
             }
             return itemsResponse;
-        }
-
-        if (at.length == 1 && StringUtils.containsIgnoreCase(at[0], "organic")) {
+        } else if (at.length == 1 && StringUtils.containsIgnoreCase(at[0], "organic")) {
             stopwatch = videosTimer.start();
             try {
                 targetedVideos = new VideoQueryCommand(sq, positions).execute();
@@ -110,8 +107,7 @@ public class DEProcessor {
             } finally {
                 videosTimer.record(stopwatch.getDuration(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);
             }
-        }
-        if (at.length == 2
+        } else if (at.length == 2
                 && StringUtils.containsIgnoreCase(allowedTypes, "promoted")
                 && StringUtils.containsIgnoreCase(allowedTypes, "channel")) {
             stopwatch = channelWidgetTimer.start();
@@ -148,9 +144,7 @@ public class DEProcessor {
             } finally {
                 channelWidgetTimer.record(stopwatch.getDuration(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);
             }
-        }
-
-        if (at.length == 2
+        } else if (at.length == 2
                 && StringUtils.containsIgnoreCase(allowedTypes, "promoted")
                 && StringUtils.containsIgnoreCase(allowedTypes, "organic")) {
             stopwatch = openWidgetTimer.start();

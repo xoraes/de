@@ -46,11 +46,6 @@ import java.util.concurrent.ExecutionException;
  */
 public class VideoProcessor {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-
-    static {
-        OBJECT_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    }
-
     private static final String CHANNEL_TIER = "channel_tier";
     private static final String GOLD = "gold";
     private static final String BRONZE = "bronze";
@@ -81,6 +76,10 @@ public class VideoProcessor {
     private static final DynamicBooleanProperty useVideoCaching =
             DynamicPropertyFactory.getInstance().getBooleanProperty("videoquery.usecache", false);
     static Client client;
+
+    static {
+        OBJECT_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    }
 
 
     @Inject
@@ -190,24 +189,24 @@ public class VideoProcessor {
      *
      * @param sq
      * @param positions
-     * @param excludedIds
      * @return list of videos
      */
-    public static List<VideoResponse> recommendUsingCache(@Nullable SearchQueryRequest sq, Integer positions, @Nullable List<String> excludedIds) {
+    public static List<VideoResponse> recommendUsingCache(@Nullable SearchQueryRequest sq, Integer positions) {
 
         if (useVideoCaching.get()) {
             try {
                 List<VideoResponse> vr = CacheService.getOrganicVideosCache().get(sq);
+                logger.info(CacheService.getOrganicVideosCache().stats().toString());
                 if (vr.size() > positions) {
                     return vr.subList(0, positions);
                 }
                 return vr;
             } catch (ExecutionException e) {
                 logger.warn("execution exception while getting data form video cache...will send from es directly", e.getCause());
-                return recommend(sq, positions, excludedIds);
+                return recommend(sq, positions);
             }
         }
-        return recommend(sq, positions, excludedIds);
+        return recommend(sq, positions);
     }
 
     /**
@@ -215,21 +214,23 @@ public class VideoProcessor {
      *
      * @param sq
      * @param positions
-     * @param excludedIds
      * @return list of videos.
      */
-    public static List<VideoResponse> recommend(@Nullable SearchQueryRequest sq, Integer positions, @Nullable List<String> excludedIds) {
+    public static List<VideoResponse> recommend(@Nullable SearchQueryRequest sq, Integer positions) {
 
         List<VideoResponse> videoResponses;
         BoolFilterBuilder fb = FilterBuilders.boolFilter();
         if (sq != null) {
             if (!DeHelper.isEmptyList(sq.getCategories())) {
-                fb.must(FilterBuilders.termsFilter("categories", DeHelper.toLowerCase(sq.getCategories())));
+                if (!(sq.getCategories().size() == 1 && sq.getCategories().indexOf("all") == 0)) {
+                    fb.must(FilterBuilders.termsFilter("categories", DeHelper.toLowerCase(sq.getCategories())));
+                }
             }
             if (!DeHelper.isEmptyList(sq.getLanguages())) {
                 fb.must(FilterBuilders.termsFilter("languages", DeHelper.toLowerCase(sq.getLanguages())));
             }
         }
+        List<String> excludedIds = sq.getExcludedIds();
         if (!DeHelper.isEmptyList(excludedIds)) {
             for (String id : excludedIds) {
                 fb.mustNot(FilterBuilders.termsFilter("video_id", id));
@@ -263,14 +264,6 @@ public class VideoProcessor {
         if (sq.isDebugEnabled()) {
             srb1.setExplain(true);
         }
-        logger.info(ctrScriptFunction.getName() + " : " + ctrScriptFunction.getValue());
-        logger.info(ctrScriptLang.getName() + " : " + ctrScriptLang.getValue());
-        logger.info(goldPartnerWeight.getName() + " : " + goldPartnerWeight.getValue());
-        logger.info(silverPartnerWeight.getName() + " : " + silverPartnerWeight.getValue());
-        logger.info(bronzePartnerWeight.getName() + " : " + bronzePartnerWeight.getValue());
-        logger.info(boostMode.getName() + " : " + boostMode.getValue());
-        logger.info(scoreMode.getName() + " : " + scoreMode.getValue());
-        logger.info(maxBoost.getName() + " : " + maxBoost.getValue());
         logger.info(srb1.toString());
 
         SearchResponse searchResponse = srb1.execute().actionGet();
@@ -298,7 +291,7 @@ public class VideoProcessor {
     }
 
     public static List<VideoResponse> getUntargetedVideos(List<VideoResponse> targetedVideo, int positions, SearchQueryRequest sq) {
-
+        logger.warn("Trying to fill query with untargetted videos");
         List<String> languages = sq.getLanguages();
         if (DeHelper.isEmptyList(languages)) {
             languages = Arrays.asList("en"); // default language if none provided
@@ -312,12 +305,13 @@ public class VideoProcessor {
         SearchQueryRequest sq1 = new SearchQueryRequest();
         sq1.setLanguages(languages);
         sq1.setDebugEnabled(sq.isDebugEnabled());
+        sq1.setExcludedIds(excludedIds);
 
         int reqVideosSize = positions;
         if (!DeHelper.isEmptyList(targetedVideo)) {
             reqVideosSize = positions - targetedVideo.size();
         }
-        List<VideoResponse> unTargetedVideos = recommend(sq1, reqVideosSize, excludedIds);
+        List<VideoResponse> unTargetedVideos = recommend(sq1, reqVideosSize);
         int sizeUnTargeted = 0;
         if (!DeHelper.isEmptyList(unTargetedVideos)) {
             sizeUnTargeted = unTargetedVideos.size();
@@ -335,7 +329,7 @@ public class VideoProcessor {
                 excludedIds.add(v.getVideoId());
             }
             // try to backfill with en videos
-            List<VideoResponse> englishTargetedVideos = recommend(sq1, reqVideosSize - sizeUnTargeted, excludedIds);
+            List<VideoResponse> englishTargetedVideos = recommend(sq1, reqVideosSize - sizeUnTargeted);
             int sizeEnglishLangVideos = 0;
             if (!DeHelper.isEmptyList(englishTargetedVideos)) {
                 sizeEnglishLangVideos = englishTargetedVideos.size();

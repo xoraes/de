@@ -68,7 +68,6 @@ public class AdUnitProcessor {
     }
 
     public static List<AdUnitResponse> recommend(SearchQueryRequest sq, Integer positions) throws DeException {
-
         List<AdUnitResponse> adUnitResponses = null;
         if (sq != null) {
             DateTimeFormatter df = DateTimeFormat.forPattern(DeHelper.getDateTimeFormatString());
@@ -208,6 +207,9 @@ public class AdUnitProcessor {
         unit.setSchedules(null);
         if (unit.getCpc() == null || unit.getCpc() == 0) {
             unit.setCpc(0L);
+        }
+        if (unit.getCpv() == null || unit.getCpv() == 0) {
+            unit.setCpv(0L);
         }
         if (StringUtils.isBlank(unit.getStartDate())) {
             unit.setStartDate(DeHelper.timeToISO8601String(DeHelper.currentUTCTime()));

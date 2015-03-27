@@ -44,7 +44,7 @@ project.ext {
     deserver = '0.1.0'
 }
 dependencies {
-    compile 'org.elasticsearch:elasticsearch:1.4.4'
+    compile 'org.elasticsearch:elasticsearch:1.5.0'
     compile 'com.google.guava:guava:18.0'
     compile 'org.eclipse.jetty:jetty-servlet:9.2.7.v20150116'
     compile 'org.eclipse.jetty:jetty-server:9.2.7.v20150116'
@@ -76,14 +76,14 @@ dependencies {
     compile 'org.codehaus.janino:janino:2.6.1'
     compile 'org.codehaus.groovy:groovy-all:2.3.7'
     compile 'org.apache.lucene:lucene-expressions:4.10.2'
-    compile 'com.netflix.hystrix:hystrix-core:1.4.0-RC6'
-    compile 'com.netflix.hystrix:hystrix-metrics-event-stream:1.4.0-RC6'
-    compile 'com.netflix.hystrix:hystrix-servo-metrics-publisher:1.4.0-RC6'
+    compile 'com.netflix.hystrix:hystrix-core:1.4.1'
+    compile 'com.netflix.hystrix:hystrix-metrics-event-stream:1.4.1'
+    compile 'com.netflix.hystrix:hystrix-servo-metrics-publisher:1.4.1'
     compile 'com.netflix.servo:servo-core:0.8.3'
     compile 'com.google.guava:guava:18.0'
     compile 'org.projectlombok:lombok:1.16.2'
-    compile 'com.netflix.feign:feign-core:8.0.0-rc.2'
-    compile 'com.netflix.feign:feign-jackson:8.0.0-rc.2'
+    compile 'com.netflix.feign:feign-core:8.1.0'
+    compile 'com.netflix.feign:feign-jackson:8.1.0'
     testCompile 'junit:junit:latest.release'
 }
 

@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 public class CacheService {
     private static final Logger logger = LoggerFactory.getLogger(CacheService.class);
     private static final DynamicLongProperty chanRefreshAfterWriteMins = DynamicPropertyFactory.getInstance().getLongProperty("pixelle.channel.refresh.write.minutes", 4);
-    private static final DynamicLongProperty videoRefreshAfterWriteMins = DynamicPropertyFactory.getInstance().getLongProperty("pixelle.organic.refresh.write.minutes", 2);
+    private static final DynamicLongProperty videoRefreshAfterWriteMins = DynamicPropertyFactory.getInstance().getLongProperty("pixelle.organic.refresh.write.minutes", 1);
     private static final DynamicIntProperty channelLruSize = DynamicPropertyFactory.getInstance().getIntProperty("pixelle.channel.lru.size", 1000);
     private static final DynamicIntProperty videoLruSize = DynamicPropertyFactory.getInstance().getIntProperty("pixelle.organic.lru.size", 1000);
     private static final DynamicIntProperty maxVideosToCache = DynamicPropertyFactory.getInstance().getIntProperty("pixelle.organic.cache.max", 20);
@@ -73,8 +73,8 @@ public class CacheService {
                     new CacheLoader<SearchQueryRequest, List<VideoResponse>>() {
                         @Override
                         public List<VideoResponse> load(SearchQueryRequest sq) throws Exception {
-                            List<VideoResponse> vr = VideoProcessor.recommend(sq, maxVideosToCache.get(), null);
-                            logger.warn("Caching organic videos..:", sq.toString());
+                            List<VideoResponse> vr = VideoProcessor.recommend(sq, maxVideosToCache.get());
+                            logger.info("Caching organic videos..:", sq.toString());
                             return vr;
                         }
 
@@ -84,7 +84,7 @@ public class CacheService {
                             ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
                             ListenableFuture<List<VideoResponse>> listenableFuture;
                             try {
-                                listenableFuture = executor.submit(() -> VideoProcessor.recommend(sq, maxVideosToCache.get(), null));
+                                listenableFuture = executor.submit(() -> VideoProcessor.recommend(sq, maxVideosToCache.get()));
                                 return listenableFuture;
                             } finally {
                                 executor.shutdown();

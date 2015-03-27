@@ -20,7 +20,7 @@ import java.util.List;
 public class ChannelQueryCommand extends HystrixCommand<List<VideoResponse>> {
     private static final DynamicIntProperty semaphoreCount =
             DynamicPropertyFactory.getInstance().getIntProperty("channelquery.semaphore.count", 100);
-
+    private static final DynamicIntProperty timeout = DynamicPropertyFactory.getInstance().getIntProperty("hystrix.channel.query.timeout", 5000);
     private static Logger logger = LoggerFactory.getLogger(ChannelQueryCommand.class);
     private final SearchQueryRequest sq;
     private final int positions;
@@ -31,8 +31,8 @@ public class ChannelQueryCommand extends HystrixCommand<List<VideoResponse>> {
                 .andCommandKey(HystrixCommandKey.Factory.asKey("ChannelQuery"))
                 .andCommandPropertiesDefaults(HystrixCommandProperties.Setter()
                         .withExecutionIsolationStrategy(HystrixCommandProperties.ExecutionIsolationStrategy.SEMAPHORE)
-                        .withExecutionIsolationSemaphoreMaxConcurrentRequests(semaphoreCount.get())));
-
+                        .withExecutionIsolationSemaphoreMaxConcurrentRequests(semaphoreCount.get())
+                        .withExecutionTimeoutInMilliseconds(timeout.get())));
         this.sq = sq;
         this.positions = positions;
     }

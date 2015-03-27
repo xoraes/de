@@ -42,8 +42,7 @@ public class DMApiQueryCommand extends HystrixCommand<ChannelVideos> {
                 .andCommandKey(HystrixCommandKey.Factory.asKey("DMChannelQuery"))
                 .andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey("DMChannelQueryPool"))
                 .andCommandPropertiesDefaults(HystrixCommandProperties.Setter()
-                        .withExecutionIsolationThreadTimeoutInMilliseconds(timeout.get())));
-
+                        .withExecutionTimeoutInMilliseconds(timeout.get())));
         channelId = channel;
     }
 

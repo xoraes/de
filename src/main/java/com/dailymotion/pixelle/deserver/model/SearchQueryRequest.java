@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Objects;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.slf4j.Logger;
@@ -17,7 +18,7 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY) //this will ensure only non-null values are included in the serialized json
 @Data
-@EqualsAndHashCode(of = {"languages", "categories"})
+@EqualsAndHashCode(of={"categories","languages"})
 public class SearchQueryRequest {
     private static Logger logger = LoggerFactory.getLogger(SearchQueryRequest.class);
     @JsonProperty("languages")
@@ -40,5 +41,7 @@ public class SearchQueryRequest {
     private String timeTable;
     @JsonIgnore
     private boolean debugEnabled;
+    @JsonIgnore
+    private List<String> excludedIds;
 }
 

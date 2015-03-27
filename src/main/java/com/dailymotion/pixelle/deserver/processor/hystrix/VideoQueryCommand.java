@@ -31,13 +31,12 @@ public class VideoQueryCommand extends HystrixCommand<List<VideoResponse>> {
                 .andCommandPropertiesDefaults(HystrixCommandProperties.Setter()
                         .withExecutionIsolationStrategy(HystrixCommandProperties.ExecutionIsolationStrategy.SEMAPHORE)
                         .withExecutionIsolationSemaphoreMaxConcurrentRequests(semaphoreCount.get())));
-
         this.sq = sq;
         this.positions = positions;
     }
 
     @Override
     protected List<VideoResponse> run() throws Exception {
-        return VideoProcessor.recommendUsingCache(sq, positions, null);
+        return VideoProcessor.recommendUsingCache(sq, positions);
     }
 }

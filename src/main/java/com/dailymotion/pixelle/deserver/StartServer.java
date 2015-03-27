@@ -46,9 +46,6 @@ final class StartServer {
     private static final LongGauge channelCacheEvictionCount = new LongGauge(MonitorConfig.builder("channelCacheEvictionCount_gauge").build());
     private static Logger logger = LoggerFactory.getLogger(DEServlet.class);
 
-    private StartServer() {
-    }
-
     static {
         DefaultMonitorRegistry.getInstance().register(videoCacheHitRate);
         DefaultMonitorRegistry.getInstance().register(channelCacheHitRate);
@@ -56,6 +53,9 @@ final class StartServer {
         DefaultMonitorRegistry.getInstance().register(videoCacheLoadExceptionRate);
         DefaultMonitorRegistry.getInstance().register(videoCacheEvictionCount);
         DefaultMonitorRegistry.getInstance().register(channelCacheEvictionCount);
+    }
+
+    private StartServer() {
     }
 
     public static void main(String[] args) throws Exception {
