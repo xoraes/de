@@ -46,4 +46,6 @@ public class AdUnitResponse extends ItemsResponse {
     private String resizableThumbnailUrl;
     @JsonProperty("type")
     private String contentType = "promoted";
+    @JsonProperty("debug")
+    private String debugInfo;
 }

@@ -57,6 +57,8 @@ public class AdUnit {
     private Integer clicks;
     @JsonProperty("views")
     private Integer views;
+    @JsonProperty("impressions")
+    private Integer impressions;
     @JsonProperty("excluded_categories")
     private List<String> excludedCategories;
     @JsonProperty("devices")

@@ -245,7 +245,6 @@ public class VideoProcessor {
                 .add(FilterBuilders.termFilter(CHANNEL_TIER, GOLD), ScoreFunctionBuilders.weightFactorFunction(goldPartnerWeight.getValue()))
                 .add(FilterBuilders.termFilter(CHANNEL_TIER, SILVER), ScoreFunctionBuilders.weightFactorFunction(silverPartnerWeight.getValue()))
                 .add(FilterBuilders.termFilter(CHANNEL_TIER, BRONZE), ScoreFunctionBuilders.weightFactorFunction(bronzePartnerWeight.getValue()))
-                .add(ScoreFunctionBuilders.randomFunction(sq.getTime()))
                 .boostMode(boostMode.getValue())
                 .maxBoost(maxBoost.getValue())
                 .scoreMode(scoreMode.getValue());

@@ -7,11 +7,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
+import com.netflix.config.DynamicPropertyFactory;
+import com.netflix.config.DynamicStringProperty;
 import com.netflix.servo.DefaultMonitorRegistry;
 import com.netflix.servo.monitor.BasicCounter;
 import com.netflix.servo.monitor.Counter;
 import com.netflix.servo.monitor.MonitorConfig;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.lucene.search.Explanation;
 import org.eclipse.jetty.http.HttpStatus;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.bulk.BulkItemResponse;
@@ -54,6 +57,10 @@ public class AdUnitProcessor {
     // JMX: com.netflix.servo.COUNTER.TotalAdsRequestsServed
     private static final Counter totalAdsRequestsServed = new BasicCounter(MonitorConfig
             .builder("TotalAdsRequestsServed").build());
+    private static final DynamicStringProperty ctrScriptFunction =
+            DynamicPropertyFactory.getInstance().getStringProperty("ctr.script.code", "");
+    private static final DynamicStringProperty ctrScriptLang =
+            DynamicPropertyFactory.getInstance().getStringProperty("ctr.script.lang", "expression");
     private static Client client;
 
     static {
@@ -106,8 +113,11 @@ public class AdUnitProcessor {
                     FilterBuilders.missingFilter("views"),
                     FilterBuilders.scriptFilter("doc['views'].value < doc['goal_views'].value").lang("expression")));
 
+
             QueryBuilder qb = QueryBuilders.functionScoreQuery(fb)
-                    .add(ScoreFunctionBuilders.randomFunction((int) (Math.random() * MAX_RANDOM)));
+                    .add(FilterBuilders.andFilter(FilterBuilders.rangeFilter("clicks").from(0), FilterBuilders.rangeFilter("impressions").from(0)),
+                            ScoreFunctionBuilders.scriptFunction(ctrScriptFunction.getValue()).lang(ctrScriptLang.getValue()))
+                    .add(ScoreFunctionBuilders.fieldValueFactorFunction("cpv"));
 
 
             SearchRequestBuilder srb1 = client.prepareSearch(DeHelper.promotedIndex.get())
@@ -115,6 +125,10 @@ public class AdUnitProcessor {
                     .setSearchType(SearchType.QUERY_AND_FETCH)
                     .setQuery(qb)
                     .setSize(positions * SIZ_MULTIPLIER);
+
+            if (sq.isDebugEnabled()) {
+                srb1.setExplain(true);
+            }
 
             logger.info(srb1.toString());
 
@@ -125,6 +139,14 @@ public class AdUnitProcessor {
             for (SearchHit hit : searchResponse.getHits().getHits()) {
                 try {
                     AdUnitResponse unit = OBJECT_MAPPER.readValue(hit.getSourceAsString(), AdUnitResponse.class);
+                    if (sq.isDebugEnabled()) {
+                        Explanation ex = new Explanation();
+                        ex.setValue(hit.getScore());
+                        ex.setDescription("Source ====>" + hit.getSourceAsString());
+                        ex.addDetail(hit.explanation());
+                        unit.setDebugInfo(ex.toHtml().replace("\n", ""));
+                        logger.info(ex.toString());
+                    }
                     adUnitResponses.add(unit);
                 } catch (IOException e) {
                     throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
@@ -147,8 +169,6 @@ public class AdUnitProcessor {
         if (StringUtils.isBlank(cid)) {
             throw new DeException(new Throwable("no cid provided"), HttpStatus.BAD_REQUEST_400);
         }
-
-
         BoolFilterBuilder fb = FilterBuilders.boolFilter().must(FilterBuilders.termFilter("campaign", cid));
         QueryBuilder qb = QueryBuilders.filteredQuery(null, fb);
         SearchRequestBuilder srb1 = client.prepareSearch(DeHelper.promotedIndex.get())
@@ -334,7 +354,7 @@ public class AdUnitProcessor {
         }
         return adUnits;
     }
-
+    
     private static List<AdUnitResponse> removeDuplicateCampaigns(int positions, List<AdUnitResponse> units) {
         int count = 1;
         Map<String, Integer> m = new HashMap<String, Integer>();
