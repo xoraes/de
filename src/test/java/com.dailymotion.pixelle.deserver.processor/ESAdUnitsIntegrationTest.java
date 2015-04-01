@@ -80,6 +80,7 @@ public class ESAdUnitsIntegrationTest {
         m.put("start_date", "2014-11-01T00:00:00Z");
         m.put("end_date", "2114-11-01T00:00:00Z");
         m.put("resizable_thumbnail_url", "resizable_thumbnail_url");
+        m.put("custom_video_url", "custom_video_url");
         m.put("IGNOREME", "IGNOREME"); //Unknown json should be ignored
         m.put("video_id", "video_id");
         m.put("duration", 123);
@@ -145,6 +146,7 @@ public class ESAdUnitsIntegrationTest {
         Assert.assertTrue(adunit.getTitle().equals("title"));
         Assert.assertTrue(adunit.getDuration() == 123);
         Assert.assertTrue(adunit.getResizableThumbnailUrl().equals("resizable_thumbnail_url"));
+        Assert.assertTrue(adunit.getCustomVideoUrl().equals("custom_video_url"));
         Assert.assertTrue(adunit.getTacticId().equals("1"));
         Assert.assertTrue(adunit.getCpv() == 10);
 
