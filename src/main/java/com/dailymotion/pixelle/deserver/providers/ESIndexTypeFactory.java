@@ -139,10 +139,9 @@ final class ESIndexTypeFactory {
         builder.startObject("goal_period").field("type", "string").field("index", "no").endObject();
         builder.startObject("account").field("type", "string").field("index", "no").endObject();
         builder.startObject("delivery").field("type", "string").field("index", "no").endObject();
-
+        builder.startObject("custom_video_url").field("type", "string").field("index", "no").endObject();
 
         builder.startObject("duration").field("type", "integer").field("index", "no").endObject();
-
         builder.startObject("paused").field("type", "boolean").field("index", "not_analyzed").endObject();
 
         builder.endObject().endObject().endObject();

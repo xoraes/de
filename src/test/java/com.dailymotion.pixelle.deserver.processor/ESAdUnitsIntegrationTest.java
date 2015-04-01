@@ -126,6 +126,7 @@ public class ESAdUnitsIntegrationTest {
         sq.setTime("2014-11-21T01:00:00Z");
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
+        sq.setDebugEnabled(true);
 
         ItemsResponse i = new QueryCommand(sq, 1, "promoted").execute();
         Assert.assertNotNull(i);
@@ -163,6 +164,7 @@ public class ESAdUnitsIntegrationTest {
         sq.setFormat("fmt1");
         sq.setLanguages(new ArrayList<String>(Arrays.asList("EN")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("US")));
+        sq.setDebugEnabled(true);
 
         ItemsResponse i = new QueryCommand(sq, 3, "promoted").execute();
         System.out.println("Response ====>:" + i.toString());
@@ -214,6 +216,7 @@ public class ESAdUnitsIntegrationTest {
         sq.setFormat("fmt1");
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
+        sq.setDebugEnabled(true);
 
         System.out.println("Search Query ====>" + sq.toString());
         ItemsResponse i = new QueryCommand(sq, 10, null).execute();
@@ -242,6 +245,7 @@ public class ESAdUnitsIntegrationTest {
         sq.setFormat("fmt1");
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
+        sq.setDebugEnabled(true);
 
         System.out.println("Search Query ====>" + sq.toString());
         ItemsResponse i = new QueryCommand(sq, 10, null).execute();
@@ -264,6 +268,7 @@ public class ESAdUnitsIntegrationTest {
         sq.setFormat("fmt1");
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
+        sq.setDebugEnabled(true);
 
         System.out.println("Search Query ====>" + sq.toString());
         ItemsResponse i = new QueryCommand(sq, 10, null).execute();
@@ -289,6 +294,7 @@ public class ESAdUnitsIntegrationTest {
         sq.setFormat("fmt1");
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
+        sq.setDebugEnabled(true);
 
         System.out.println("Search Query ====>" + sq.toString());
         ItemsResponse i = new QueryCommand(sq, 10, null).execute();
@@ -323,6 +329,7 @@ public class ESAdUnitsIntegrationTest {
         sq.setFormat("fmt1");
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
+        sq.setDebugEnabled(true);
 
         System.out.println("Search Query ====>" + sq.toString());
         ItemsResponse i = new QueryCommand(sq, 10, null).execute();
@@ -348,12 +355,82 @@ public class ESAdUnitsIntegrationTest {
         sq.setFormat("fmt1");
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
+        sq.setDebugEnabled(true);
 
         System.out.println("Search Query ====>" + sq.toString());
         ItemsResponse i = new QueryCommand(sq, 10, null).execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 2);
+        deleteAdUnitsByIds("1", "2", "3");
+    }
+
+    @Test
+    public void testCpvBoosting() throws Exception {
+        Map m1 = createAdUnitDataMap("1", "1");
+        Map m2 = createAdUnitDataMap("2", "2");
+        Map m3 = createAdUnitDataMap("3", "3");
+        m1.put("cpv", 1);
+        m2.put("cpv", 2);
+        m3.put("cpv", 3);
+        loadAdUnitMaps(m1, m2, m3);
+        SearchQueryRequest sq = new SearchQueryRequest();
+        sq.setTime("2014-12-31T15:00:00-0800");
+        sq.setCategories(new ArrayList(Arrays.asList("cat1")));
+        sq.setDevice("dev1");
+        sq.setFormat("fmt1");
+        sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
+        sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
+        sq.setDebugEnabled(true);
+
+        System.out.println("Search Query ====>" + sq.toString());
+        ItemsResponse i = new QueryCommand(sq, 3, null).execute();
+        System.out.println("Response ====>:" + i.toString());
+        Assert.assertNotNull(i);
+        Assert.assertEquals(3, i.getResponse().size());
+        AdUnitResponse r1 = (AdUnitResponse) i.getResponse().get(0);
+        AdUnitResponse r2 = (AdUnitResponse) i.getResponse().get(1);
+        AdUnitResponse r3 = (AdUnitResponse) i.getResponse().get(2);
+        Assert.assertEquals("3", r1.getCampaignId());
+        Assert.assertEquals("2", r2.getCampaignId());
+        Assert.assertEquals("1", r3.getCampaignId());
+        deleteAdUnitsByIds("1", "2", "3");
+    }
+
+    @Test
+    public void testCtrBoosting() throws Exception {
+        Map m1 = createAdUnitDataMap("1", "1");
+        Map m2 = createAdUnitDataMap("2", "2");
+        Map m3 = createAdUnitDataMap("3", "3");
+
+        m1.put("clicks", 1.0);
+        m1.put("impressions", 10.0);
+        m2.put("clicks", 2.0);
+        m2.put("impressions", 10.0);
+        m3.put("clicks", 3.0);
+        m3.put("impressions", 10.0);
+        loadAdUnitMaps(m1, m2, m3);
+
+        SearchQueryRequest sq = new SearchQueryRequest();
+        sq.setTime("2014-12-31T15:00:00-0800");
+        sq.setCategories(new ArrayList(Arrays.asList("cat1")));
+        sq.setDevice("dev1");
+        sq.setFormat("fmt1");
+        sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
+        sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
+        sq.setDebugEnabled(true);
+
+        System.out.println("Search Query ====>" + sq.toString());
+        ItemsResponse i = new QueryCommand(sq, 3, null).execute();
+        System.out.println("Response ====>:" + i.toString());
+        Assert.assertNotNull(i);
+        Assert.assertEquals(3, i.getResponse().size());
+        AdUnitResponse r1 = (AdUnitResponse) i.getResponse().get(0);
+        AdUnitResponse r2 = (AdUnitResponse) i.getResponse().get(1);
+        AdUnitResponse r3 = (AdUnitResponse) i.getResponse().get(2);
+        Assert.assertEquals("3", r1.getCampaignId());
+        Assert.assertEquals("2", r2.getCampaignId());
+        Assert.assertEquals("1", r3.getCampaignId());
         deleteAdUnitsByIds("1", "2", "3");
     }
 }

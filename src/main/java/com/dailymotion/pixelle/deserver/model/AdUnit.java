@@ -85,6 +85,8 @@ public class AdUnit {
     private String delivery;
     @JsonProperty("resizable_thumbnail_url")
     private String resizableThumbnailUrl;
+    @JsonProperty("custom_video_url")
+    private String customVideoUrl;
     @JsonProperty("paused")
     private Boolean paused;
 }

@@ -46,6 +46,8 @@ public class AdUnitResponse extends ItemsResponse {
     private String resizableThumbnailUrl;
     @JsonProperty("type")
     private String contentType = "promoted";
+    @JsonProperty("custom_video_url")
+    private String customVideoUrl;
     @JsonProperty("debug")
     private String debugInfo;
 }
