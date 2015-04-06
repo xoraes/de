@@ -283,11 +283,17 @@ public class DEProcessor {
             // Incrment counter to track this globally
             Map<String, Integer> impressionHistory = sq.getImpressionHistory();
             if (impressionHistory != null && impressionHistory.size() != 0) {
+                List<String> exList = new ArrayList<>();
                 for (Map.Entry<String, Integer> entry : impressionHistory.entrySet()) {
                     if (entry.getValue() > DeHelper.maxImpressions.get()) {
-                        sq.getExcludedAds().add(entry.getKey());
+                        exList.add(entry.getKey());
                         maxImpressionThreshhold.increment();
                     }
+                }
+                if (!DeHelper.isEmptyList(sq.getExcludedAds())) {
+                    sq.getExcludedAds().addAll(exList);
+                } else {
+                    sq.setExcludedAds(exList);
                 }
             }
         }

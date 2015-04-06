@@ -21,17 +21,13 @@ import org.eclipse.jetty.jmx.MBeanContainer;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.LowResourceMonitor;
-import org.eclipse.jetty.server.NCSARequestLog;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.handler.RequestLogHandler;
 import org.eclipse.jetty.server.handler.StatisticsHandler;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
-
-
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.glassfish.hk2.api.ServiceLocator;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
@@ -128,7 +124,7 @@ final class StartServer {
         server.setStopAtShutdown(true);
 
         // jmx
-        MBeanContainer mbContainer=new MBeanContainer(ManagementFactory.getPlatformMBeanServer());
+        MBeanContainer mbContainer = new MBeanContainer(ManagementFactory.getPlatformMBeanServer());
         server.addEventListener(mbContainer);
         server.addBean(mbContainer);
 
@@ -169,7 +165,7 @@ final class StartServer {
 
 
         // === jetty-lowresources.xml ===
-        LowResourceMonitor lowResourcesMonitor=new LowResourceMonitor(server);
+        LowResourceMonitor lowResourcesMonitor = new LowResourceMonitor(server);
         lowResourcesMonitor.setPeriod(1000);
         lowResourcesMonitor.setLowResourcesIdleTimeout(200);
         lowResourcesMonitor.setMonitorThreads(true);
