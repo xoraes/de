@@ -11,6 +11,8 @@ import com.dailymotion.pixelle.deserver.processor.hystrix.ChannelQueryCommand;
 import com.dailymotion.pixelle.deserver.processor.hystrix.VideoQueryCommand;
 import com.google.inject.Inject;
 import com.netflix.servo.DefaultMonitorRegistry;
+import com.netflix.servo.monitor.BasicCounter;
+import com.netflix.servo.monitor.Counter;
 import com.netflix.servo.monitor.LongGauge;
 import com.netflix.servo.monitor.MonitorConfig;
 import com.netflix.servo.monitor.StatsTimer;
@@ -27,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -42,6 +45,8 @@ public class DEProcessor {
     private static final StatsTimer channelWidgetTimer = new StatsTimer(MonitorConfig.builder("myWidgetTimerQuery_statsTimer").build(), new StatsConfig.Builder().withPublishMean(true).build());
     private static final LongGauge videoCount = new LongGauge(MonitorConfig.builder("numVideos_gauge").build());
     private static final LongGauge adunitCount = new LongGauge(MonitorConfig.builder("numadUnits_gauge").build());
+    private static final Counter maxImpressionThreshhold = new BasicCounter(MonitorConfig
+            .builder("UserCrossedMaxImpressionThreshhold").build());
     private static Client client;
 
     static {
@@ -51,6 +56,7 @@ public class DEProcessor {
         DefaultMonitorRegistry.getInstance().register(channelWidgetTimer);
         DefaultMonitorRegistry.getInstance().register(videoCount);
         DefaultMonitorRegistry.getInstance().register(adunitCount);
+        DefaultMonitorRegistry.getInstance().register(maxImpressionThreshhold);
     }
 
     @Inject
@@ -271,6 +277,18 @@ public class DEProcessor {
             }
             if (StringUtils.isBlank(sq.getTime())) {
                 sq.setTime(DeHelper.timeToISO8601String(DeHelper.currentUTCTime()));
+            }
+            // add the adunit to excluded list if the user has already gotten a "lot"
+            // of impressions. "Lot" is defined globally visible and defined value.
+            // Incrment counter to track this globally
+            Map<String, Integer> impressionHistory = sq.getImpressionHistory();
+            if (impressionHistory != null && impressionHistory.size() != 0) {
+                for (Map.Entry<String, Integer> entry : impressionHistory.entrySet()) {
+                    if (entry.getValue() > DeHelper.maxImpressions.get()) {
+                        sq.getExcludedAds().add(entry.getKey());
+                        maxImpressionThreshhold.increment();
+                    }
+                }
             }
         }
         return sq;

@@ -39,6 +39,9 @@ public final class DeHelper {
             DynamicPropertyFactory.getInstance().getIntProperty("adunits.retryOnConflict", 5);
     public static final DynamicIntProperty retryOnConflictVideos =
             DynamicPropertyFactory.getInstance().getIntProperty("videos.retryOnConflict", 5);
+    public static final DynamicIntProperty maxImpressions =
+            DynamicPropertyFactory.getInstance().getIntProperty("impressions.max", 10);
+
     public static final DynamicIntProperty dePort =
             DynamicPropertyFactory.getInstance().getIntProperty("port", 8080);
     private static final String DATETIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ssZ";

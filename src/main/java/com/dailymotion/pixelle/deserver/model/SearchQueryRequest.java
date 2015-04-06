@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by n.dhupia on 10/29/14.
@@ -36,11 +37,16 @@ public class SearchQueryRequest {
     private String browser;
     @JsonProperty("channel")
     private String channel;
+    @JsonProperty("impression_history")
+    private Map<String, Integer> impressionHistory;
     @JsonIgnore
     private String timeTable;
     @JsonIgnore
     private boolean debugEnabled;
     @JsonIgnore
     private List<String> excludedIds;
+    @JsonIgnore
+    private List<String> excludedAds;
+
 }
 

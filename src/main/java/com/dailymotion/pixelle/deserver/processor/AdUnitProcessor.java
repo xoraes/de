@@ -51,7 +51,6 @@ import java.util.Map;
 public class AdUnitProcessor {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final Integer MAX_YEARS = 100;
-    private static final Integer MAX_RANDOM = 100;
     private static final Integer SIZ_MULTIPLIER = 4;
     private static final Logger logger = LoggerFactory.getLogger(AdUnitProcessor.class);
     // JMX: com.netflix.servo.COUNTER.TotalAdsRequestsServed
@@ -108,7 +107,12 @@ public class AdUnitProcessor {
             if (!DeHelper.isEmptyList(sq.getCategories())) {
                 fb.mustNot(FilterBuilders.termsFilter("excluded_categories", DeHelper.toLowerCase(sq.getCategories())));
             }
-
+            List<String> excludedAds = sq.getExcludedAds();
+            if (!DeHelper.isEmptyList(sq.getExcludedAds())) {
+                for (String id : excludedAds) {
+                    fb.mustNot(FilterBuilders.termsFilter("_id", id));
+                }
+            }
             fb.must(FilterBuilders.orFilter(FilterBuilders.missingFilter("goal_views"),
                     FilterBuilders.missingFilter("views"),
                     FilterBuilders.scriptFilter("doc['views'].value < doc['goal_views'].value").lang("expression")));
@@ -157,7 +161,14 @@ public class AdUnitProcessor {
 
         }
         if (DeHelper.isEmptyList(adUnitResponses)) {
-            logger.info("No ads returned =======> " + (sq != null ? sq.toString() : null));
+            //instead of returning no ads, return something even excluded-ad
+            if (!DeHelper.isEmptyList(sq.getExcludedAds())) {
+                sq.setExcludedAds(null);
+                return recommend(sq, positions);
+            } else {
+                logger.info("No ads returned =======> " + (sq != null ? sq.toString() : null));
+            }
+
         } else {
             logger.info("Success =======> " + (adUnitResponses != null ? adUnitResponses.toString() : null));
             totalAdsRequestsServed.increment();
