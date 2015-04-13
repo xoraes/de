@@ -207,7 +207,7 @@ public class AdUnitProcessor {
         if (unit == null) {
             throw new DeException(new Throwable("no adunit found in request body"), HttpStatus.BAD_REQUEST_400);
         }
-        updateAdUnit(modifyAdUnitForInsert(unit));
+        updateAdUnit(modifyAdUnitForInsert(unit), true);
     }
 
     private static AdUnit modifyAdUnitForInsert(AdUnit unit) {
@@ -259,15 +259,14 @@ public class AdUnitProcessor {
         return unit;
     }
 
-    public static void updateAdUnit(AdUnit unit) throws DeException {
+    public static void updateAdUnit(AdUnit unit, boolean enableUpsert) throws DeException {
         if (unit == null) {
-            throw new DeException(new Throwable("no adunit found in request body"), HttpStatus.BAD_REQUEST_400);
+            throw new DeException(new Throwable("no adunit found in request"), HttpStatus.BAD_REQUEST_400);
         }
-
         try {
             client.prepareUpdate(DeHelper.promotedIndex.get(), DeHelper.adunitsType.get(), unit.getId())
                     .setDoc(OBJECT_MAPPER.writeValueAsString(unit))
-                    .setDocAsUpsert(true)
+                    .setDocAsUpsert(enableUpsert)
                     .setRetryOnConflict(DeHelper.retryOnConflictAdUnits.get())
                     .execute()
                     .actionGet();
