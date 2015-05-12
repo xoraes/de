@@ -117,7 +117,6 @@ public class AdUnitProcessor {
                     FilterBuilders.missingFilter("views"),
                     FilterBuilders.scriptFilter("doc['views'].value < doc['goal_views'].value").lang("expression")));
 
-
             QueryBuilder qb = QueryBuilders.functionScoreQuery(fb)
                     .add(FilterBuilders.andFilter(FilterBuilders.rangeFilter("clicks").from(0), FilterBuilders.rangeFilter("impressions").from(0)),
                             ScoreFunctionBuilders.scriptFunction(ctrScriptFunction.getValue()).lang(ctrScriptLang.getValue()))
@@ -313,7 +312,6 @@ public class AdUnitProcessor {
                 if (br.isFailed()) {
                     logger.error(br.getFailureMessage());
                 }
-
             }
             // process failures by iterating through each bulk response item
             throw new DeException(new Throwable("Error inserting adunits in Bulk"), HttpStatus.INTERNAL_SERVER_ERROR_500);
