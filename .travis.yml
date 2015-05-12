@@ -2,7 +2,7 @@ language: java
 jdk:
 - oraclejdk8
 script:
-- ./gradlew -q check jar de distTar
+- ./gradlew -q check jar de distZip
 after_script:
 - test -f ./build/libs/de.jar
 - test -f ./build/libs/pxl-deserver.jar
