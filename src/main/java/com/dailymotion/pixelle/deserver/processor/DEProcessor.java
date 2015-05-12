@@ -118,11 +118,8 @@ public class DEProcessor {
                 && StringUtils.containsIgnoreCase(allowedTypes, "channel")) {
             stopwatch = channelWidgetTimer.start();
             try {
-                Future<List<AdUnitResponse>> adsFuture;
-                Future<List<VideoResponse>> targetedVideosFuture;
-
-                adsFuture = new AdQueryCommand(sq, positions).queue();
-                targetedVideosFuture = new ChannelQueryCommand(sq, positions).queue();
+                Future<List<AdUnitResponse>> adsFuture = new AdQueryCommand(sq, positions).queue();
+                Future<List<VideoResponse>> targetedVideosFuture = new ChannelQueryCommand(sq, positions).queue();
 
                 try {
                     ads = adsFuture.get();

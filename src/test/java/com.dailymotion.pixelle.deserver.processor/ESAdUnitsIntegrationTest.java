@@ -437,6 +437,82 @@ public class ESAdUnitsIntegrationTest {
     }
 
     @Test
+    public void testCpvAndCtrCombinedBoosting() throws Exception {
+        Map m1 = createAdUnitDataMap("1", "1");
+        Map m2 = createAdUnitDataMap("2", "2");
+        Map m3 = createAdUnitDataMap("3", "3");
+        Map m4 = createAdUnitDataMap("4", "4");
+        Map m5 = createAdUnitDataMap("5", "5");
+        Map m6 = createAdUnitDataMap("6", "6");
+        Map m7 = createAdUnitDataMap("7", "7");
+        Map m8 = createAdUnitDataMap("8", "8");
+        Map m9 = createAdUnitDataMap("9", "9");
+
+        m1.put("cpv", 10);
+        m2.put("cpv", 10);
+        m3.put("cpv", 10);
+        m4.put("cpv", 4);
+        m5.put("cpv", 5);
+        m6.put("cpv", 13);
+        m7.put("cpv", 13);
+        m8.put("cpv", 1);
+        m9.put("cpv", 13);
+
+        m1.put("clicks", 50.0);
+        m1.put("impressions", 10000.0);
+
+        m2.put("clicks", 58.0);
+        m2.put("impressions", 10000.0);
+
+        m3.put("clicks", 48.0);
+        m3.put("impressions", 10000.0);
+
+
+        m4.put("clicks", 47.0);
+        m4.put("impressions", 10000.0);
+
+        m5.put("clicks", 58.0);
+        m5.put("impressions", 10000.0);
+
+        m6.put("clicks", 47.0);
+        m6.put("impressions", 10000.0);
+
+        m7.put("clicks", 41.0);
+        m7.put("impressions", 10000.0);
+
+        m8.put("clicks", 105.0);
+        m8.put("impressions", 10000.0);
+
+        m9.put("clicks", 55.0);
+        m9.put("impressions", 10000.0);
+
+
+        loadAdUnitMaps(m1, m2, m3, m4, m5, m6, m7, m8, m9);
+        SearchQueryRequest sq = new SearchQueryRequest();
+        sq.setTime("2014-12-31T15:00:00-0800");
+        sq.setCategories(new ArrayList(Arrays.asList("cat1")));
+        sq.setDevice("dev1");
+        sq.setFormat("fmt1");
+        sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
+        sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
+        sq.setDebugEnabled(true);
+
+        System.out.println("Search Query ====>" + sq.toString());
+        ItemsResponse i = new QueryCommand(sq, 3, null).execute();
+        System.out.println("Response ====>:" + i.toString());
+        Assert.assertNotNull(i);
+        Assert.assertEquals(3, i.getResponse().size());
+        AdUnitResponse r1 = (AdUnitResponse) i.getResponse().get(0);
+        AdUnitResponse r2 = (AdUnitResponse) i.getResponse().get(1);
+        AdUnitResponse r3 = (AdUnitResponse) i.getResponse().get(2);
+        Assert.assertEquals("9", r1.getCampaignId());
+        Assert.assertEquals("6", r2.getCampaignId());
+        Assert.assertEquals("2", r3.getCampaignId());
+        deleteAdUnitsByIds("1", "2", "3", "4", "5", "6", "7", "8", "9");
+    }
+
+
+    @Test
     public void testImpressionHistory() throws Exception {
         Map m1 = createAdUnitDataMap("1", "1");
         Map m2 = createAdUnitDataMap("2", "2");
