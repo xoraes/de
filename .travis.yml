@@ -11,25 +11,26 @@ cache:
   directories:
   - $HOME/.gradle/caches/
 deploy:
-  provider: s3
-  access_key_id: AKIAIEGAQ4U2PGZGBKEQ
-  secret_access_key:
-    secure: x9vI4iSwXLgYH02uoJnXZEJqgvDqXq/ZvlIA+aaVheNr33YbqLv5bKhmw2BOHgVWLUiwL53QgQI3jkfXJ6vMmZka7fwqkEd8s2iea4RYzpfi1J0EVs7LdyzKJdKkZbnuYzghApvk8/0gtvB7ymfFMm3LXCWD2TIyHJjSyKNNgwI=
-  bucket: pixelle-salt/s3/pixelle-de/dev
-  acl: private
-  skip_cleanup: true
-  local-dir: ./build/distributions/
-  on:
-    repo: dailymotion/pixelle-de
-    branch: master
-  provider: s3
-  access_key_id: AKIAIEGAQ4U2PGZGBKEQ
-  secret_access_key:
-    secure: x9vI4iSwXLgYH02uoJnXZEJqgvDqXq/ZvlIA+aaVheNr33YbqLv5bKhmw2BOHgVWLUiwL53QgQI3jkfXJ6vMmZka7fwqkEd8s2iea4RYzpfi1J0EVs7LdyzKJdKkZbnuYzghApvk8/0gtvB7ymfFMm3LXCWD2TIyHJjSyKNNgwI=
-  bucket: pixelle-salt/s3/pixelle-de/prod
-  acl: private
-  skip_cleanup: true
-  local-dir: ./build/distributions/
-  on:
-    repo: dailymotion/pixelle-de
-    branch: prod
+  - provider: s3
+    access_key_id: AKIAIEGAQ4U2PGZGBKEQ
+    secret_access_key:
+      secure: x9vI4iSwXLgYH02uoJnXZEJqgvDqXq/ZvlIA+aaVheNr33YbqLv5bKhmw2BOHgVWLUiwL53QgQI3jkfXJ6vMmZka7fwqkEd8s2iea4RYzpfi1J0EVs7LdyzKJdKkZbnuYzghApvk8/0gtvB7ymfFMm3LXCWD2TIyHJjSyKNNgwI=
+    bucket: pixelle-salt/s3/pixelle-de/dev
+    acl: private
+    skip_cleanup: true
+    local-dir: ./build/distributions/
+    on:
+      repo: dailymotion/pixelle-de
+      branch: master
+
+  - provider: s3
+    access_key_id: AKIAIEGAQ4U2PGZGBKEQ
+    secret_access_key:
+      secure: x9vI4iSwXLgYH02uoJnXZEJqgvDqXq/ZvlIA+aaVheNr33YbqLv5bKhmw2BOHgVWLUiwL53QgQI3jkfXJ6vMmZka7fwqkEd8s2iea4RYzpfi1J0EVs7LdyzKJdKkZbnuYzghApvk8/0gtvB7ymfFMm3LXCWD2TIyHJjSyKNNgwI=
+    bucket: pixelle-salt/s3/pixelle-de/prod
+    acl: private
+    skip_cleanup: true
+    local-dir: ./build/distributions/
+    on:
+      repo: dailymotion/pixelle-de
+      branch: prod
