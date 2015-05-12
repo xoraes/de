@@ -33,6 +33,8 @@ public class ChannelVideo {
     private String ownerId;
     @JsonProperty("owner.username")
     private String ownerUsername;
+    @JsonProperty("owner.screenname")
+    private String ownerScreenName;
     @JsonProperty("thumbnail_url")
     private String thumbnailUrl;
     @JsonProperty("title")

@@ -109,6 +109,7 @@ public class ChannelProcessor extends VideoProcessor {
                 VideoResponse videoResponse = new VideoResponse();
                 videoResponse.setChannel(videos.get(i).getChannel());
                 videoResponse.setChannelId(videos.get(i).getChannelId());
+                videoResponse.setChannelName(videos.get(i).getChannelName());
                 videoResponse.setDescription(videos.get(i).getDescription());
                 videoResponse.setTitle(videos.get(i).getTitle());
                 videoResponse.setResizableThumbnailUrl(videos.get(i).getResizableThumbnailUrl());
@@ -154,6 +155,7 @@ public class ChannelProcessor extends VideoProcessor {
                 video.setPublicationDate(dt.toString(df));
                 video.setChannel(channelVideo.getOwnerUsername());
                 video.setChannelId(channelVideo.getOwnerId());
+                video.setChannelName(channelVideo.getOwnerScreenName());
                 video.setCategories(Arrays.asList(channelVideo.getChannel()));
                 video.setTags(channelVideo.getTags());
                 video.setId(channelVideo.getVideoId());

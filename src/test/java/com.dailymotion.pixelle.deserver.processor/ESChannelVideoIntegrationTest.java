@@ -150,18 +150,16 @@ public class ESChannelVideoIntegrationTest {
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 1);
         VideoResponse video = (VideoResponse) i.getResponse().get(0);
-        System.out.println("Video" + video.toString());
+        System.out.println(video.toString());
         Assert.assertNotNull(video.getVideoId());
         Assert.assertNotNull(video.getChannel());
         Assert.assertNotNull(video.getChannelId());
-
+        Assert.assertNotNull(video.getChannelName());
         Assert.assertNotNull(video.getContentType());
         Assert.assertNotNull(video.getDescription());
         Assert.assertNotNull(video.getTitle());
         Assert.assertNotNull(video.getDuration());
         Assert.assertNotNull(video.getResizableThumbnailUrl());
-
-
     }
 
 
