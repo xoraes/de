@@ -6,7 +6,7 @@ script:
 after_script:
 - test -f ./build/libs/de.jar
 - test -f ./build/libs/pxl-deserver.jar
-- test -f ./build/distributions/de.tar
+- test -f ./build/distributions/de.zip
 cache:
   directories:
   - $HOME/.gradle/caches/
