@@ -1,39 +1,35 @@
 language: java
 jdk:
 - oraclejdk8
-
 script:
 - ./gradlew -q check jar de distTar
-
 after_script:
 - test -f ./build/libs/de.jar
 - test -f ./build/libs/pxl-deserver.jar
 - test -f ./build/distributions/de.tar
-
 cache:
   directories:
   - $HOME/.gradle/caches/
-
 deploy:
-  - provider: s3
-    access_key_id: AKIAIEGAQ4U2PGZGBKEQ
-    secret_access_key:
-      secure: iuZ/GyhhpK3h4vcqK1Xpw+fTbMQi7JN6i9TMuQ4PvZQV4YCjYv8yIhYNvWdHjj3pcSHXAsnvBfR93nCY6LUfcQ5J8GWdlLjjSAqBLxZI9Vqu8pxw3RdqpKvkxS81gaTab5pw3hb7N/cwfJxPpoj9ZdFfnj1+XRagVu6SQ/1g3+w=
-    bucket: pixelle-salt/s3/pixelle-de/dev
-    acl: private
-    skip_cleanup: true
-    local-dir: ./build/distributions/
-    on:
-      repo: dailymotion/pixelle-de
-      branch: master
-  - provider: s3
-    access_key_id: AKIAIEGAQ4U2PGZGBKEQ
-    secret_access_key:
-      secure: iuZ/GyhhpK3h4vcqK1Xpw+fTbMQi7JN6i9TMuQ4PvZQV4YCjYv8yIhYNvWdHjj3pcSHXAsnvBfR93nCY6LUfcQ5J8GWdlLjjSAqBLxZI9Vqu8pxw3RdqpKvkxS81gaTab5pw3hb7N/cwfJxPpoj9ZdFfnj1+XRagVu6SQ/1g3+w=
-    bucket: pixelle-salt/s3/pixelle-de/prod
-    local-dir: ./build/distributions/
-    acl: private
-    skip_cleanup: true
-    on:
-      repo: dailymotion/pixelle-de
-      branch: prod
+  provider: s3
+  access_key_id: AKIAIEGAQ4U2PGZGBKEQ
+  secret_access_key:
+    secure: x9vI4iSwXLgYH02uoJnXZEJqgvDqXq/ZvlIA+aaVheNr33YbqLv5bKhmw2BOHgVWLUiwL53QgQI3jkfXJ6vMmZka7fwqkEd8s2iea4RYzpfi1J0EVs7LdyzKJdKkZbnuYzghApvk8/0gtvB7ymfFMm3LXCWD2TIyHJjSyKNNgwI=
+  bucket: pixelle-salt/s3/pixelle-de/dev
+  acl: private
+  skip_cleanup: true
+  local-dir: ./build/distributions/
+  on:
+    repo: dailymotion/pixelle-de
+    branch: master
+  provider: s3
+  access_key_id: AKIAIEGAQ4U2PGZGBKEQ
+  secret_access_key:
+    secure: x9vI4iSwXLgYH02uoJnXZEJqgvDqXq/ZvlIA+aaVheNr33YbqLv5bKhmw2BOHgVWLUiwL53QgQI3jkfXJ6vMmZka7fwqkEd8s2iea4RYzpfi1J0EVs7LdyzKJdKkZbnuYzghApvk8/0gtvB7ymfFMm3LXCWD2TIyHJjSyKNNgwI=
+  bucket: pixelle-salt/s3/pixelle-de/prod
+  acl: private
+  skip_cleanup: true
+  local-dir: ./build/distributions/
+  on:
+    repo: dailymotion/pixelle-de
+    branch: prod
