@@ -19,7 +19,7 @@ deploy:
     access_key_id: AKIAIEGAQ4U2PGZGBKEQ
     secret_access_key:
       secure: iuZ/GyhhpK3h4vcqK1Xpw+fTbMQi7JN6i9TMuQ4PvZQV4YCjYv8yIhYNvWdHjj3pcSHXAsnvBfR93nCY6LUfcQ5J8GWdlLjjSAqBLxZI9Vqu8pxw3RdqpKvkxS81gaTab5pw3hb7N/cwfJxPpoj9ZdFfnj1+XRagVu6SQ/1g3+w=
-    bucket: pixelle-salt/s3/pixelle-de-java/dev
+    bucket: pixelle-salt/s3/pixelle-de/dev
     acl: private
     skip_cleanup: true
     local-dir: ./build/distributions/
@@ -30,7 +30,7 @@ deploy:
     access_key_id: AKIAIEGAQ4U2PGZGBKEQ
     secret_access_key:
       secure: iuZ/GyhhpK3h4vcqK1Xpw+fTbMQi7JN6i9TMuQ4PvZQV4YCjYv8yIhYNvWdHjj3pcSHXAsnvBfR93nCY6LUfcQ5J8GWdlLjjSAqBLxZI9Vqu8pxw3RdqpKvkxS81gaTab5pw3hb7N/cwfJxPpoj9ZdFfnj1+XRagVu6SQ/1g3+w=
-    bucket: pixelle-salt/s3/pixelle-de-java/prod
+    bucket: pixelle-salt/s3/pixelle-de/prod
     local-dir: ./build/distributions/
     acl: private
     skip_cleanup: true
