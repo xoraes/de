@@ -9,6 +9,6 @@ import feign.RequestLine;
  */
 
 public interface DMApiService {
-    @RequestLine("GET /user/{channel}/videos?fields=id,3d,ads,allow_embed,channel,created_time,updated_time,description,duration,explicit,geoblocking,language,mediablocking,mode,owner.id,owner.username,published,status,tags,thumbnail_url,title,&sort=recent&limit=100")
+    @RequestLine("GET /user/{channel}/videos?fields=id,3d,ads,allow_embed,channel,created_time,updated_time,description,duration,explicit,geoblocking,language,mediablocking,mode,owner.id,owner.username,published,status,tags,thumbnail_url,title,&sort=trending&limit=25")
     ChannelVideos getVideos(@Param("channel") String channelId);
 }
