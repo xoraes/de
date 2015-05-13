@@ -448,7 +448,7 @@ public class ESAdUnitsIntegrationTest {
         Map m8 = createAdUnitDataMap("8", "8");
         Map m9 = createAdUnitDataMap("9", "9");
 
-        m1.put("cpv", 10);
+        m1.put("cpv", 20);
         m2.put("cpv", 10);
         m3.put("cpv", 10);
         m4.put("cpv", 4);
@@ -458,7 +458,7 @@ public class ESAdUnitsIntegrationTest {
         m8.put("cpv", 1);
         m9.put("cpv", 13);
 
-        m1.put("clicks", 50.0);
+        m1.put("clicks", 40.0);
         m1.put("impressions", 10000.0);
 
         m2.put("clicks", 58.0);
@@ -505,9 +505,9 @@ public class ESAdUnitsIntegrationTest {
         AdUnitResponse r1 = (AdUnitResponse) i.getResponse().get(0);
         AdUnitResponse r2 = (AdUnitResponse) i.getResponse().get(1);
         AdUnitResponse r3 = (AdUnitResponse) i.getResponse().get(2);
-        Assert.assertEquals("9", r1.getCampaignId());
-        Assert.assertEquals("6", r2.getCampaignId());
-        Assert.assertEquals("2", r3.getCampaignId());
+        Assert.assertEquals("1", r1.getCampaignId());
+        Assert.assertEquals("9", r2.getCampaignId());
+        Assert.assertEquals("6", r3.getCampaignId());
         deleteAdUnitsByIds("1", "2", "3", "4", "5", "6", "7", "8", "9");
     }
 

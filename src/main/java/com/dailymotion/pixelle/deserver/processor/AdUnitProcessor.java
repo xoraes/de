@@ -120,7 +120,7 @@ public class AdUnitProcessor {
             QueryBuilder qb = QueryBuilders.functionScoreQuery(fb)
                     .add(FilterBuilders.andFilter(FilterBuilders.rangeFilter("clicks").from(0), FilterBuilders.rangeFilter("impressions").from(0)),
                             ScoreFunctionBuilders.scriptFunction(ctrScriptFunction.getValue()).lang(ctrScriptLang.getValue()))
-                    .add(ScoreFunctionBuilders.fieldValueFactorFunction("cpv"));
+                    .add(ScoreFunctionBuilders.fieldValueFactorFunction("cpv").setWeight(2.0f));
 
 
             SearchRequestBuilder srb1 = client.prepareSearch(DeHelper.promotedIndex.get())
