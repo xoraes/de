@@ -127,7 +127,9 @@ public class ChannelProcessor extends VideoProcessor {
         if (StringUtils.isBlank(thumbnailUrl)) {
             return thumbnailUrl;
         }
-        String id = thumbnailUrl.substring(thumbnailUrl.lastIndexOf("/") + 1, thumbnailUrl.lastIndexOf("."));
+        // sample url string: http://s1.dmcdn.net/KatPf.jpg
+        // id includes id + extension such as this
+        String id = thumbnailUrl.substring(thumbnailUrl.lastIndexOf("/") + 1);
         if (StringUtils.isBlank(id)) {
             return null;
         }
