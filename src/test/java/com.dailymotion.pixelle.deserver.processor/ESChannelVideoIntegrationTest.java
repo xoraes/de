@@ -13,6 +13,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.netflix.config.ConfigurationManager;
+import com.netflix.hystrix.exception.HystrixBadRequestException;
 import org.elasticsearch.client.Client;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -104,7 +105,7 @@ public class ESChannelVideoIntegrationTest {
         return m;
     }
 
-    private static void deleteVideosByIds(String... ids) {
+    private static void deleteVideosByIds(String... ids) throws DeException {
         for (String id : ids) {
             System.out.println("Deleting Video Id: " + id);
             Assert.assertTrue(DEProcessor.deleteById(DeHelper.channelIndex.get(), DeHelper.videosType.get(), id));
@@ -162,6 +163,13 @@ public class ESChannelVideoIntegrationTest {
         Assert.assertNotNull(video.getResizableThumbnailUrl());
     }
 
+    @Test(expected = HystrixBadRequestException.class)
+    public void testDmApiCallWithInvalidChannel() throws DeException {
+        SearchQueryRequest sq = new SearchQueryRequest();
+        sq.setChannel("12o301927312hkjadkjhaskdj");
+        ItemsResponse i = new QueryCommand(sq, 1, "promoted,channel").execute();
+    }
+
 
     @Test
     public void testGetAdsAndVideos() throws Exception {
@@ -187,8 +195,7 @@ public class ESChannelVideoIntegrationTest {
         ItemsResponse i = new QueryCommand(sq, 3, "promoted,channel").execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
-        System.out.println(i.getResponse().get(2).getClass().getName());
-        Assert.assertTrue(i.getResponse().size() == 3);
+        Assert.assertEquals(3, i.getResponse().size());
         Assert.assertTrue(i.getResponse().get(2).getClass().getCanonicalName().contains("AdUnit"));
 
         deleteVideosByIds("1", "2", "3");

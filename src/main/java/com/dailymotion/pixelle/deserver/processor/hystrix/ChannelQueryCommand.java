@@ -9,6 +9,7 @@ import com.netflix.hystrix.HystrixCommand;
 import com.netflix.hystrix.HystrixCommandGroupKey;
 import com.netflix.hystrix.HystrixCommandKey;
 import com.netflix.hystrix.HystrixCommandProperties;
+import com.netflix.hystrix.exception.HystrixBadRequestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +40,15 @@ public class ChannelQueryCommand extends HystrixCommand<List<VideoResponse>> {
 
     @Override
     protected List<VideoResponse> run() throws Exception {
-        return ChannelProcessor.recommend(sq, positions);
+        List<VideoResponse> vrl = null;
+        try {
+            vrl = ChannelProcessor.recommendChannel(sq, positions);
+        } catch (Exception e) {
+            if (e.getCause() instanceof HystrixBadRequestException) {
+                throw new HystrixBadRequestException(e.getMessage(), e.getCause());
+            }
+            throw e;
+        }
+        return vrl;
     }
 }

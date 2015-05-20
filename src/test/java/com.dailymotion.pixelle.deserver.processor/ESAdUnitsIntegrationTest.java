@@ -110,7 +110,7 @@ public class ESAdUnitsIntegrationTest {
         Thread.sleep(2000);
     }
 
-    public static void deleteAdUnitsByIds(String... ids) {
+    public static void deleteAdUnitsByIds(String... ids) throws DeException {
         for (String id : ids) {
             Assert.assertTrue(DEProcessor.deleteById(DeHelper.promotedIndex.get(), DeHelper.adunitsType.get(), id));
         }

@@ -1,7 +1,9 @@
 package com.dailymotion.pixelle.deserver.providers;
 
+import com.dailymotion.pixelle.deserver.processor.DeException;
 import com.dailymotion.pixelle.deserver.processor.DeHelper;
 import com.google.inject.Provider;
+import com.google.inject.ProvisionException;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.slf4j.Logger;
@@ -55,9 +57,14 @@ public final class ESTestNodeClientProvider implements Provider<Client> {
         }
 
 
-        ESIndexTypeFactory.createIndex(client, DeHelper.promotedIndex.get(), elasticsearchSettings.build(), DeHelper.adunitsType.get());
-        ESIndexTypeFactory.createIndex(client, DeHelper.organicIndex.get(), elasticsearchSettings.build(), DeHelper.videosType.get());
-        ESIndexTypeFactory.createIndex(client, DeHelper.channelIndex.get(), elasticsearchSettings.build(), DeHelper.videosType.get());
+        try {
+            ESIndexTypeFactory.createIndex(client, DeHelper.promotedIndex.get(), elasticsearchSettings.build(), DeHelper.adunitsType.get());
+            ESIndexTypeFactory.createIndex(client, DeHelper.organicIndex.get(), elasticsearchSettings.build(), DeHelper.videosType.get());
+            ESIndexTypeFactory.createIndex(client, DeHelper.channelIndex.get(), elasticsearchSettings.build(), DeHelper.videosType.get());
+        } catch (DeException e) {
+            logger.error(e.getMessage());
+            throw new ProvisionException(e.getMessage());
+        }
         return client;
     }
 }

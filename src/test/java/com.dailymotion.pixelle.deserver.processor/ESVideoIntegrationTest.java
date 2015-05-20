@@ -50,7 +50,7 @@ public class ESVideoIntegrationTest {
         });
     }
 
-    private static void deleteVideosByIds(String... ids) {
+    private static void deleteVideosByIds(String... ids) throws DeException {
         for (String id : ids) {
             Assert.assertTrue(DEProcessor.deleteById(DeHelper.organicIndex.get(), DeHelper.videosType.get(), id));
         }

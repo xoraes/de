@@ -47,19 +47,25 @@ public class CacheService {
                         public List<Video> load(String key) throws DeException {
                             logger.info("Caching and indexing channel video..");
                             ChannelVideos cVideos = new DMApiQueryCommand(key).execute();
-                            List<Video> videos = ChannelProcessor.getFilteredVideos(cVideos);
-                            ChannelProcessor.submitAsyncIndexingTask(videos);
-                            return videos;
-                        }
-
-                        @Override
-                        public ListenableFuture<List<Video>> reload(final String channelId, List<Video> oldValue) throws Exception {
-                            logger.info("Reloading cache for key " + channelId);
-                            ListenableFuture<List<Video>> listenableFuture = cacheMaintainer.submit(() -> {
-                                ChannelVideos cVideos = new DMApiQueryCommand(channelId).execute();
+                            if (cVideos != null) {
                                 List<Video> videos = ChannelProcessor.getFilteredVideos(cVideos);
                                 ChannelProcessor.submitAsyncIndexingTask(videos);
                                 return videos;
+                            }
+                            return null;
+                        }
+
+                        @Override
+                        public ListenableFuture<List<Video>> reload(final String channelId, List<Video> oldValue) throws DeException {
+                            logger.info("Reloading cache for key " + channelId);
+                            ListenableFuture<List<Video>> listenableFuture = cacheMaintainer.submit(() -> {
+                                ChannelVideos cVideos = new DMApiQueryCommand(channelId).execute();
+                                if (cVideos != null) {
+                                    List<Video> videos = ChannelProcessor.getFilteredVideos(cVideos);
+                                    ChannelProcessor.submitAsyncIndexingTask(videos);
+                                    return videos;
+                                }
+                                return null;
                             });
                             return listenableFuture;
 

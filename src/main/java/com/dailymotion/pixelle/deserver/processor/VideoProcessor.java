@@ -140,7 +140,7 @@ public class VideoProcessor {
         insertVideoInBulk(videos, DeHelper.channelIndex.get());
     }
 
-    private static void insertVideoInBulk(List<Video> videos, String index) {
+    private static void insertVideoInBulk(List<Video> videos, String index) throws DeException {
         if (DeHelper.isEmptyList(videos)) {
             return;
         }
@@ -188,7 +188,7 @@ public class VideoProcessor {
      * @param positions
      * @return list of videos
      */
-    public static List<VideoResponse> recommendUsingCache(@Nullable SearchQueryRequest sq, Integer positions) {
+    public static List<VideoResponse> recommendUsingCache(@Nullable SearchQueryRequest sq, Integer positions) throws DeException {
 
         if (useVideoCaching.get()) {
             try {
@@ -213,7 +213,7 @@ public class VideoProcessor {
      * @param positions
      * @return list of videos.
      */
-    public static List<VideoResponse> recommend(@Nullable SearchQueryRequest sq, Integer positions) {
+    public static List<VideoResponse> recommend(@Nullable SearchQueryRequest sq, Integer positions) throws DeException {
 
         List<VideoResponse> videoResponses;
         BoolFilterBuilder fb = FilterBuilders.boolFilter();
@@ -284,7 +284,7 @@ public class VideoProcessor {
         return videoResponses;
     }
 
-    public static List<VideoResponse> getUntargetedVideos(List<VideoResponse> targetedVideo, int positions, SearchQueryRequest sq) {
+    public static List<VideoResponse> getUntargetedVideos(List<VideoResponse> targetedVideo, int positions, SearchQueryRequest sq) throws DeException {
         logger.warn("Trying to fill query with untargetted videos");
         List<String> languages = sq.getLanguages();
         if (DeHelper.isEmptyList(languages)) {

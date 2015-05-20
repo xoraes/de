@@ -14,7 +14,9 @@ import com.dailymotion.pixelle.deserver.processor.hystrix.AdUnitBulkInsertComman
 import com.dailymotion.pixelle.deserver.processor.hystrix.AdUpdateCommand;
 import com.dailymotion.pixelle.deserver.processor.hystrix.QueryCommand;
 import com.dailymotion.pixelle.deserver.processor.hystrix.VideoBulkInsertCommand;
+import com.netflix.hystrix.exception.HystrixBadRequestException;
 import org.apache.commons.lang.StringUtils;
+import org.eclipse.jetty.http.HttpStatus;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.glassfish.jersey.server.ManagedAsync;
 import org.slf4j.Logger;
@@ -146,7 +148,13 @@ public class DEServlet {
         if (isDebugEnabled) {
             sq.setDebugEnabled(true);
         }
-        ItemsResponse i = new QueryCommand(sq, pos, allowedTypes).execute();
+        ItemsResponse i = null;
+
+        try {
+            i = new QueryCommand(sq, pos, allowedTypes).execute();
+        } catch (HystrixBadRequestException e) {
+            throw new DeException(HttpStatus.BAD_REQUEST_400, "Bad Request");
+        }
         return Response.ok(i).build();
     }
 

@@ -9,12 +9,12 @@ import com.dailymotion.pixelle.deserver.processor.hystrix.ChannelVideoBulkInsert
 import com.dailymotion.pixelle.deserver.processor.service.CacheService;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.cache.LoadingCache;
 import com.google.inject.Inject;
 import com.netflix.config.DynamicBooleanProperty;
 import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.config.DynamicStringProperty;
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.jetty.http.HttpStatus;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
@@ -32,11 +32,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Created by n.dhupia on 2/27/15.
@@ -57,9 +55,11 @@ public class ChannelProcessor extends VideoProcessor {
         super(esClient);
     }
 
-    public static List<VideoResponse> recommend(SearchQueryRequest sq, Integer positions) throws DeException {
+    public static List<VideoResponse> recommendChannel(SearchQueryRequest sq, Integer positions) throws Exception {
 
-        List<VideoResponse> videoResponses;
+        List<VideoResponse> videoResponses = null;
+
+
         BoolFilterBuilder fb = FilterBuilders.boolFilter();
         fb.must(FilterBuilders.termFilter("channel", sq.getChannel()));
 
@@ -78,12 +78,8 @@ public class ChannelProcessor extends VideoProcessor {
         videoResponses = new ArrayList<>();
 
         for (SearchHit hit : searchResponse.getHits().getHits()) {
-            try {
-                VideoResponse videoResponse = OBJECT_MAPPER.readValue(hit.getSourceAsString(), VideoResponse.class);
-                videoResponses.add(videoResponse);
-            } catch (IOException e) {
-                throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
-            }
+            VideoResponse videoResponse = OBJECT_MAPPER.readValue(hit.getSourceAsString(), VideoResponse.class);
+            videoResponses.add(videoResponse);
         }
         /*
          * User request first hits ES. If num positions are found, then done. Otherwise, look in the videoCache.
@@ -94,28 +90,29 @@ public class ChannelProcessor extends VideoProcessor {
          */
         if (DeHelper.isEmptyList(videoResponses) || videoResponses.size() < positions) {
             videoResponses = new ArrayList<>();
-            List<Video> videos;
-            try {
-                videos = CacheService.getChannelVideosCache().get(sq.getChannel());
-                logger.info("getting videos from cache");
-            } catch (ExecutionException e) {
-                throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
+            List<Video> videos = null;
+            logger.info("getting videos from cache");
+            LoadingCache<String, List<Video>> cache = CacheService.getChannelVideosCache();
+            if (cache != null) {
+                videos = cache.get(sq.getChannel());
             }
-            int numVideos = videos.size();
-            if (numVideos > positions) {
-                numVideos = positions;
-            }
-            for (int i = 0; i < numVideos; i++) {
-                VideoResponse videoResponse = new VideoResponse();
-                videoResponse.setChannel(videos.get(i).getChannel());
-                videoResponse.setChannelId(videos.get(i).getChannelId());
-                videoResponse.setChannelName(videos.get(i).getChannelName());
-                videoResponse.setDescription(videos.get(i).getDescription());
-                videoResponse.setTitle(videos.get(i).getTitle());
-                videoResponse.setResizableThumbnailUrl(videos.get(i).getResizableThumbnailUrl());
-                videoResponse.setDuration(videos.get(i).getDuration());
-                videoResponse.setVideoId(videos.get(i).getVideoId());
-                videoResponses.add(videoResponse);
+            if (videos != null) {
+                int numVideos = videos.size();
+                if (numVideos > positions) {
+                    numVideos = positions;
+                }
+                for (int i = 0; i < numVideos; i++) {
+                    VideoResponse videoResponse = new VideoResponse();
+                    videoResponse.setChannel(videos.get(i).getChannel());
+                    videoResponse.setChannelId(videos.get(i).getChannelId());
+                    videoResponse.setChannelName(videos.get(i).getChannelName());
+                    videoResponse.setDescription(videos.get(i).getDescription());
+                    videoResponse.setTitle(videos.get(i).getTitle());
+                    videoResponse.setResizableThumbnailUrl(videos.get(i).getResizableThumbnailUrl());
+                    videoResponse.setDuration(videos.get(i).getDuration());
+                    videoResponse.setVideoId(videos.get(i).getVideoId());
+                    videoResponses.add(videoResponse);
+                }
             }
         }
         logger.info("Num video responses:" + videoResponses.size());

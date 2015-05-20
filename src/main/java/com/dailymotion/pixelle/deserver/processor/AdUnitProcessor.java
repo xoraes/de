@@ -175,7 +175,7 @@ public class AdUnitProcessor {
         return adUnitResponses;
     }
 
-    public static List<AdUnit> getAdUnitsByCampaign(String cid) {
+    public static List<AdUnit> getAdUnitsByCampaign(String cid) throws DeException {
         if (StringUtils.isBlank(cid)) {
             throw new DeException(new Throwable("no cid provided"), HttpStatus.BAD_REQUEST_400);
         }
@@ -336,7 +336,7 @@ public class AdUnitProcessor {
         return unit;
     }
 
-    public static List<AdUnit> getAllAdUnits() {
+    public static List<AdUnit> getAllAdUnits() throws DeException {
         QueryBuilder qb = QueryBuilders.matchAllQuery();
 
         //TODO fix this later - we should do paging instead of getting all docs

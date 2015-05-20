@@ -10,6 +10,7 @@ import com.dailymotion.pixelle.deserver.processor.hystrix.AdQueryCommand;
 import com.dailymotion.pixelle.deserver.processor.hystrix.ChannelQueryCommand;
 import com.dailymotion.pixelle.deserver.processor.hystrix.VideoQueryCommand;
 import com.google.inject.Inject;
+import com.netflix.hystrix.exception.HystrixBadRequestException;
 import com.netflix.servo.DefaultMonitorRegistry;
 import com.netflix.servo.monitor.BasicCounter;
 import com.netflix.servo.monitor.Counter;
@@ -127,7 +128,11 @@ public class DEProcessor {
                 } catch (InterruptedException e) {
                     throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
                 } catch (ExecutionException e) {
-                    throw new DeException(e.getCause(), HttpStatus.INTERNAL_SERVER_ERROR_500);
+                    if (e.getCause() instanceof HystrixBadRequestException) {
+                        throw new DeException(e.getCause(), HttpStatus.BAD_REQUEST_400);
+                    }
+                    logger.error("DE error while querying DM API");
+                    throw new DeException(HttpStatus.INTERNAL_SERVER_ERROR_500, "DE Error while query DM API");
                 }
 
                 //if we have enough ads and videos, merge and send
@@ -189,12 +194,12 @@ public class DEProcessor {
     }
 
 
-    public static List<AdUnit> getAdUnitsByCampaign(String cid) {
+    public static List<AdUnit> getAdUnitsByCampaign(String cid) throws DeException {
         return AdUnitProcessor.getAdUnitsByCampaign(cid);
     }
 
 
-    public static AdUnit getAdUnitById(String id) {
+    public static AdUnit getAdUnitById(String id) throws DeException {
         return AdUnitProcessor.getAdUnitById(id);
     }
 
@@ -204,7 +209,7 @@ public class DEProcessor {
     }
 
 
-    public static List<AdUnit> getAllAdUnits() {
+    public static List<AdUnit> getAllAdUnits() throws DeException {
         return AdUnitProcessor.getAllAdUnits();
     }
 

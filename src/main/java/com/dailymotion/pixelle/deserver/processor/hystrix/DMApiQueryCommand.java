@@ -2,6 +2,7 @@ package com.dailymotion.pixelle.deserver.processor.hystrix;
 
 import com.dailymotion.pixelle.deserver.model.ChannelVideos;
 import com.dailymotion.pixelle.deserver.processor.DeException;
+import com.dailymotion.pixelle.deserver.processor.service.DMApiErrorDecoder;
 import com.dailymotion.pixelle.deserver.processor.service.DMApiService;
 import com.netflix.config.DynamicIntProperty;
 import com.netflix.config.DynamicLongProperty;
@@ -12,6 +13,7 @@ import com.netflix.hystrix.HystrixCommandGroupKey;
 import com.netflix.hystrix.HystrixCommandKey;
 import com.netflix.hystrix.HystrixCommandProperties;
 import com.netflix.hystrix.HystrixThreadPoolKey;
+import com.netflix.hystrix.exception.HystrixBadRequestException;
 import feign.Feign;
 import feign.Retryer;
 import feign.jackson.JacksonDecoder;
@@ -32,6 +34,12 @@ public class DMApiQueryCommand extends HystrixCommand<ChannelVideos> {
     private static final DynamicLongProperty retryPeriod = DynamicPropertyFactory.getInstance().getLongProperty("dm.api.retry.period", 100);
     private static final DynamicLongProperty retryMaxPeriod = DynamicPropertyFactory.getInstance().getLongProperty("dm.api.retry.max.period", 1);
     private static final DynamicIntProperty retryMaxAttempts = DynamicPropertyFactory.getInstance().getIntProperty("dm.api.retry.max.attempts", 5);
+    private static final DMApiService dmApi = Feign.builder()
+            .retryer(new Retryer.Default(retryPeriod.get(), TimeUnit.SECONDS.toMillis(retryMaxPeriod.get()), retryMaxAttempts.get()))
+            .decoder(new JacksonDecoder())
+            .encoder(new JacksonEncoder())
+            .errorDecoder(new DMApiErrorDecoder())
+            .target(DMApiService.class, dmApiUrl.get());
 
     private static Logger logger = LoggerFactory.getLogger(DMApiQueryCommand.class);
     private final String channelId;
@@ -47,15 +55,19 @@ public class DMApiQueryCommand extends HystrixCommand<ChannelVideos> {
     }
 
     @Override
-    protected ChannelVideos run() throws Exception {
+    protected ChannelVideos run() throws DeException {
         if (StringUtils.isBlank(channelId)) {
-            throw new DeException(new Throwable("No channel id provided"), HttpStatus.BAD_REQUEST_400);
+            throw new DeException(HttpStatus.BAD_REQUEST_400, "No channel id provided");
         }
-        DMApiService dmApi = Feign.builder()
-                .retryer(new Retryer.Default(retryPeriod.get(), TimeUnit.SECONDS.toMillis(retryMaxPeriod.get()), retryMaxAttempts.get()))
-                .decoder(new JacksonDecoder())
-                .encoder(new JacksonEncoder())
-                .target(DMApiService.class, dmApiUrl.get());
-        return dmApi.getVideos(channelId);
+        ChannelVideos cvs = null;
+        try {
+            cvs = dmApi.getVideos(channelId);
+        } catch (DeException e) {
+            if (HttpStatus.isClientError(e.getStatus())) {
+                throw new HystrixBadRequestException(e.getMessage(), e.getCause());
+            }
+            throw e;
+        }
+        return cvs;
     }
 }

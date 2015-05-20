@@ -3,14 +3,12 @@ package com.dailymotion.pixelle.deserver.processor.hystrix;
 import com.dailymotion.pixelle.deserver.model.AdUnitResponse;
 import com.dailymotion.pixelle.deserver.model.SearchQueryRequest;
 import com.dailymotion.pixelle.deserver.processor.AdUnitProcessor;
-import com.dailymotion.pixelle.deserver.processor.DeException;
 import com.netflix.config.DynamicIntProperty;
 import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.hystrix.HystrixCommand;
 import com.netflix.hystrix.HystrixCommandGroupKey;
 import com.netflix.hystrix.HystrixCommandKey;
 import com.netflix.hystrix.HystrixCommandProperties;
-import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,11 +41,5 @@ public class AdQueryCommand extends HystrixCommand<List<AdUnitResponse>> {
     @Override
     protected List<AdUnitResponse> run() throws Exception {
         return AdUnitProcessor.recommend(sq, positions);
-    }
-
-    @Override
-    protected List<AdUnitResponse> getFallback() throws DeException {
-        //in future we can do return a fallback adunit here or do something smarter here
-        throw new DeException(new Throwable("Error querying adunit"), HttpStatus.INTERNAL_SERVER_ERROR_500);
     }
 }

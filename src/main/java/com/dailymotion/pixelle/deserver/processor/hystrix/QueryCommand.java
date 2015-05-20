@@ -3,21 +3,26 @@ package com.dailymotion.pixelle.deserver.processor.hystrix;
 import com.dailymotion.pixelle.deserver.model.ItemsResponse;
 import com.dailymotion.pixelle.deserver.model.SearchQueryRequest;
 import com.dailymotion.pixelle.deserver.processor.DEProcessor;
+import com.dailymotion.pixelle.deserver.processor.DeException;
 import com.netflix.config.DynamicIntProperty;
 import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.hystrix.HystrixCommand;
 import com.netflix.hystrix.HystrixCommandGroupKey;
 import com.netflix.hystrix.HystrixCommandKey;
 import com.netflix.hystrix.HystrixCommandProperties;
+import com.netflix.hystrix.exception.HystrixBadRequestException;
+import org.eclipse.jetty.http.HttpStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Created by n.dhupia on 12/11/14.
  */
 public class QueryCommand extends HystrixCommand<ItemsResponse> {
-
     private static final DynamicIntProperty semaphoreCount =
             DynamicPropertyFactory.getInstance().getIntProperty("query.semaphore.count", 100);
     private static final DynamicIntProperty timeout = DynamicPropertyFactory.getInstance().getIntProperty("hystrix.query.timeout", 5000);
+    private static Logger logger = LoggerFactory.getLogger(QueryCommand.class);
     private final SearchQueryRequest sq;
     private final String allowedTypes;
     private final Integer positions;
@@ -37,6 +42,16 @@ public class QueryCommand extends HystrixCommand<ItemsResponse> {
 
     @Override
     protected ItemsResponse run() throws Exception {
-        return DEProcessor.recommend(sq, positions, allowedTypes);
+        ItemsResponse items = null;
+
+        try {
+            items = DEProcessor.recommend(sq, positions, allowedTypes);
+        } catch (DeException e) {
+            if (HttpStatus.isClientError(e.getStatus())) {
+                throw new HystrixBadRequestException(e.getMsg());
+            }
+            throw e;
+        }
+        return items;
     }
 }

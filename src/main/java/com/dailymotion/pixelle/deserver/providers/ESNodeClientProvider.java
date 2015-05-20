@@ -1,7 +1,9 @@
 package com.dailymotion.pixelle.deserver.providers;
 
+import com.dailymotion.pixelle.deserver.processor.DeException;
 import com.dailymotion.pixelle.deserver.processor.DeHelper;
 import com.google.inject.Provider;
+import com.google.inject.ProvisionException;
 import com.netflix.config.DynamicBooleanProperty;
 import com.netflix.config.DynamicPropertyFactory;
 import org.elasticsearch.client.Client;
@@ -74,9 +76,15 @@ public class ESNodeClientProvider implements Provider<Client> {
             logger.info("successfully deleted index: " + DeHelper.channelIndex.get());
         }
         //creates index only if it does not exist
-        ESIndexTypeFactory.createIndex(client, DeHelper.promotedIndex.get(), promotedSettings.build(), DeHelper.adunitsType.get());
-        ESIndexTypeFactory.createIndex(client, DeHelper.organicIndex.get(), organicSettings.build(), DeHelper.videosType.get());
-        ESIndexTypeFactory.createIndex(client, DeHelper.channelIndex.get(), channelSettings.build(), DeHelper.videosType.get());
+        try {
+            ESIndexTypeFactory.createIndex(client, DeHelper.promotedIndex.get(), promotedSettings.build(), DeHelper.adunitsType.get());
+            ESIndexTypeFactory.createIndex(client, DeHelper.organicIndex.get(), organicSettings.build(), DeHelper.videosType.get());
+            ESIndexTypeFactory.createIndex(client, DeHelper.channelIndex.get(), channelSettings.build(), DeHelper.videosType.get());
+
+        } catch (DeException e) {
+            logger.error(e.getMessage());
+            throw new ProvisionException(e.getMessage());
+        }
         return client;
     }
 }
