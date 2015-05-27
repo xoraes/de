@@ -107,10 +107,10 @@ public class AdUnitProcessor {
             if (!DeHelper.isEmptyList(sq.getCategories())) {
                 fb.mustNot(FilterBuilders.termsFilter("excluded_categories", DeHelper.toLowerCase(sq.getCategories())));
             }
-            List<String> excludedAds = sq.getExcludedAds();
-            if (!DeHelper.isEmptyList(sq.getExcludedAds())) {
+            List<String> excludedAds = sq.getExcludedVideoIds();
+            if (!DeHelper.isEmptyList(excludedAds)) {
                 for (String id : excludedAds) {
-                    fb.mustNot(FilterBuilders.termsFilter("_id", id));
+                    fb.mustNot(FilterBuilders.termsFilter("video_id", id));
                 }
             }
             fb.must(FilterBuilders.orFilter(FilterBuilders.missingFilter("goal_views"),
@@ -161,8 +161,8 @@ public class AdUnitProcessor {
         }
         if (DeHelper.isEmptyList(adUnitResponses)) {
             //instead of returning no ads, return something even excluded-ad
-            if (!DeHelper.isEmptyList(sq.getExcludedAds())) {
-                sq.setExcludedAds(null);
+            if (!DeHelper.isEmptyList(sq.getExcludedVideoIds())) {
+                sq.setExcludedVideoIds(null);
                 return recommend(sq, positions);
             } else {
                 logger.info("No ads returned =======> " + (sq != null ? sq.toString() : null));

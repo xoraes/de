@@ -44,9 +44,7 @@ public class SearchQueryRequest {
     @JsonIgnore
     private boolean debugEnabled;
     @JsonIgnore
-    private List<String> excludedIds;
-    @JsonIgnore
-    private List<String> excludedAds;
+    private List<String> excludedVideoIds;
 
 }
 

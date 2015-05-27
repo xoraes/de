@@ -292,10 +292,10 @@ public class DEProcessor {
                         maxImpressionThreshhold.increment();
                     }
                 }
-                if (!DeHelper.isEmptyList(sq.getExcludedAds())) {
-                    sq.getExcludedAds().addAll(exList);
+                if (!DeHelper.isEmptyList(sq.getExcludedVideoIds())) {
+                    sq.getExcludedVideoIds().addAll(exList);
                 } else {
-                    sq.setExcludedAds(exList);
+                    sq.setExcludedVideoIds(exList);
                 }
             }
         }

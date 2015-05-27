@@ -225,7 +225,7 @@ public class VideoProcessor {
                 fb.must(FilterBuilders.termsFilter("languages", DeHelper.toLowerCase(sq.getLanguages())));
             }
         }
-        List<String> excludedIds = sq.getExcludedIds();
+        List<String> excludedIds = sq.getExcludedVideoIds();
         if (!DeHelper.isEmptyList(excludedIds)) {
             for (String id : excludedIds) {
                 fb.mustNot(FilterBuilders.termsFilter("video_id", id));
@@ -299,7 +299,7 @@ public class VideoProcessor {
         SearchQueryRequest sq1 = new SearchQueryRequest();
         sq1.setLanguages(languages);
         sq1.setDebugEnabled(sq.isDebugEnabled());
-        sq1.setExcludedIds(excludedIds);
+        sq1.setExcludedVideoIds(excludedIds);
 
         int reqVideosSize = positions;
         if (!DeHelper.isEmptyList(targetedVideo)) {

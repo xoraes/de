@@ -516,9 +516,10 @@ public class ESAdUnitsIntegrationTest {
     public void testImpressionHistory() throws Exception {
         Map m1 = createAdUnitDataMap("1", "1");
         Map m2 = createAdUnitDataMap("2", "2");
+        m1.put("video_id", "1");
+        m2.put("video_id", "2");
         loadAdUnitMaps(m1, m2);
-        m1.put("clicks", 10.0);
-        m1.put("impressions", 10.0);
+
         SearchQueryRequest sq = new SearchQueryRequest();
         sq.setTime("2014-12-31T15:00:00-0800");
         sq.setCategories(new ArrayList(Arrays.asList("cat1")));
@@ -539,7 +540,7 @@ public class ESAdUnitsIntegrationTest {
 
         Map<String, Integer> m = new HashMap<>();
         m.put("1", 11);
-        m.put("2", 9);
+        m.put("2", 1);
         sq.setImpressionHistory(m);
 
         System.out.println("Search Query ====>" + sq.toString());
