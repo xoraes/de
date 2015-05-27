@@ -104,6 +104,7 @@ final class ESIndexTypeFactory {
         builder.startObject("end_date").field("type", "date").field("format", "date_time_no_millis").field("index", "not_analyzed").endObject();
 
         builder.startObject("_id").field("type", "string").field("index", "not_analyzed").endObject();
+        builder.startObject("video_id").field("type", "string").field("index", "not_analyzed").endObject();
         builder.startObject("ad").field("type", "string").field("index", "not_analyzed").endObject();
         builder.startObject("campaign").field("type", "string").field("index", "not_analyzed").endObject();
 
@@ -131,7 +132,7 @@ final class ESIndexTypeFactory {
         builder.startObject("thumbnail_url").field("type", "string").field("index", "no").endObject();
         builder.startObject("resizable_thumbnail_url").field("type", "string").field("index", "no").endObject();
         builder.startObject("video_url").field("type", "string").field("index", "no").endObject();
-        builder.startObject("video_id").field("type", "string").field("index", "no").endObject();
+
         builder.startObject("channel").field("type", "string").field("index", "no").endObject();
         builder.startObject("channel_id").field("type", "string").field("index", "no").endObject();
         builder.startObject("channel_name").field("type", "string").field("index", "no").endObject();
