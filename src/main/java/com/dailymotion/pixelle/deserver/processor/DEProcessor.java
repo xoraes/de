@@ -287,7 +287,7 @@ public class DEProcessor {
             if (impressionHistory != null && impressionHistory.size() != 0) {
                 List<String> exList = new ArrayList<>();
                 for (Map.Entry<String, Integer> entry : impressionHistory.entrySet()) {
-                    if (entry.getValue() > DeHelper.maxImpressions.get()) {
+                    if (entry.getValue() >= DeHelper.maxImpressions.get()) {
                         exList.add(entry.getKey());
                         maxImpressionThreshhold.increment();
                     }
