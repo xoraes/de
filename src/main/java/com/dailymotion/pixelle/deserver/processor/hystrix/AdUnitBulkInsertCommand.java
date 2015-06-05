@@ -19,6 +19,9 @@ import java.util.List;
 public class AdUnitBulkInsertCommand extends HystrixCommand<Void> {
     private static final DynamicIntProperty semaphoreCount =
             DynamicPropertyFactory.getInstance().getIntProperty("adunitbulkinsert.semaphore.count", 10);
+    private static final DynamicIntProperty timeoutMillis =
+            DynamicPropertyFactory.getInstance().getIntProperty("adunitbulkbinsert.timeout.milliseconds", 60000);
+
     private static Logger logger = LoggerFactory.getLogger(AdUnitBulkInsertCommand.class);
     private final List<AdUnit> adUnits;
 
@@ -26,6 +29,7 @@ public class AdUnitBulkInsertCommand extends HystrixCommand<Void> {
         super(HystrixCommand.Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey("DecisioningEngine"))
                 .andCommandKey(HystrixCommandKey.Factory.asKey("AdUnitBulkInsert"))
                 .andCommandPropertiesDefaults(HystrixCommandProperties.Setter()
+                        .withExecutionTimeoutInMilliseconds(timeoutMillis.get())
                         .withExecutionIsolationStrategy(HystrixCommandProperties.ExecutionIsolationStrategy.SEMAPHORE)
                         .withExecutionIsolationSemaphoreMaxConcurrentRequests(semaphoreCount.get())));
         this.adUnits = adUnits;

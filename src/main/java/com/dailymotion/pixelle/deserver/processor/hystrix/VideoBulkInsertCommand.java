@@ -23,6 +23,9 @@ import java.util.List;
 public class VideoBulkInsertCommand extends HystrixCommand<Void> {
     private static final DynamicIntProperty semaphoreCount =
             DynamicPropertyFactory.getInstance().getIntProperty("videobulkbinsert.semaphore.count", 10);
+    private static final DynamicIntProperty timeoutMillis =
+            DynamicPropertyFactory.getInstance().getIntProperty("videobulkbinsert.timeout.milliseconds", 60000);
+
     private static Logger logger = LoggerFactory.getLogger(VideoBulkInsertCommand.class);
     private final List<Video> videos;
 
@@ -30,6 +33,7 @@ public class VideoBulkInsertCommand extends HystrixCommand<Void> {
         super(HystrixCommand.Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey("DecisioningEngine"))
                 .andCommandKey(HystrixCommandKey.Factory.asKey("VideoBulkInsert"))
                 .andCommandPropertiesDefaults(HystrixCommandProperties.Setter()
+                        .withExecutionTimeoutInMilliseconds(timeoutMillis.get())
                         .withExecutionIsolationStrategy(HystrixCommandProperties.ExecutionIsolationStrategy.SEMAPHORE)
                         .withExecutionIsolationSemaphoreMaxConcurrentRequests(semaphoreCount.get())));
         this.videos = videos;

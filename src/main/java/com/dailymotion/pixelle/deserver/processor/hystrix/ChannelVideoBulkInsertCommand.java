@@ -23,6 +23,8 @@ import java.util.List;
 public class ChannelVideoBulkInsertCommand extends HystrixCommand<Void> {
     private static final DynamicIntProperty semaphoreCount =
             DynamicPropertyFactory.getInstance().getIntProperty("channel.videobulkbinsert.semaphore.count", 10);
+    private static final DynamicIntProperty timeoutMillis =
+            DynamicPropertyFactory.getInstance().getIntProperty("channel.videobulkbinsert.timeout.milliseconds", 60000);
     private static Logger logger = LoggerFactory.getLogger(ChannelVideoBulkInsertCommand.class);
     private final List<Video> videos;
 
@@ -31,6 +33,7 @@ public class ChannelVideoBulkInsertCommand extends HystrixCommand<Void> {
         super(HystrixCommand.Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey("DecisioningEngine"))
                 .andCommandKey(HystrixCommandKey.Factory.asKey("ChannelVideoBulkInsert"))
                 .andCommandPropertiesDefaults(HystrixCommandProperties.Setter()
+                        .withExecutionTimeoutInMilliseconds(timeoutMillis.get())
                         .withExecutionIsolationStrategy(HystrixCommandProperties.ExecutionIsolationStrategy.SEMAPHORE)
                         .withExecutionIsolationSemaphoreMaxConcurrentRequests(semaphoreCount.get())));
         this.videos = videos;
