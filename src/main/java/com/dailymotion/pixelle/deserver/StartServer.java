@@ -53,7 +53,7 @@ final class StartServer {
     private static final DoubleGauge videoCacheLoadExceptionRate = new DoubleGauge(MonitorConfig.builder("videoCacheLoadExceptionRate_gauge").build());
     private static final LongGauge videoCacheEvictionCount = new LongGauge(MonitorConfig.builder("videoCacheEvictionCount_gauge").build());
     private static final LongGauge channelCacheEvictionCount = new LongGauge(MonitorConfig.builder("channelCacheEvictionCount_gauge").build());
-    private static Logger logger = LoggerFactory.getLogger(DEServlet.class);
+    private static Logger logger = LoggerFactory.getLogger(StartServer.class);
 
     static {
         DefaultMonitorRegistry.getInstance().register(videoCacheHitRate);
@@ -88,24 +88,13 @@ final class StartServer {
         config.register(DEServlet.class);
         config.register(DeExceptionMapper.class);
 
-        ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-
-        scheduledExecutorService.schedule(() -> {
-            channelCacheHitRate.set(CacheService.getChannelVideosCache().stats().hitRate());
-            videoCacheHitRate.set(CacheService.getOrganicVideosCache().stats().hitRate());
-            channelCacheLoadExceptionRate.set(CacheService.getChannelVideosCache().stats().loadExceptionRate());
-            videoCacheLoadExceptionRate.set(CacheService.getOrganicVideosCache().stats().loadExceptionRate());
-            videoCacheEvictionCount.set(CacheService.getOrganicVideosCache().stats().evictionCount());
-            channelCacheEvictionCount.set(CacheService.getChannelVideosCache().stats().evictionCount());
-        }, 30, TimeUnit.SECONDS);
-
         ServletContainer servletContainer = new ServletContainer(config);
         ServletHolder sh = new ServletHolder(servletContainer);
 
         // Setup Threadpool
         QueuedThreadPool threadPool = new QueuedThreadPool();
-        threadPool.setMaxThreads(1000);
-        threadPool.setMinThreads(100);
+        threadPool.setMaxThreads(500);
+        threadPool.setMinThreads(10);
         threadPool.setName("de_pool");
 
 
@@ -176,6 +165,24 @@ final class StartServer {
         lowResourcesMonitor.setMaxLowResourcesTime(5000);
         server.addBean(lowResourcesMonitor);
 
+        try {
+            server.start();
+            server.join();
+        } catch (Exception err) {
+            logger.error("Error starting Jetty server", err);
+            throw new IOException(err);
+        }
+        ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+
+        scheduledExecutorService.schedule(() -> {
+            channelCacheHitRate.set(CacheService.getChannelVideosCache().stats().hitRate());
+            videoCacheHitRate.set(CacheService.getOrganicVideosCache().stats().hitRate());
+            channelCacheLoadExceptionRate.set(CacheService.getChannelVideosCache().stats().loadExceptionRate());
+            videoCacheLoadExceptionRate.set(CacheService.getOrganicVideosCache().stats().loadExceptionRate());
+            videoCacheEvictionCount.set(CacheService.getOrganicVideosCache().stats().evictionCount());
+            channelCacheEvictionCount.set(CacheService.getChannelVideosCache().stats().evictionCount());
+        }, 30, TimeUnit.SECONDS);
+
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
@@ -184,17 +191,11 @@ final class StartServer {
                     scheduledExecutorService.shutdownNow();
                     server.stop();
                 } catch (Exception e) {
-                    LoggerFactory.getLogger(getClass()).error("Can not stop the Jetty server", e);
+                    logger.error("Can not stop the Jetty server", e);
                 }
             }
         });
 
-        try {
-            server.start();
-            server.join();
-        } catch (Exception err) {
-            throw new IOException(err);
-        }
 
     }
 }

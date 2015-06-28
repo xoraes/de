@@ -107,12 +107,6 @@ public class AdUnitProcessor {
             if (!DeHelper.isEmptyList(sq.getCategories())) {
                 fb.mustNot(FilterBuilders.termsFilter("excluded_categories", DeHelper.toLowerCase(sq.getCategories())));
             }
-            List<String> excludedAds = sq.getExcludedVideoIds();
-            if (!DeHelper.isEmptyList(excludedAds)) {
-                for (String id : excludedAds) {
-                    fb.mustNot(FilterBuilders.termsFilter("video_id", id));
-                }
-            }
             fb.must(FilterBuilders.orFilter(FilterBuilders.missingFilter("goal_views"),
                     FilterBuilders.missingFilter("views"),
                     FilterBuilders.scriptFilter("doc['views'].value < doc['goal_views'].value").lang("expression")));
@@ -122,6 +116,12 @@ public class AdUnitProcessor {
                             ScoreFunctionBuilders.scriptFunction(ctrScriptFunction.getValue()).lang(ctrScriptLang.getValue()))
                     .add(ScoreFunctionBuilders.fieldValueFactorFunction("cpv").setWeight(2.0f));
 
+            List<String> excludedAds = sq.getExcludedVideoIds();
+            if (!DeHelper.isEmptyList(excludedAds)) {
+                for (String id : excludedAds) {
+                    fb.mustNot(FilterBuilders.termsFilter("video_id", id));
+                }
+            }
 
             SearchRequestBuilder srb1 = client.prepareSearch(DeHelper.promotedIndex.get())
                     .setTypes(DeHelper.adunitsType.get())

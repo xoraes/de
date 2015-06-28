@@ -40,7 +40,7 @@ public final class DeHelper {
     public static final DynamicIntProperty retryOnConflictVideos =
             DynamicPropertyFactory.getInstance().getIntProperty("videos.retryOnConflict", 5);
     public static final DynamicIntProperty maxImpressions =
-            DynamicPropertyFactory.getInstance().getIntProperty("impressions.max", 10);
+            DynamicPropertyFactory.getInstance().getIntProperty("impressions.max", 3);
 
     public static final DynamicIntProperty dePort =
             DynamicPropertyFactory.getInstance().getIntProperty("port", 8080);

@@ -193,7 +193,6 @@ public class VideoProcessor {
         if (useVideoCaching.get()) {
             try {
                 List<VideoResponse> vr = CacheService.getOrganicVideosCache().get(sq);
-                logger.info(CacheService.getOrganicVideosCache().stats().toString());
                 if (vr.size() > positions) {
                     return vr.subList(0, positions);
                 }
