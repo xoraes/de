@@ -88,12 +88,23 @@ final class StartServer {
         config.register(DEServlet.class);
         config.register(DeExceptionMapper.class);
 
+        ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+
+        scheduledExecutorService.schedule(() -> {
+            channelCacheHitRate.set(CacheService.getChannelVideosCache().stats().hitRate());
+            videoCacheHitRate.set(CacheService.getOrganicVideosCache().stats().hitRate());
+            channelCacheLoadExceptionRate.set(CacheService.getChannelVideosCache().stats().loadExceptionRate());
+            videoCacheLoadExceptionRate.set(CacheService.getOrganicVideosCache().stats().loadExceptionRate());
+            videoCacheEvictionCount.set(CacheService.getOrganicVideosCache().stats().evictionCount());
+            channelCacheEvictionCount.set(CacheService.getChannelVideosCache().stats().evictionCount());
+        }, 30, TimeUnit.SECONDS);
+
         ServletContainer servletContainer = new ServletContainer(config);
         ServletHolder sh = new ServletHolder(servletContainer);
 
         // Setup Threadpool
         QueuedThreadPool threadPool = new QueuedThreadPool();
-        threadPool.setMaxThreads(500);
+        threadPool.setMaxThreads(100);
         threadPool.setMinThreads(10);
         threadPool.setName("de_pool");
 
@@ -165,24 +176,6 @@ final class StartServer {
         lowResourcesMonitor.setMaxLowResourcesTime(5000);
         server.addBean(lowResourcesMonitor);
 
-        try {
-            server.start();
-            server.join();
-        } catch (Exception err) {
-            logger.error("Error starting Jetty server", err);
-            throw new IOException(err);
-        }
-        ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-
-        scheduledExecutorService.schedule(() -> {
-            channelCacheHitRate.set(CacheService.getChannelVideosCache().stats().hitRate());
-            videoCacheHitRate.set(CacheService.getOrganicVideosCache().stats().hitRate());
-            channelCacheLoadExceptionRate.set(CacheService.getChannelVideosCache().stats().loadExceptionRate());
-            videoCacheLoadExceptionRate.set(CacheService.getOrganicVideosCache().stats().loadExceptionRate());
-            videoCacheEvictionCount.set(CacheService.getOrganicVideosCache().stats().evictionCount());
-            channelCacheEvictionCount.set(CacheService.getChannelVideosCache().stats().evictionCount());
-        }, 30, TimeUnit.SECONDS);
-
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
@@ -196,6 +189,13 @@ final class StartServer {
             }
         });
 
+        try {
+            server.start();
+            server.join();
+        } catch (Exception err) {
+            logger.error("Could not start Jetty server",err);
+            throw new IOException(err);
+        }
 
     }
 }
