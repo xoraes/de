@@ -1,9 +1,6 @@
 package com.dailymotion.pixelle.deserver.processor.service;
 
-import com.dailymotion.pixelle.deserver.model.ChannelVideos;
-import com.dailymotion.pixelle.deserver.model.SearchQueryRequest;
-import com.dailymotion.pixelle.deserver.model.Video;
-import com.dailymotion.pixelle.deserver.model.VideoResponse;
+import com.dailymotion.pixelle.deserver.model.*;
 import com.dailymotion.pixelle.deserver.processor.ChannelProcessor;
 import com.dailymotion.pixelle.deserver.processor.DeException;
 import com.dailymotion.pixelle.deserver.processor.VideoProcessor;
@@ -38,32 +35,28 @@ public class CacheService {
     //exiting service makes sure the thread terminates 120 secs after jvm shutdown
     private static final ListeningExecutorService cacheMaintainer = MoreExecutors.listeningDecorator(MoreExecutors.getExitingExecutorService((ThreadPoolExecutor) Executors.newCachedThreadPool()));
 
-    private static final LoadingCache<String, List<Video>> channelVideosCache = CacheBuilder.newBuilder()
+    private static final LoadingCache<Channels, List<Video>> channelVideosCache = CacheBuilder.newBuilder()
             .recordStats()
             .maximumSize(channelLruSize.get()).refreshAfterWrite(chanRefreshAfterWriteMins.get(), TimeUnit.MINUTES)
             .build(
-                    new CacheLoader<String, List<Video>>() {
+                    new CacheLoader<Channels, List<Video>>() {
                         @Override
-                        public List<Video> load(String key) throws DeException {
+                        public List<Video> load(Channels channels) throws DeException {
                             logger.info("Caching and indexing channel video..");
-                            ChannelVideos cVideos = new DMApiQueryCommand(key).execute();
+                            ChannelVideos cVideos = new DMApiQueryCommand(channels).execute();
                             if (cVideos != null) {
-                                List<Video> videos = ChannelProcessor.getFilteredVideos(cVideos);
-                                ChannelProcessor.submitAsyncIndexingTask(videos);
-                                return videos;
+                                return ChannelProcessor.getFilteredVideos(cVideos);
                             }
                             return null;
                         }
 
                         @Override
-                        public ListenableFuture<List<Video>> reload(final String channelId, List<Video> oldValue) throws DeException {
-                            logger.info("Reloading cache for key " + channelId);
+                        public ListenableFuture<List<Video>> reload(final Channels channels, List<Video> oldValue) throws DeException {
+                            logger.info("Reloading cache for key " + channels.getChannels());
                             ListenableFuture<List<Video>> listenableFuture = cacheMaintainer.submit(() -> {
-                                ChannelVideos cVideos = new DMApiQueryCommand(channelId).execute();
+                                ChannelVideos cVideos = new DMApiQueryCommand(channels).execute();
                                 if (cVideos != null) {
-                                    List<Video> videos = ChannelProcessor.getFilteredVideos(cVideos);
-                                    ChannelProcessor.submitAsyncIndexingTask(videos);
-                                    return videos;
+                                    return ChannelProcessor.getFilteredVideos(cVideos);
                                 }
                                 return null;
                             });
@@ -98,7 +91,7 @@ public class CacheService {
                         }
                     });
 
-    public static final LoadingCache<String, List<Video>> getChannelVideosCache() {
+    public static final LoadingCache<Channels, List<Video>> getChannelVideosCache() {
         return channelVideosCache;
     }
 

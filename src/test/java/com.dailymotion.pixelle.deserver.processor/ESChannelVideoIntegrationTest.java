@@ -6,6 +6,7 @@ import com.dailymotion.pixelle.deserver.model.Video;
 import com.dailymotion.pixelle.deserver.model.VideoResponse;
 import com.dailymotion.pixelle.deserver.processor.hystrix.ChannelVideoBulkInsertCommand;
 import com.dailymotion.pixelle.deserver.processor.hystrix.QueryCommand;
+import com.dailymotion.pixelle.deserver.processor.service.CacheService;
 import com.dailymotion.pixelle.deserver.providers.ESTestNodeClientProvider;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -113,43 +114,17 @@ public class ESChannelVideoIntegrationTest {
     }
 
     @Test
-    public void testCheckAllVideoFields() throws Exception {
-        Map m1 = createVideoDataMap("1");
-        loadVideoMaps(m1);
-        SearchQueryRequest sq = new SearchQueryRequest();
-        sq.setCategories(new ArrayList(Arrays.asList("cat1")));
-        sq.setDevice("dev1");
-        sq.setFormat("fmt1");
-        sq.setTime("2014-11-21T01:00:00Z");
-        sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
-        sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
-        sq.setChannel("channel");
-
-        ItemsResponse i = new QueryCommand(sq, 1, "promoted,channel").execute();
-        Assert.assertNotNull(i);
-        Assert.assertTrue(i.getResponse().size() == 1);
-        VideoResponse video = (VideoResponse) i.getResponse().get(0);
-        System.out.println("Video" + video.toString());
-        Assert.assertTrue(video.getVideoId().equalsIgnoreCase("1"));
-        Assert.assertTrue(video.getChannel().equals("channel"));
-        Assert.assertTrue(video.getChannelId().equals("channel_id"));
-        Assert.assertTrue(video.getChannelName().equals("channel_name"));
-        Assert.assertTrue(video.getContentType().equals("organic"));
-        Assert.assertTrue(video.getDescription().equals("description"));
-        Assert.assertTrue(video.getTitle().equals("title"));
-        Assert.assertTrue(video.getDuration() == 123);
-        Assert.assertTrue(video.getResizableThumbnailUrl().equals("resizable_thumbnail_url"));
-        deleteVideosByIds("1");
-    }
-
-    @Test
     public void testDmApiCall() throws Exception {
-        SearchQueryRequest sq = new SearchQueryRequest();
-        sq.setChannel("rs");
 
+        SearchQueryRequest sq = new SearchQueryRequest();
+        sq.setChannels(Arrays.asList("buzzfeedvideo","spi0n"));
+        sq.setSortOrder("recent");
+        System.out.println("Search Query ====>" + sq.toString());
         ItemsResponse i = new QueryCommand(sq, 1, "promoted,channel").execute();
+        System.out.println("Response ====>:" + i.toString());
+
         Assert.assertNotNull(i);
-        Assert.assertTrue(i.getResponse().size() == 1);
+        Assert.assertEquals(1,i.getResponse().size());
         VideoResponse video = (VideoResponse) i.getResponse().get(0);
         System.out.println(video.toString());
         Assert.assertNotNull(video.getVideoId());
@@ -161,44 +136,28 @@ public class ESChannelVideoIntegrationTest {
         Assert.assertNotNull(video.getTitle());
         Assert.assertNotNull(video.getDuration());
         Assert.assertNotNull(video.getResizableThumbnailUrl());
-    }
-
-    @Test(expected = HystrixBadRequestException.class)
-    public void testDmApiCallWithInvalidChannel() throws DeException {
-        SearchQueryRequest sq = new SearchQueryRequest();
-        sq.setChannel("12o301927312hkjadkjhaskdj");
-        ItemsResponse i = new QueryCommand(sq, 1, "promoted,channel").execute();
-    }
-
-
-    @Test
-    public void testGetAdsAndVideos() throws Exception {
-        Map m1 = createVideoDataMap("1");
-        Map m2 = createVideoDataMap("2");
-        Map m3 = createVideoDataMap("3");
-        loadVideoMaps(m1, m2, m3);
 
         Map m4 = ESAdUnitsIntegrationTest.createAdUnitDataMap("1", "1");
         ESAdUnitsIntegrationTest.loadAdUnitMaps(m4);
 
-
-        SearchQueryRequest sq = new SearchQueryRequest();
+        sq = new SearchQueryRequest();
         sq.setTime("2014-12-31T15:00:00-0800");
         sq.setCategories(new ArrayList(Arrays.asList("cat1")));
         sq.setDevice("dev1");
         sq.setFormat("fmt1");
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
-        sq.setChannel("channel");
+        sq.setChannels(Arrays.asList("buzzfeedvideo","spi0n"));
+        sq.setSortOrder("recent");
 
         System.out.println("Search Query ====>" + sq.toString());
-        ItemsResponse i = new QueryCommand(sq, 3, "promoted,channel").execute();
+        i = new QueryCommand(sq, 3, "promoted,channel").execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertEquals(3, i.getResponse().size());
         Assert.assertTrue(i.getResponse().get(2).getClass().getCanonicalName().contains("AdUnit"));
-
-        deleteVideosByIds("1", "2", "3");
+        Assert.assertEquals(1, CacheService.getChannelVideosCache().size());
+        Assert.assertEquals(1, CacheService.getChannelVideosCache().stats().hitCount());
         ESAdUnitsIntegrationTest.deleteAdUnitsByIds("1");
     }
 }

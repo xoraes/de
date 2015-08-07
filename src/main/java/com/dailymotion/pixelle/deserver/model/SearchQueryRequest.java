@@ -35,8 +35,10 @@ public class SearchQueryRequest {
     private String time;
     @JsonProperty("browser")
     private String browser;
-    @JsonProperty("channel")
-    private String channel;
+    @JsonProperty("channels")
+    private List<String> channels; //comma separated list of channels
+    @JsonProperty("sort")
+    private String sortOrder;
     @JsonProperty("impression_history")
     private Map<String, Integer> impressionHistory;
     @JsonIgnore
@@ -45,6 +47,5 @@ public class SearchQueryRequest {
     private boolean debugEnabled;
     @JsonIgnore
     private List<String> excludedVideoIds;
-
 }
 

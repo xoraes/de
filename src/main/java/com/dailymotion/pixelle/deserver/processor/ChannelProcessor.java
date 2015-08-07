@@ -1,30 +1,18 @@
 package com.dailymotion.pixelle.deserver.processor;
 
-import com.dailymotion.pixelle.deserver.model.ChannelVideo;
-import com.dailymotion.pixelle.deserver.model.ChannelVideos;
-import com.dailymotion.pixelle.deserver.model.SearchQueryRequest;
-import com.dailymotion.pixelle.deserver.model.Video;
-import com.dailymotion.pixelle.deserver.model.VideoResponse;
+import com.dailymotion.pixelle.deserver.model.*;
 import com.dailymotion.pixelle.deserver.processor.hystrix.ChannelVideoBulkInsertCommand;
 import com.dailymotion.pixelle.deserver.processor.service.CacheService;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.Ordering;
 import com.google.inject.Inject;
 import com.netflix.config.DynamicBooleanProperty;
 import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.config.DynamicStringProperty;
 import org.apache.commons.lang3.StringUtils;
-import org.elasticsearch.action.search.SearchRequestBuilder;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.index.query.BoolFilterBuilder;
-import org.elasticsearch.index.query.FilterBuilders;
-import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders;
-import org.elasticsearch.search.SearchHit;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -34,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -43,6 +32,7 @@ public class ChannelProcessor extends VideoProcessor {
     private static final Integer MAX_RANDOM = 100;
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final DynamicStringProperty listOfValidCategories = DynamicPropertyFactory.getInstance().getStringProperty("pixelle.channel.categories", "");
+    private static final DynamicStringProperty listOfValidSortOrders = DynamicPropertyFactory.getInstance().getStringProperty("pixelle.channel.sortorders", "recent,trending,visited,random");
     private static final DynamicBooleanProperty persistChanneltoES = DynamicPropertyFactory.getInstance().getBooleanProperty("pixelle.channel.es.store", false);
     private static final Logger logger = LoggerFactory.getLogger(ChannelProcessor.class);
 
@@ -57,64 +47,43 @@ public class ChannelProcessor extends VideoProcessor {
 
     public static List<VideoResponse> recommendChannel(SearchQueryRequest sq, Integer positions) throws Exception {
 
-        List<VideoResponse> videoResponses = null;
-
-
-        BoolFilterBuilder fb = FilterBuilders.boolFilter();
-        fb.must(FilterBuilders.termFilter("channel", sq.getChannel()));
-
-        QueryBuilder qb = QueryBuilders.functionScoreQuery(fb)
-                .add(ScoreFunctionBuilders.randomFunction((int) (Math.random() * MAX_RANDOM)));
-
-        SearchRequestBuilder srb1 = client.prepareSearch(DeHelper.channelIndex.get())
-                .setTypes(DeHelper.videosType.get())
-                .setSearchType(SearchType.QUERY_THEN_FETCH)
-                .setQuery(qb)
-                .setSize(positions);
-
-        logger.info(srb1.toString());
-
-        SearchResponse searchResponse = srb1.execute().actionGet();
-        videoResponses = new ArrayList<>();
-
-        for (SearchHit hit : searchResponse.getHits().getHits()) {
-            VideoResponse videoResponse = OBJECT_MAPPER.readValue(hit.getSourceAsString(), VideoResponse.class);
-            videoResponses.add(videoResponse);
+        if (StringUtils.isBlank(sq.getSortOrder()) || ! listOfValidSortOrders.get().contains(sq.getSortOrder().toLowerCase())) {
+            sq.setSortOrder("recent"); //default to recent when provided invalid sort order
+            logger.warn("Invalid sort order provided, defaulting to 'recent' sort order: ", sq.toString());
         }
+        List<VideoResponse> videoResponses = new ArrayList<>();
         /*
-         * User request first hits ES. If num positions are found, then done. Otherwise, look in the videoCache.
          * If videoCache is empty, it is loaded with data from DM - this happens during cold start.
          * If videoCache has non-stale data, it is returned.
          * If videoCache has stale data (6 min since last write), then stale data is returned
-         * and fresh data is replaced into the cache asynchronously from DM and indexed to ES.
+         * and fresh data is replaced into the cache asynchronously from DM
          */
-        if (DeHelper.isEmptyList(videoResponses) || videoResponses.size() < positions) {
-            videoResponses = new ArrayList<>();
-            List<Video> videos = null;
-            logger.info("getting videos from cache");
-            LoadingCache<String, List<Video>> cache = CacheService.getChannelVideosCache();
-            if (cache != null) {
-                videos = cache.get(sq.getChannel());
+        List<Video> videos = null;
+        logger.info("getting videos from cache");
+        LoadingCache<Channels, List<Video>> cache = CacheService.getChannelVideosCache();
+        if (cache != null) {
+            Channels channels = new Channels(listToString(sq.getChannels()), sq.getSortOrder());
+            videos = cache.get(channels);
+        }
+        if (videos != null) {
+            int numVideos = videos.size();
+            if (numVideos > positions) {
+                numVideos = positions;
             }
-            if (videos != null) {
-                int numVideos = videos.size();
-                if (numVideos > positions) {
-                    numVideos = positions;
-                }
-                for (int i = 0; i < numVideos; i++) {
-                    VideoResponse videoResponse = new VideoResponse();
-                    videoResponse.setChannel(videos.get(i).getChannel());
-                    videoResponse.setChannelId(videos.get(i).getChannelId());
-                    videoResponse.setChannelName(videos.get(i).getChannelName());
-                    videoResponse.setDescription(videos.get(i).getDescription());
-                    videoResponse.setTitle(videos.get(i).getTitle());
-                    videoResponse.setResizableThumbnailUrl(videos.get(i).getResizableThumbnailUrl());
-                    videoResponse.setDuration(videos.get(i).getDuration());
-                    videoResponse.setVideoId(videos.get(i).getVideoId());
-                    videoResponses.add(videoResponse);
-                }
+            for (int i = 0; i < numVideos; i++) {
+                VideoResponse videoResponse = new VideoResponse();
+                videoResponse.setChannel(videos.get(i).getChannel());
+                videoResponse.setChannelId(videos.get(i).getChannelId());
+                videoResponse.setChannelName(videos.get(i).getChannelName());
+                videoResponse.setDescription(videos.get(i).getDescription());
+                videoResponse.setTitle(videos.get(i).getTitle());
+                videoResponse.setResizableThumbnailUrl(videos.get(i).getResizableThumbnailUrl());
+                videoResponse.setDuration(videos.get(i).getDuration());
+                videoResponse.setVideoId(videos.get(i).getVideoId());
+                videoResponses.add(videoResponse);
             }
         }
+
         logger.info("Num video responses:" + videoResponses.size());
         return videoResponses;
     }
@@ -194,6 +163,11 @@ public class ChannelProcessor extends VideoProcessor {
             return true;
         }
         return !listOfValidCategories.get().contains(channelVideo.getChannel().toLowerCase());
+    }
+    private static String listToString(List<String> channels) {
+        Ordering<String> ordering = Ordering.from(String.CASE_INSENSITIVE_ORDER).nullsFirst();
+        Collections.sort(channels, ordering);
+        return StringUtils.join(channels, ',');
     }
 }
 

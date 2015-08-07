@@ -10,6 +10,7 @@ import feign.RequestLine;
  */
 
 public interface DMApiService {
-    @RequestLine("GET /user/{channel}/videos?fields=id,3d,ads,allow_embed,channel,owner.screenname,created_time,updated_time,description,duration,explicit,geoblocking,language,mediablocking,mode,owner.id,owner.username,published,status,tags,thumbnail_url,title,&sort=recent&limit=25")
-    ChannelVideos getVideos(@Param("channel") String channelId) throws DeException;
+    @RequestLine("GET /videos?owners={channels}&fields=id,3d,ads,allow_embed,channel,owner.screenname,created_time,updated_time,description,duration,explicit,geoblocking,language,mediablocking,mode,owner.id,owner.username,published,status,tags,thumbnail_url,title,&sort={order}&limit=25")
+    ChannelVideos getVideos(@Param("channels") String channelIds,@Param("order") String sortOrder) throws DeException;
+
 }
