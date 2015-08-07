@@ -63,56 +63,6 @@ public class ESChannelVideoIntegrationTest {
         injector = null;
     }
 
-    private static void loadVideoMaps(Map<String, Object>... map) throws Exception {
-        String json;
-        Video video;
-        List<Video> videos = new ArrayList<Video>();
-        for (Map m : map) {
-            try {
-                //serialize to json
-                json = mapper.writeValueAsString(m);
-            } catch (JsonProcessingException e) {
-                e.printStackTrace();
-                throw new Exception("failed parsing json", e);
-            }
-            if (json != null) {
-                //deserialize to adunit
-                video = mapper.readValue(json, Video.class);
-                videos.add(video);
-            }
-        }
-        new ChannelVideoBulkInsertCommand(videos).execute();
-        Thread.sleep(2000);
-    }
-
-    private static Map<String, Object> createVideoDataMap(String id) {
-        String timeNow = DeHelper.currentUTCTimeString();
-        Map<String, Object> m = new HashMap<String, Object>();
-        m.put("_id", id);
-        m.put("video_id", id);
-        m.put("_updated", timeNow);
-        m.put("_created", timeNow);
-        m.put("publication_date", timeNow);
-        m.put("categories", new ArrayList<String>(Arrays.asList("cat1", "cat2")));
-        m.put("languages", new ArrayList<String>(Arrays.asList("en", "fr")));
-        m.put("tags", new ArrayList<String>(Arrays.asList("tag1", "tag2")));
-        m.put("title", "title");
-        m.put("description", "description");
-        m.put("channel", "channel");
-        m.put("channel_name", "channel_name");
-        m.put("channel_id", "channel_id");
-        m.put("resizable_thumbnail_url", "resizable_thumbnail_url");
-        m.put("duration", 123);
-        return m;
-    }
-
-    private static void deleteVideosByIds(String... ids) throws DeException {
-        for (String id : ids) {
-            System.out.println("Deleting Video Id: " + id);
-            Assert.assertTrue(DEProcessor.deleteById(DeHelper.channelIndex.get(), DeHelper.videosType.get(), id));
-        }
-    }
-
     @Test
     public void testDmApiCall() throws Exception {
 
@@ -158,6 +108,26 @@ public class ESChannelVideoIntegrationTest {
         Assert.assertTrue(i.getResponse().get(2).getClass().getCanonicalName().contains("AdUnit"));
         Assert.assertEquals(1, CacheService.getChannelVideosCache().size());
         Assert.assertEquals(1, CacheService.getChannelVideosCache().stats().hitCount());
+
+        sq = new SearchQueryRequest();
+        sq.setTime("2014-12-31T15:00:00-0800");
+        sq.setCategories(new ArrayList(Arrays.asList("cat1")));
+        sq.setDevice("dev1");
+        sq.setFormat("fmt1");
+        sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
+        sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
+        sq.setChannel("buzzfeedvideo");
+
+
+        System.out.println("Search Query ====>" + sq.toString());
+        i = new QueryCommand(sq, 1, "promoted,channel").execute();
+        System.out.println("Response ====>:" + i.toString());
+        Assert.assertNotNull(i);
+        Assert.assertEquals(1, i.getResponse().size());
+        Assert.assertEquals(2, CacheService.getChannelVideosCache().size());
+        Assert.assertEquals(1, CacheService.getChannelVideosCache().stats().hitCount());
+
+
         ESAdUnitsIntegrationTest.deleteAdUnitsByIds("1");
     }
 }

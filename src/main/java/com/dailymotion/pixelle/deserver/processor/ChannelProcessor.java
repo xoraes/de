@@ -29,7 +29,6 @@ import java.util.List;
  * Created by n.dhupia on 2/27/15.
  */
 public class ChannelProcessor extends VideoProcessor {
-    private static final Integer MAX_RANDOM = 100;
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final DynamicStringProperty listOfValidCategories = DynamicPropertyFactory.getInstance().getStringProperty("pixelle.channel.categories", "");
     private static final DynamicStringProperty listOfValidSortOrders = DynamicPropertyFactory.getInstance().getStringProperty("pixelle.channel.sortorders", "recent,trending,visited,random");
@@ -62,7 +61,12 @@ public class ChannelProcessor extends VideoProcessor {
         logger.info("getting videos from cache");
         LoadingCache<Channels, List<Video>> cache = CacheService.getChannelVideosCache();
         if (cache != null) {
-            Channels channels = new Channels(listToString(sq.getChannels()), sq.getSortOrder());
+            Channels channels;
+            if (StringUtils.isNotBlank(sq.getChannel())) {
+                channels = new Channels(sq.getChannel(), sq.getSortOrder());
+            } else {
+                channels = new Channels(listToString(sq.getChannels()), sq.getSortOrder());
+            }
             videos = cache.get(channels);
         }
         if (videos != null) {

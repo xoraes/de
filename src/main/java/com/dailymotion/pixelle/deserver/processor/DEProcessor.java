@@ -117,6 +117,9 @@ public class DEProcessor {
         } else if (at.length == 2
                 && StringUtils.containsIgnoreCase(allowedTypes, "promoted")
                 && StringUtils.containsIgnoreCase(allowedTypes, "channel")) {
+            if (DeHelper.isEmptyList(sq.getChannels()) && StringUtils.isBlank(sq.getChannel())) {
+                throw new DeException(HttpStatus.BAD_REQUEST_400, "No channels specified");
+            }
             stopwatch = channelWidgetTimer.start();
             try {
                 Future<List<AdUnitResponse>> adsFuture = new AdQueryCommand(sq, positions).queue();
