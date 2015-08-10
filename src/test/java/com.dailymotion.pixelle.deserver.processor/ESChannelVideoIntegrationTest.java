@@ -20,6 +20,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -127,7 +128,22 @@ public class ESChannelVideoIntegrationTest {
         Assert.assertEquals(2, CacheService.getChannelVideosCache().size());
         Assert.assertEquals(1, CacheService.getChannelVideosCache().stats().hitCount());
 
-
         ESAdUnitsIntegrationTest.deleteAdUnitsByIds("1");
+    }
+    @Test(expected = HystrixBadRequestException.class)
+    public void testTooManyChannels() throws Exception {
+        SearchQueryRequest sq = new SearchQueryRequest();
+        sq.setTime("2014-12-31T15:00:00-0800");
+        sq.setCategories(new ArrayList(Arrays.asList("cat1")));
+        sq.setDevice("dev1");
+        sq.setFormat("fmt1");
+        sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
+        sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
+        sq.setChannels(Arrays.asList("buzzfeedvideo", "spi0n", "buzzfeedvideo", "spi0n", "buzzfeedvideo", "spi0n", "buzzfeedvideo", "spi0n"));
+
+
+        System.out.println("Search Query ====>" + sq.toString());
+        ItemsResponse i = new QueryCommand(sq, 1, "promoted,channel").execute();
+        System.out.println("Response ====>:" + i.toString());
     }
 }

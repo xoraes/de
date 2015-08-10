@@ -9,6 +9,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Ordering;
 import com.google.inject.Inject;
 import com.netflix.config.DynamicBooleanProperty;
+import com.netflix.config.DynamicIntProperty;
 import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.config.DynamicStringProperty;
 import org.apache.commons.lang3.StringUtils;
@@ -31,7 +32,7 @@ import java.util.List;
 public class ChannelProcessor extends VideoProcessor {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final DynamicStringProperty listOfValidCategories = DynamicPropertyFactory.getInstance().getStringProperty("pixelle.channel.categories", "");
-    private static final DynamicStringProperty listOfValidSortOrders = DynamicPropertyFactory.getInstance().getStringProperty("pixelle.channel.sortorders", "recent,trending,visited,random");
+    private static final DynamicStringProperty listOfValidSortOrders = DynamicPropertyFactory.getInstance().getStringProperty("pixelle.channel.sortorders", "recent,visited,random");
     private static final DynamicBooleanProperty persistChanneltoES = DynamicPropertyFactory.getInstance().getBooleanProperty("pixelle.channel.es.store", false);
     private static final Logger logger = LoggerFactory.getLogger(ChannelProcessor.class);
 
@@ -62,10 +63,11 @@ public class ChannelProcessor extends VideoProcessor {
         LoadingCache<Channels, List<Video>> cache = CacheService.getChannelVideosCache();
         if (cache != null) {
             Channels channels;
-            if (StringUtils.isNotBlank(sq.getChannel())) {
-                channels = new Channels(sq.getChannel(), sq.getSortOrder());
-            } else {
+            // DeProcessor checks to ensure channel or channels is sent and is never empty. 
+            if (! DeHelper.isEmptyList(sq.getChannels())) {
                 channels = new Channels(listToString(sq.getChannels()), sq.getSortOrder());
+            } else {
+                channels = new Channels(sq.getChannel(), sq.getSortOrder());
             }
             videos = cache.get(channels);
         }

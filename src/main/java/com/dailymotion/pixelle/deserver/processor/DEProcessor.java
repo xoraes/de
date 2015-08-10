@@ -10,6 +10,8 @@ import com.dailymotion.pixelle.deserver.processor.hystrix.AdQueryCommand;
 import com.dailymotion.pixelle.deserver.processor.hystrix.ChannelQueryCommand;
 import com.dailymotion.pixelle.deserver.processor.hystrix.VideoQueryCommand;
 import com.google.inject.Inject;
+import com.netflix.config.DynamicIntProperty;
+import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.hystrix.exception.HystrixBadRequestException;
 import com.netflix.servo.DefaultMonitorRegistry;
 import com.netflix.servo.monitor.BasicCounter;
@@ -44,6 +46,7 @@ public class DEProcessor {
     private static final StatsTimer videosTimer = new StatsTimer(MonitorConfig.builder("videosQuery_statsTimer").build(), new StatsConfig.Builder().withPublishMean(true).build());
     private static final StatsTimer openWidgetTimer = new StatsTimer(MonitorConfig.builder("openWidgetQuery_statsTimer").build(), new StatsConfig.Builder().withPublishMean(true).build());
     private static final StatsTimer channelWidgetTimer = new StatsTimer(MonitorConfig.builder("myWidgetTimerQuery_statsTimer").build(), new StatsConfig.Builder().withPublishMean(true).build());
+    private static final DynamicIntProperty MAX_CHANNELS = DynamicPropertyFactory.getInstance().getIntProperty("pixelle.channel.maxchannels", 7);
     private static final LongGauge videoCount = new LongGauge(MonitorConfig.builder("numVideos_gauge").build());
     private static final LongGauge adunitCount = new LongGauge(MonitorConfig.builder("numadUnits_gauge").build());
     private static final Counter maxImpressionThreshhold = new BasicCounter(MonitorConfig
@@ -119,6 +122,9 @@ public class DEProcessor {
                 && StringUtils.containsIgnoreCase(allowedTypes, "channel")) {
             if (DeHelper.isEmptyList(sq.getChannels()) && StringUtils.isBlank(sq.getChannel())) {
                 throw new DeException(HttpStatus.BAD_REQUEST_400, "No channels specified");
+            }
+            if (!DeHelper.isEmptyList(sq.getChannels()) && sq.getChannels().size() > MAX_CHANNELS.get()) {
+                throw new DeException(HttpStatus.BAD_REQUEST_400, "Too many channels specified");
             }
             stopwatch = channelWidgetTimer.start();
             try {
