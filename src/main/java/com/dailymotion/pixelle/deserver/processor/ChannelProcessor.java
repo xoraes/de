@@ -9,7 +9,6 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Ordering;
 import com.google.inject.Inject;
 import com.netflix.config.DynamicBooleanProperty;
-import com.netflix.config.DynamicIntProperty;
 import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.config.DynamicStringProperty;
 import org.apache.commons.lang3.StringUtils;
@@ -46,10 +45,11 @@ public class ChannelProcessor extends VideoProcessor {
     }
 
     public static List<VideoResponse> recommendChannel(SearchQueryRequest sq, Integer positions) throws Exception {
+        String sortOrder = StringUtils.lowerCase(sq.getSortOrder());
 
-        if (StringUtils.isBlank(sq.getSortOrder()) || ! listOfValidSortOrders.get().contains(sq.getSortOrder().toLowerCase())) {
+        if (StringUtils.isBlank(sortOrder) || !listOfValidSortOrders.get().contains(sortOrder)) {
             sq.setSortOrder("recent"); //default to recent when provided invalid sort order
-            logger.warn("Invalid sort order provided, defaulting to 'recent' sort order: ", sq.toString());
+            logger.info("Invalid sort order provided, defaulting to 'recent' sort order: ", sq.toString());
         }
         List<VideoResponse> videoResponses = new ArrayList<>();
         /*
@@ -63,11 +63,11 @@ public class ChannelProcessor extends VideoProcessor {
         LoadingCache<Channels, List<Video>> cache = CacheService.getChannelVideosCache();
         if (cache != null) {
             Channels channels;
-            // DeProcessor checks to ensure channel or channels is sent and is never empty. 
-            if (! DeHelper.isEmptyList(sq.getChannels())) {
-                channels = new Channels(listToString(sq.getChannels()), sq.getSortOrder());
+            // DeProcessor checks to ensure channel or channels is sent and is never empty.
+            if (!DeHelper.isEmptyList(sq.getChannels())) {
+                channels = new Channels(listToString(sq.getChannels()), sortOrder);
             } else {
-                channels = new Channels(sq.getChannel(), sq.getSortOrder());
+                channels = new Channels(sq.getChannel(), sortOrder);
             }
             videos = cache.get(channels);
         }
@@ -170,6 +170,7 @@ public class ChannelProcessor extends VideoProcessor {
         }
         return !listOfValidCategories.get().contains(channelVideo.getChannel().toLowerCase());
     }
+
     private static String listToString(List<String> channels) {
         Ordering<String> ordering = Ordering.from(String.CASE_INSENSITIVE_ORDER).nullsFirst();
         Collections.sort(channels, ordering);
