@@ -44,7 +44,7 @@ project.ext {
     deserver = '0.1.0'
 }
 dependencies {
-    compile 'org.elasticsearch:elasticsearch:1.6.0'
+    compile 'org.elasticsearch:elasticsearch:1.7.1'
     compile 'com.google.guava:guava:18.0'
     compile 'org.eclipse.jetty:jetty-servlet:9.3.0.v20150612'
     compile 'org.eclipse.jetty:jetty-server:9.3.0.v20150612'
@@ -77,10 +77,10 @@ dependencies {
     compile 'org.codehaus.janino:janino:2.7.8'
     compile 'org.codehaus.groovy:groovy-all:2.4.3'
     compile 'org.apache.lucene:lucene-expressions:4.10.2'
-    compile 'com.netflix.hystrix:hystrix-core:1.4.12'
-    compile 'com.netflix.hystrix:hystrix-metrics-event-stream:1.4.12'
-    compile 'com.netflix.hystrix:hystrix-servo-metrics-publisher:1.4.12'
-    compile 'com.netflix.servo:servo-core:0.8.3'
+    compile 'com.netflix.hystrix:hystrix-core:1.4.14'
+    compile 'com.netflix.hystrix:hystrix-metrics-event-stream:1.4.14'
+    compile 'com.netflix.hystrix:ç:1.4.14'
+    compile 'com.netflix.servo:servo-core:0.11.2'
     compile 'com.google.guava:guava:18.0'
     compile 'org.projectlombok:lombok:1.16.4'
     compile 'com.netflix.feign:feign-core:8.5.0'
@@ -90,7 +90,7 @@ dependencies {
 
 mainClassName = "com.dailymotion.pixelle.deserver.StartServer"
 task wrapper(type: Wrapper) {
-    gradleVersion = '2.4'
+    gradleVersion = '2.6'
 }
 
 applicationName = "de"
