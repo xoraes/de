@@ -6,11 +6,8 @@
     <property file="/etc/de.conf"/>
     <jmxConfigurator/>
 
-    <appender name="SYSLOG" class="ch.qos.logback.classic.net.SyslogAppender">
-        <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>
-        <syslogHost>localhost</syslogHost>
-        <facility>USER</facility>
-        <suffixPattern>de:[%thread] %logger %msg%n%rEx</suffixPattern>
+    <appender name="SYSLOG" class="net.logstash.logback.appender.LogstashSocketAppender">
+        <host>localhost</host>
     </appender>
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
