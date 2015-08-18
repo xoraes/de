@@ -8,6 +8,9 @@
 
     <appender name="SYSLOG" class="net.logstash.logback.appender.LogstashSocketAppender">
         <host>localhost</host>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <customFields>{"appname":"${appname}"}</customFields>
+        </encoder>
     </appender>
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">

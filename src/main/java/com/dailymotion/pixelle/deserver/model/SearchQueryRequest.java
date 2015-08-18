@@ -38,7 +38,7 @@ public class SearchQueryRequest {
     @JsonProperty("channel")
     private String channel; // for backward compatibility
     @JsonProperty("channels")
-    private List<String> channels; //comma separated list of channels
+    private List<String> channels;
     @JsonProperty("sort")
     private String sortOrder;
     @JsonProperty("impression_history")

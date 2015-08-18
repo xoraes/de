@@ -38,6 +38,7 @@ public class ESAdUnitsIntegrationTest {
             protected void configure() {
                 bind(Client.class).toProvider(ESTestNodeClientProvider.class).asEagerSingleton();
                 bind(AdUnitProcessor.class).asEagerSingleton();
+                bind(Forecaster.class).asEagerSingleton();
                 bind(VideoProcessor.class).asEagerSingleton();
                 bind(ChannelProcessor.class).asEagerSingleton();
                 bind(DEProcessor.class).asEagerSingleton();
@@ -553,4 +554,5 @@ public class ESAdUnitsIntegrationTest {
 
         deleteAdUnitsByIds("1", "2");
     }
+
 }

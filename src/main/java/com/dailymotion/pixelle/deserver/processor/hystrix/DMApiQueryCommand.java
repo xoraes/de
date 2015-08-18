@@ -9,11 +9,7 @@ import com.netflix.config.DynamicIntProperty;
 import com.netflix.config.DynamicLongProperty;
 import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.config.DynamicStringProperty;
-import com.netflix.hystrix.HystrixCommand;
-import com.netflix.hystrix.HystrixCommandGroupKey;
-import com.netflix.hystrix.HystrixCommandKey;
-import com.netflix.hystrix.HystrixCommandProperties;
-import com.netflix.hystrix.HystrixThreadPoolKey;
+import com.netflix.hystrix.*;
 import com.netflix.hystrix.exception.HystrixBadRequestException;
 import feign.Feign;
 import feign.Retryer;
@@ -62,7 +58,7 @@ public class DMApiQueryCommand extends HystrixCommand<ChannelVideos> {
         }
         ChannelVideos cvs;
         try {
-            cvs = dmApi.getVideos(channels.getChannels(),channels.getSortOrder());
+            cvs = dmApi.getVideos(channels.getChannels(), channels.getSortOrder());
         } catch (DeException e) {
             if (HttpStatus.isClientError(e.getStatus())) {
                 throw new HystrixBadRequestException(e.getMessage(), e.getCause());

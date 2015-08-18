@@ -1,11 +1,6 @@
 package com.dailymotion.pixelle.deserver.processor;
 
-import com.dailymotion.pixelle.deserver.model.AdUnit;
-import com.dailymotion.pixelle.deserver.model.AdUnitResponse;
-import com.dailymotion.pixelle.deserver.model.ItemsResponse;
-import com.dailymotion.pixelle.deserver.model.SearchQueryRequest;
-import com.dailymotion.pixelle.deserver.model.Video;
-import com.dailymotion.pixelle.deserver.model.VideoResponse;
+import com.dailymotion.pixelle.deserver.model.*;
 import com.dailymotion.pixelle.deserver.processor.hystrix.AdQueryCommand;
 import com.dailymotion.pixelle.deserver.processor.hystrix.ChannelQueryCommand;
 import com.dailymotion.pixelle.deserver.processor.hystrix.VideoQueryCommand;
@@ -14,12 +9,7 @@ import com.netflix.config.DynamicIntProperty;
 import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.hystrix.exception.HystrixBadRequestException;
 import com.netflix.servo.DefaultMonitorRegistry;
-import com.netflix.servo.monitor.BasicCounter;
-import com.netflix.servo.monitor.Counter;
-import com.netflix.servo.monitor.LongGauge;
-import com.netflix.servo.monitor.MonitorConfig;
-import com.netflix.servo.monitor.StatsTimer;
-import com.netflix.servo.monitor.Stopwatch;
+import com.netflix.servo.monitor.*;
 import com.netflix.servo.stats.StatsConfig;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.http.HttpStatus;
@@ -309,6 +299,10 @@ public class DEProcessor {
             }
         }
         return sq;
+    }
+
+    public static ForecastResponse forecast(ForecastRequest forecastRequest) throws DeException {
+        return Forecaster.forecast(forecastRequest);
     }
 
     public ClusterHealthResponse getHealthCheck() throws DeException {

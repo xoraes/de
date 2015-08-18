@@ -39,11 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by n.dhupia on 11/3/14.
@@ -232,7 +228,7 @@ public class AdUnitProcessor {
         if (DeHelper.isEmptyList(sch)) {
             unit.setTimetable(new ArrayList<String>(Arrays.asList("all")));
         }
-        unit.setTimetable(convertSchedulesToTimeTable(unit.getSchedules()));
+        unit.setTimetable(sch);
         unit.setSchedules(null);
         if (unit.getCpc() == null || unit.getCpc() == 0) {
             unit.setCpc(0L);
@@ -390,7 +386,7 @@ public class AdUnitProcessor {
         Boolean hourSet;
         List<String> timeTable = null;
         if (schedules != null && schedules.length > 0) {
-            timeTable = new ArrayList<String>();
+            timeTable = new ArrayList<>();
             for (int i = 0; i < 7; i++) {
                 LocalDate date = new LocalDate();
                 if (i == 0) {

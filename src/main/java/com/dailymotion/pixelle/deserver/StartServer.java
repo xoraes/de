@@ -19,11 +19,7 @@ import com.netflix.servo.monitor.MonitorConfig;
 import com.squarespace.jersey2.guice.BootstrapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jetty.jmx.MBeanContainer;
-import org.eclipse.jetty.server.HttpConfiguration;
-import org.eclipse.jetty.server.HttpConnectionFactory;
-import org.eclipse.jetty.server.LowResourceMonitor;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.server.handler.StatisticsHandler;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.FilterHolder;
@@ -42,6 +38,7 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -49,10 +46,17 @@ import java.util.concurrent.TimeUnit;
 final class StartServer {
     private static final DoubleGauge videoCacheHitRate = new DoubleGauge(MonitorConfig.builder("videoCacheHitRate_gauge").build());
     private static final DoubleGauge channelCacheHitRate = new DoubleGauge(MonitorConfig.builder("channelCacheHitRate_gauge").build());
+    private static final DoubleGauge eventCountCacheHitRate = new DoubleGauge(MonitorConfig.builder("eventCountCacheHitRate_gauge").build());
+
     private static final DoubleGauge channelCacheLoadExceptionRate = new DoubleGauge(MonitorConfig.builder("channelCacheLoadExceptionRate_gauge").build());
     private static final DoubleGauge videoCacheLoadExceptionRate = new DoubleGauge(MonitorConfig.builder("videoCacheLoadExceptionRate_gauge").build());
+    private static final DoubleGauge eventCountCacheLoadExceptionRate = new DoubleGauge(MonitorConfig.builder("eventCountCacheLoadExceptionRate_gauge").build());
+
     private static final LongGauge videoCacheEvictionCount = new LongGauge(MonitorConfig.builder("videoCacheEvictionCount_gauge").build());
     private static final LongGauge channelCacheEvictionCount = new LongGauge(MonitorConfig.builder("channelCacheEvictionCount_gauge").build());
+    private static final LongGauge eventCountCacheEvictionCount = new LongGauge(MonitorConfig.builder("eventCountCacheEvictionCount_gauge").build());
+
+
     private static Logger logger = LoggerFactory.getLogger(StartServer.class);
 
     static {
@@ -90,13 +94,24 @@ final class StartServer {
 
         ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
 
+        ExecutorService ex = Executors.newFixedThreadPool(2);
+        //warm up cache - these
+        ex.submit(() -> CacheService.getEventCountCache().get("opportunity"));
+        ex.submit(() -> CacheService.getEventCountCache().get("view"));
+
         scheduledExecutorService.schedule(() -> {
             channelCacheHitRate.set(CacheService.getChannelVideosCache().stats().hitRate());
             videoCacheHitRate.set(CacheService.getOrganicVideosCache().stats().hitRate());
+            eventCountCacheHitRate.set(CacheService.getEventCountCache().stats().hitRate());
+
             channelCacheLoadExceptionRate.set(CacheService.getChannelVideosCache().stats().loadExceptionRate());
             videoCacheLoadExceptionRate.set(CacheService.getOrganicVideosCache().stats().loadExceptionRate());
+            eventCountCacheLoadExceptionRate.set(CacheService.getEventCountCache().stats().loadExceptionRate());
+
             videoCacheEvictionCount.set(CacheService.getOrganicVideosCache().stats().evictionCount());
             channelCacheEvictionCount.set(CacheService.getChannelVideosCache().stats().evictionCount());
+            eventCountCacheEvictionCount.set(CacheService.getEventCountCache().stats().evictionCount());
+
         }, 30, TimeUnit.SECONDS);
 
         ServletContainer servletContainer = new ServletContainer(config);
@@ -182,6 +197,7 @@ final class StartServer {
                 try {
                     logger.info("Server shutting down...");
                     scheduledExecutorService.shutdownNow();
+                    ex.shutdownNow();
                     server.stop();
                 } catch (Exception e) {
                     logger.error("Can not stop the Jetty server", e);
@@ -193,9 +209,10 @@ final class StartServer {
             server.start();
             server.join();
         } catch (Exception err) {
-            logger.error("Could not start Jetty server",err);
+            logger.error("Could not start Jetty server", err);
             throw new IOException(err);
         }
-
+        ex.awaitTermination(5, TimeUnit.MINUTES);
     }
+
 }

@@ -17,7 +17,10 @@ import com.netflix.config.DynamicPropertyFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -28,12 +31,40 @@ import java.util.concurrent.TimeUnit;
 public class CacheService {
     private static final Logger logger = LoggerFactory.getLogger(CacheService.class);
     private static final DynamicLongProperty chanRefreshAfterWriteMins = DynamicPropertyFactory.getInstance().getLongProperty("pixelle.channel.refresh.write.minutes", 4);
+    private static final DynamicLongProperty eventCountRefreshAfterWriteMins = DynamicPropertyFactory.getInstance().getLongProperty("pixelle.bq.eventcounts.refresh.write.minutes", 1440); // 24 hours
     private static final DynamicLongProperty videoRefreshAfterWriteMins = DynamicPropertyFactory.getInstance().getLongProperty("pixelle.organic.refresh.write.minutes", 1);
     private static final DynamicIntProperty channelLruSize = DynamicPropertyFactory.getInstance().getIntProperty("pixelle.channel.lru.size", 1000);
     private static final DynamicIntProperty videoLruSize = DynamicPropertyFactory.getInstance().getIntProperty("pixelle.organic.lru.size", 1000);
+    private static final DynamicIntProperty eventLruSize = DynamicPropertyFactory.getInstance().getIntProperty("pixelle.bq.eventcounts.lru.size", 10);
     private static final DynamicIntProperty maxVideosToCache = DynamicPropertyFactory.getInstance().getIntProperty("pixelle.organic.cache.max", 20);
     //exiting service makes sure the thread terminates 120 secs after jvm shutdown
     private static final ListeningExecutorService cacheMaintainer = MoreExecutors.listeningDecorator(MoreExecutors.getExitingExecutorService((ThreadPoolExecutor) Executors.newCachedThreadPool()));
+
+    private static final LoadingCache<String, Map<String, Long>> eventCountCache = CacheBuilder.newBuilder()
+            .recordStats()
+            .maximumSize(eventLruSize.get()).refreshAfterWrite(eventCountRefreshAfterWriteMins.get(), TimeUnit.MINUTES)
+            .build(
+                    new CacheLoader<String, Map<String, Long>>() {
+                        @Override
+                        public Map<String, Long> load(String event) throws DeException {
+                            logger.info("Caching and indexing channel video..");
+                            try {
+                                return BigQuery.getEventCountMap(event);
+                            } catch (IOException e) {
+                                throw new DeException(e, 500);
+                            } catch (InterruptedException e) {
+                                throw new DeException(e, 500);
+                            } catch (GeneralSecurityException e) {
+                                throw new DeException(e, 500);
+                            }
+                        }
+
+                        @Override
+                        public ListenableFuture<Map<String, Long>> reload(final String event, Map<String, Long> oldValue) throws DeException {
+                            logger.info("Reloading cache for key " + event);
+                            return cacheMaintainer.submit(() -> BigQuery.getEventCountMap(event));
+                        }
+                    });
 
     private static final LoadingCache<Channels, List<Video>> channelVideosCache = CacheBuilder.newBuilder()
             .recordStats()
@@ -97,5 +128,9 @@ public class CacheService {
 
     public static final LoadingCache<SearchQueryRequest, List<VideoResponse>> getOrganicVideosCache() {
         return organicVideosCache;
+    }
+
+    public static final LoadingCache<String, Map<String, Long>> getEventCountCache() {
+        return eventCountCache;
     }
 }
