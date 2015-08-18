@@ -172,31 +172,31 @@ public class Forecaster {
 
         if (!DeHelper.isEmptyList(devices)) {
             if (!devices.contains("desktop")) {
-                dailyAvailableViews = dailyAvailableViews - (dailyAvailableViews * 0.45f);
+                dailyAvailableViews = dailyAvailableViews - dailyAvailableViews * 0.45f;
             }
             if (!devices.contains("mobile")) {
-                dailyAvailableViews = dailyAvailableViews - (dailyAvailableViews * 0.45f);
+                dailyAvailableViews = dailyAvailableViews - dailyAvailableViews * 0.45f;
             }
             if (!devices.contains("tablet")) {
-                dailyAvailableViews = dailyAvailableViews - (dailyAvailableViews * 0.09f);
+                dailyAvailableViews = dailyAvailableViews - dailyAvailableViews * 0.09f;
             }
             if (!devices.contains("tv")) {
-                dailyAvailableViews = dailyAvailableViews - (dailyAvailableViews * 0.01f);
+                dailyAvailableViews = dailyAvailableViews - dailyAvailableViews * 0.01f;
             }
         }
 
         if (!DeHelper.isEmptyList(formats)) {
             if (!devices.contains("in-feed")) {
-                dailyAvailableViews = dailyAvailableViews - (dailyAvailableViews * 0.15f);
+                dailyAvailableViews = dailyAvailableViews - dailyAvailableViews * 0.15f;
             }
             if (!devices.contains("in-search")) {
-                dailyAvailableViews = dailyAvailableViews - (dailyAvailableViews * 0.10f);
+                dailyAvailableViews = dailyAvailableViews - dailyAvailableViews * 0.10f;
             }
             if (!devices.contains("in-related")) {
-                dailyAvailableViews = dailyAvailableViews - (dailyAvailableViews * 0.60f);
+                dailyAvailableViews = dailyAvailableViews - dailyAvailableViews * 0.60f;
             }
             if (!devices.contains("in-widget")) {
-                dailyAvailableViews = dailyAvailableViews - (dailyAvailableViews * 0.15f);
+                dailyAvailableViews = dailyAvailableViews - dailyAvailableViews * 0.15f;
             }
         }
 
