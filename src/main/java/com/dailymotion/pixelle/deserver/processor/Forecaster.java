@@ -7,6 +7,7 @@ import com.google.inject.Inject;
 import com.netflix.config.DynamicFloatProperty;
 import com.netflix.config.DynamicPropertyFactory;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.jetty.http.HttpStatus;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
@@ -48,6 +49,9 @@ public class Forecaster {
 
     public static ForecastResponse forecast(ForecastRequest forecastRequest) throws DeException {
 
+        if (forecastRequest.getCpv() <= 0) {
+            throw new DeException(HttpStatus.BAD_REQUEST_400, "Cpv must be provided and be greater or equal to 1");
+        }
         // get the min and max cpv given the location(s)
         List<String> locations = forecastRequest.getLocations();
         Long cpv = forecastRequest.getCpv();
@@ -71,8 +75,18 @@ public class Forecaster {
         Max max = (Max) maxAggs;
         float maxCpvValue = (float) max.getValue();
 
+        // make sure min and max cpv >= 1
+        if (minCpvValue == 0) {
+            minCpvValue = 1;
+        }
+
+        if (maxCpvValue == 0) {
+            maxCpvValue = 1;
+        }
+
         float dailyOppCount = 1.0f, dailyViewCount = 1.0f;
 
+        // get the daily view and opp count based on location. add opp/view per location.
         for (String country : locations) {
             try {
                 dailyOppCount = (dailyOppCount + CacheService.getEventCountCache().get("opportunity").get(country.toUpperCase())) / bqTimePeriod.get();
@@ -87,25 +101,22 @@ public class Forecaster {
             }
         }
 
-
-        if (minCpvValue == 0) {
-            minCpvValue = 1;
-        }
-
-        if (maxCpvValue == 0) {
-            maxCpvValue = 1;
-        }
-        Float diffCpv = maxCpvValue - minCpvValue;
-        if (diffCpv.intValue() <= 0) {
-            diffCpv = 0.00001f;
-        }
         Float dailyAvailableViews = dailyOppCount * vtr.get() - dailyViewCount;
+
         dailyAvailableViews = applyStaticFilterRules(dailyAvailableViews, forecastRequest);
 
+        float ratio = 1.0f;
+        Float diffCpv = maxCpvValue - minCpvValue;
+        if (cpv >= maxCpvValue) {
+            ratio = 1.0f;
+        } else if (cpv <= minCpvValue || diffCpv < 1) { // we don't want num or denominator to be zero
+            ratio = cpv / maxCpvValue;
+        } else {
+            ratio = ((float) cpv - minCpvValue) / diffCpv;
+        }
 
-        Long dailyMaxViews = Float.valueOf((dailyAvailableViews * 1.0f) * ((float) cpv - minCpvValue) / diffCpv).longValue();
-        Long dailyMinViews = Float.valueOf((dailyAvailableViews * 0.25f) * ((float) cpv - minCpvValue) / diffCpv).longValue();
-
+        Long dailyMaxViews = Float.valueOf((dailyAvailableViews * 1.0f) * ratio).longValue();
+        Long dailyMinViews = Float.valueOf((dailyAvailableViews * 0.25f) * ratio).longValue();
 
         if (dailyMaxViews <= 1) {
             dailyMaxViews = 100L;
@@ -124,6 +135,8 @@ public class Forecaster {
         Integer numDays = getDaysInBetween(forecastRequest.getStartDate(), forecastRequest.getEndDate());
 
         Long totalMaxValues, totalMinValues;
+
+        //return total views only if schedules and start/end date is present
         if (avgHours > 0 && numDays > 0) {
             totalMaxValues = Float.valueOf(dailyMaxViews * avgHours * numDays).longValue();
             totalMinValues = Float.valueOf(dailyMinViews * avgHours * numDays).longValue();
@@ -140,15 +153,19 @@ public class Forecaster {
     }
 
     private static int getHoursPerWeekFromSchedule(Integer[] schedules) {
+
+        if (schedules == null || schedules.length < 7) {
+            return 168; // total number of hours in week
+        }
+
         Boolean hourSet;
         int weeklyHours = 0;
-        if (schedules != null && schedules.length > 0) {
-            for (int i = 0; i < 7; i++) {
-                for (int j = 0; j < 24; j++) {
-                    hourSet = isHourSet(j, schedules[i]);
-                    if (hourSet) {
-                        weeklyHours++;
-                    }
+
+        for (int i = 0; i < 7; i++) {
+            for (int j = 0; j < 24; j++) {
+                hourSet = isHourSet(j, schedules[i]);
+                if (hourSet) {
+                    weeklyHours++;
                 }
             }
         }

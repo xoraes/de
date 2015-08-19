@@ -20,21 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 
-/**
- * Example of authorizing with BigQuery and reading from a public dataset.
- */
 public class BigQuery {
-    // [START credentials]
-    /////////////////////////
-    // CHANGE ME!
-    // USER GENERATED VALUES: you must fill in values specific to your application.
-    //
-    // Visit https://cloud.google.com/console to create a Project and generate an
-    // OAuth 2.0 Client ID and Secret.
-    // See the README for more info.
-    // Then, add the Project ID below, and point the CLIENTSECRETS_LOCATION file
-    // to the file you downloaded.
-    /////////////////////////
     private static final String PROJECT_ID = "dailymotion-pixelle";
     // Static variables for API scope, callback URI, and HTTP/JSON functions
     private static final List<String> SCOPES = Arrays.asList(BigqueryScopes.BIGQUERY);
@@ -47,8 +33,6 @@ public class BigQuery {
     private static Logger logger = LoggerFactory.getLogger(BigQuery.class);
 
     public static Map<String, Long> getEventCountMap(String event) throws IOException, InterruptedException, GeneralSecurityException {
-        // Create a new BigQuery client authorized via OAuth 2.0 protocol
-
         Bigquery bigquery = createAuthorizedClient();
         String query = null;
 
@@ -120,7 +104,7 @@ public class BigQuery {
     }
 
     /**
-     * Polls the status of a BigQuery job, returns Job reference if "Done"
+     * Polls the status of a BigQuery job, returns Job reference if "Done".
      *
      * @param bigquery  an authorized BigQuery client
      * @param projectId a string containing the current project ID
@@ -151,7 +135,7 @@ public class BigQuery {
     }
 
     /**
-     * Makes an API call to the BigQuery API
+     * Makes an API call to the BigQuery API.
      *
      * @param bigquery     an authorized BigQuery client
      * @param projectId    a string containing the current project ID

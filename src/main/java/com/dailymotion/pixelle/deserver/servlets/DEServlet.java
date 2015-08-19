@@ -265,7 +265,7 @@ public class DEServlet {
     @Path("/forecast")
     @ManagedAsync
     @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
     public ForecastResponse forecast(ForecastRequest forecastRequest) throws DeException {
         return DEProcessor.forecast(forecastRequest);
     }
