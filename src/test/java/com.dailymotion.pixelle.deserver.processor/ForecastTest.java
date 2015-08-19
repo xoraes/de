@@ -81,7 +81,7 @@ public class ForecastTest {
         req.setCpv(15L);
         req.setEndDate("2015-10-30T00:00:00Z");
         req.setStartDate("2015-01-01T00:00:00Z");
-        req.setDevices(Arrays.asList("desktop","tablet","tv"));
+        req.setDevices(Arrays.asList("desktop", "tablet", "tv"));
 
         Integer[] sch = {16777215, 16777215, 16777215, 16777215, 16777215, 16777215, 16777215};
         req.setSchedules(sch);
@@ -94,4 +94,30 @@ public class ForecastTest {
 
         ESAdUnitsIntegrationTest.deleteAdUnitsByIds("1", "2");
     }
+    @Test(expected = DeException.class)
+    public void testForecastNoLocation() throws Exception {
+        Map m1 = ESAdUnitsIntegrationTest.createAdUnitDataMap("1", "1");
+        Map m2 = ESAdUnitsIntegrationTest.createAdUnitDataMap("2", "2");
+        m1.put("cpv", "10");
+        m2.put("cpv", "20");
+        ESAdUnitsIntegrationTest.loadAdUnitMaps(m1, m2);
+
+        ForecastRequest req = new ForecastRequest();
+        req.setCpv(15L);
+
+        ForecastResponse response = DEProcessor.forecast(req);
+        ESAdUnitsIntegrationTest.deleteAdUnitsByIds("1", "2");
+    }
+    @Test(expected = DeException.class)
+    public void testForecastNoCpv() throws Exception {
+        Map m1 = ESAdUnitsIntegrationTest.createAdUnitDataMap("1", "1");
+        Map m2 = ESAdUnitsIntegrationTest.createAdUnitDataMap("2", "2");
+        m1.put("cpv", "10");
+        m2.put("cpv", "20");
+        ESAdUnitsIntegrationTest.loadAdUnitMaps(m1, m2);
+        ForecastRequest req = new ForecastRequest();
+        ForecastResponse response = DEProcessor.forecast(req);
+        ESAdUnitsIntegrationTest.deleteAdUnitsByIds("1", "2");
+    }
+
 }

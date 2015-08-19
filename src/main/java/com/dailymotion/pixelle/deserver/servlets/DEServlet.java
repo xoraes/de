@@ -263,7 +263,6 @@ public class DEServlet {
      */
     @POST
     @Path("/forecast")
-    @ManagedAsync
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public ForecastResponse forecast(ForecastRequest forecastRequest) throws DeException {

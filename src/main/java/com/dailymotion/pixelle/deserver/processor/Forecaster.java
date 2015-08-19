@@ -49,8 +49,14 @@ public class Forecaster {
 
     public static ForecastResponse forecast(ForecastRequest forecastRequest) throws DeException {
 
+        if (forecastRequest == null) {
+            throw new DeException(HttpStatus.BAD_REQUEST_400, "Cpv and country code must be provided");
+        }
         if (forecastRequest.getCpv() <= 0) {
             throw new DeException(HttpStatus.BAD_REQUEST_400, "Cpv must be provided and be greater or equal to 1");
+        }
+        if (DeHelper.isEmptyList(forecastRequest.getLocations())) {
+            throw new DeException(HttpStatus.BAD_REQUEST_400, "Location list must be provided");
         }
         // get the min and max cpv given the location(s)
         List<String> locations = forecastRequest.getLocations();
