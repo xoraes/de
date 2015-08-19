@@ -52,7 +52,7 @@ public class Forecaster {
         if (forecastRequest == null) {
             throw new DeException(HttpStatus.BAD_REQUEST_400, "Cpv and country code must be provided");
         }
-        if (forecastRequest.getCpv() <= 0) {
+        if (forecastRequest.getCpv() == null || forecastRequest.getCpv() < 1) {
             throw new DeException(HttpStatus.BAD_REQUEST_400, "Cpv must be provided and be greater or equal to 1");
         }
         if (DeHelper.isEmptyList(forecastRequest.getLocations())) {

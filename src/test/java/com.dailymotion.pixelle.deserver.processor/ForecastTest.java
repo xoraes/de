@@ -116,6 +116,8 @@ public class ForecastTest {
         m2.put("cpv", "20");
         ESAdUnitsIntegrationTest.loadAdUnitMaps(m1, m2);
         ForecastRequest req = new ForecastRequest();
+        String countries[] = new String[]{"US"};
+        req.setLocations(Arrays.asList(countries));
         ForecastResponse response = DEProcessor.forecast(req);
         ESAdUnitsIntegrationTest.deleteAdUnitsByIds("1", "2");
     }
