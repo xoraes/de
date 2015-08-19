@@ -43,8 +43,8 @@ public class DEServlet {
      */
     @GET
     @Path("/healthcheck")
-    @Produces(MediaType.APPLICATION_JSON)
-    public ClusterHealthResponse healthCheck() throws DeException {
+    @Produces(MediaType.TEXT_PLAIN)
+    public String healthCheck() throws DeException {
         return deProcessor.getHealthCheck();
     }
 
@@ -56,8 +56,8 @@ public class DEServlet {
      */
     @GET
     @Path("/status")
-    @Produces(MediaType.APPLICATION_JSON)
-    public ClusterHealthResponse status() throws DeException {
+    @Produces(MediaType.TEXT_PLAIN)
+    public String status() throws DeException {
         return healthCheck();
     }
 

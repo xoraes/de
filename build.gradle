@@ -46,9 +46,9 @@ project.ext {
 dependencies {
     compile 'org.elasticsearch:elasticsearch:1.7.1'
     compile 'com.google.guava:guava:18.0'
-    compile 'org.eclipse.jetty:jetty-servlet:9.3.0.v20150612'
-    compile 'org.eclipse.jetty:jetty-server:9.3.0.v20150612'
-    compile 'org.eclipse.jetty:jetty-jmx:9.3.0.v20150612'
+    compile 'org.eclipse.jetty:jetty-servlet:9.3.2.v20150730'
+    compile 'org.eclipse.jetty:jetty-server:9.3.2.v20150730'
+    compile 'org.eclipse.jetty:jetty-jmx:9.3.2.v20150730'
     compile 'com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.5.4'
     compile 'com.squarespace.jersey2-guice:jersey2-guice:0.10'
     compile 'com.google.inject.extensions:guice-servlet:4.0'

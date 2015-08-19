@@ -14,6 +14,7 @@ import com.netflix.servo.stats.StatsConfig;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.http.HttpStatus;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthStatus;
 import org.elasticsearch.action.count.CountResponse;
 import org.elasticsearch.client.Client;
 import org.slf4j.Logger;
@@ -305,7 +306,7 @@ public class DEProcessor {
         return Forecaster.forecast(forecastRequest);
     }
 
-    public ClusterHealthResponse getHealthCheck() throws DeException {
+    public String getHealthCheck() throws DeException {
         boolean adIndexExists = client.admin()
                 .indices()
                 .prepareExists(DeHelper.promotedIndex.get())
@@ -341,11 +342,15 @@ public class DEProcessor {
             countResponse = client.prepareCount(DeHelper.promotedIndex.get()).setTypes(DeHelper.adunitsType.get()).execute().actionGet();
             adunitCount.set(countResponse.getCount());
 
-            return client.admin()
+            if (client.admin()
                     .cluster()
                     .prepareHealth(DeHelper.promotedIndex.get(), DeHelper.organicIndex.get())
                     .execute()
-                    .actionGet();
+                    .actionGet().getStatus() == ClusterHealthStatus.GREEN) {
+                return "OK";
+            } else {
+                throw new DeException(HttpStatus.INTERNAL_SERVER_ERROR_500, "internal error - cluster health");
+            }
         } else {
             throw new DeException(new Throwable("index or type does not exist"), HttpStatus.INTERNAL_SERVER_ERROR_500);
         }
