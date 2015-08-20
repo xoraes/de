@@ -280,7 +280,7 @@ public class VideoProcessor {
     }
 
     public static List<VideoResponse> getUntargetedVideos(List<VideoResponse> targetedVideo, int positions, SearchQueryRequest sq) throws DeException {
-        logger.warn("Trying to fill query with untargetted videos");
+        logger.info("Trying to fill query with untargetted videos: Search Query" + sq.toString());
         List<String> languages = sq.getLanguages();
         if (DeHelper.isEmptyList(languages)) {
             languages = Arrays.asList("en"); // default language if none provided
