@@ -1,16 +1,15 @@
-# docker build -t pixelle/pxldesrv
+FROM jeanblanchard/java:jre-8
 
-FROM java:8
+ADD build/distributions/de.zip /
+RUN unzip -d / /de.zip &&  rm /de.zip
 
-COPY . /usr/src/myapp
-WORKDIR /usr/src/myapp
-
-RUN ./gradlew jar de distZip
-RUN unzip -d / build/distributions/de.zip
-RUN rm -rf /usr/src/myapp
+RUN apk add --update bash && rm -rf /var/cache/apk/*
 
 COPY dist/de.conf /etc/de.conf
 
+RUN mkdir -p /var/log/elasticsearch
+
+RUN mkdir /data
 VOLUME ["/data"]
 
 ENTRYPOINT ["/de/bin/de"]
