@@ -21,6 +21,6 @@ public class JSONParseExceptionMapper implements ExceptionMapper<JsonParseExcept
         DeException dex = new DeException(HttpStatus.BAD_REQUEST_400, "Invalid request");
         ErrorResponse ex = new ErrorResponse(dex);
         return Response.status(HttpStatus.BAD_REQUEST_400)
-                .entity(ex).type((MediaType.APPLICATION_JSON)).build();
+                .entity(ex).type(MediaType.APPLICATION_JSON).build();
     }
 }
