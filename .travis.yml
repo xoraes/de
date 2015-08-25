@@ -1,20 +1,42 @@
-sudo: false
+sudo: required
+
+services:
+  - docker
+
 env:
   global:
     - NOKOGIRI_USE_SYSTEM_LIBRARIES=true
-
+    - COMMIT=${TRAVIS_COMMIT::8}
+    - "DOCKER_EMAIL=team.pixelle@gmail.com"
+    - "DOCKER_USER=pxlsalt"
+    - secure: "kZe+NBZWIEIa8lhWjDCxko1fpdd+CkFdYnd6Zoem/x3n58tcGYD96+MQtmEiGQLcsvE4b1WBux8xQsgy0zOKE93J4zuq59Pz2Loa0d9WP6vhkL8VdGyaY1f5T2BLp8WdNdDSFfpYSjwdiC59r8SXs6Fn5yTt4JjboLZYJt8gZT4="
+    
 language: java
+
 jdk:
-- oraclejdk8
+  - oraclejdk8
+
 script:
-- ./gradlew -q check jar de distZip
+  - ./gradlew -q check jar de distZip
+
 after_script:
-- test -f ./build/libs/de.jar
-- test -f ./build/libs/pxl-deserver.jar
-- test -f ./build/distributions/de.zip
+  - test -f ./build/libs/de.jar
+  - test -f ./build/libs/pxl-deserver.jar
+  - test -f ./build/distributions/de.zip
+
 cache:
   directories:
   - $HOME/.gradle/caches/
+
+after_success:
+  - export REPO=pixelle/pxlde
+  - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH ; fi`
+  - docker build -f dist/Dockerfile -t $REPO:$COMMIT .
+  - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+  - docker tag $REPO:$COMMIT $REPO:$TAG
+  - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
+  - docker push $REPO
+  
 deploy:
   - provider: s3
     access_key_id: AKIAIEGAQ4U2PGZGBKEQ
