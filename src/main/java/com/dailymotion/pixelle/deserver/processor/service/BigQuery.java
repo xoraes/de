@@ -25,10 +25,17 @@ import java.util.List;
 
 
 public class BigQuery {
-    private static final String PROJECT_ID = "dailymotion-pixelle";
     // Static variables for API scope, callback URI, and HTTP/JSON functions
+    private static final String PROJECT_ID = "dailymotion-pixelle";
     private static final List<String> SCOPES = Arrays.asList(BigqueryScopes.BIGQUERY);
-    private static final String REDIRECT_URI = "urn:ietf:wg:oauth:2.0:oob";
+    private static final String TOTAL = "total";
+    private static final String BQ_APP_NAME = "pixelle-forecast";
+    private static final String BQ_CREDENTIAL_FILENAME = "/bq.json";
+    private static final String BQ_DONE_STATE = "DONE";
+    private static final int BQ_PAUSE_TIME = 1000;
+
+
+    
     /**
      * Global instances of HTTP transport and JSON factory objects.
      */
@@ -98,10 +105,10 @@ public class BigQuery {
      */
     public static Bigquery createAuthorizedClient() throws IOException, GeneralSecurityException {
 
-        GoogleCredential credential = GoogleCredential.fromStream(BigQuery.class.getResourceAsStream("/bq.json"));
+        GoogleCredential credential = GoogleCredential.fromStream(BigQuery.class.getResourceAsStream(BQ_CREDENTIAL_FILENAME));
         credential = credential.createScoped(SCOPES);
 
-        return new Bigquery.Builder(TRANSPORT, JSON_FACTORY, credential).setApplicationName("pixelle-de").build();
+        return new Bigquery.Builder(TRANSPORT, JSON_FACTORY, credential).setApplicationName(BQ_APP_NAME).build();
     }
 
 
@@ -158,13 +165,13 @@ public class BigQuery {
             elapsedTime = System.currentTimeMillis() - startTime;
             logger.info("Job status ({}ms) {}: {}", elapsedTime,
                     jobId.getJobId(), pollJob.getStatus().getState());
-            if (pollJob.getStatus().getState().equals("DONE")) {
+            if (pollJob.getStatus().getState().equals(BQ_DONE_STATE)) {
                 return pollJob;
             }
             // Pause execution for one second before polling job status again, to
             // reduce unnecessary calls to the BigQUery API and lower overall
             // application bandwidth.
-            Thread.sleep(1000);
+            Thread.sleep(BQ_PAUSE_TIME);
         }
     }
 
@@ -212,14 +219,14 @@ public class BigQuery {
             res.put(country, target, count);
         }
 
-        res.put("total", "total", total);
+        res.put(TOTAL, TOTAL, total);
         // set column key totals
         for (String column : res.columnKeySet()) {
             Long tc = 0l;
             for (Long v : res.column(column).values()) {
                 tc = v + tc;
             }
-            res.put("total", column, tc);
+            res.put(TOTAL, column, tc);
         }
         // set country totals
         for (String rowKey : res.rowKeySet()) {
@@ -227,7 +234,7 @@ public class BigQuery {
             for (Long v : res.row(rowKey).values()) {
                 tc = v + tc;
             }
-            res.put(StringUtils.lowerCase(rowKey), "total", tc);
+            res.put(StringUtils.lowerCase(rowKey), TOTAL, tc);
         }
         return res;
     }
