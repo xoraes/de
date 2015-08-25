@@ -1,7 +1,11 @@
 package com.dailymotion.pixelle.deserver.servlets;
 
+import com.dailymotion.pixelle.deserver.model.ErrorResponse;
+import com.dailymotion.pixelle.deserver.processor.DeException;
 import com.fasterxml.jackson.core.JsonParseException;
+import org.eclipse.jetty.http.HttpStatus;
 
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
@@ -14,7 +18,9 @@ public class JSONParseExceptionMapper implements ExceptionMapper<JsonParseExcept
     @Override
     public Response toResponse(final JsonParseException jpe) {
         // Create and return an appropriate response here
-        return Response.status(Response.Status.BAD_REQUEST)
-                .entity("Invalid data supplied for request").build();
+        DeException dex = new DeException(HttpStatus.BAD_REQUEST_400, "Invalid request");
+        ErrorResponse ex = new ErrorResponse(dex);
+        return Response.status(HttpStatus.BAD_REQUEST_400)
+                .entity(ex).type((MediaType.APPLICATION_JSON)).build();
     }
 }
