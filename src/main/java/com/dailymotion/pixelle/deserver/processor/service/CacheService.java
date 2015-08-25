@@ -20,6 +20,8 @@ import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -33,7 +35,7 @@ public class CacheService {
     private static final Logger logger = LoggerFactory.getLogger(CacheService.class);
 
     private static final DynamicLongProperty chanRefreshAfterWriteMins = DynamicPropertyFactory.getInstance().getLongProperty("pixelle.channel.refresh.write.minutes", 4);
-    private static final DynamicLongProperty eventCountRefreshAfterWriteMins = DynamicPropertyFactory.getInstance().getLongProperty("pixelle.bq.eventcounts.refresh.write.minutes", 1440); // 24 hours
+    private static final DynamicLongProperty countryCountRefreshAfterWriteMins = DynamicPropertyFactory.getInstance().getLongProperty("pixelle.bq.countrycounts.refresh.write.minutes", 1440); // 24 hours
     private static final DynamicLongProperty videoRefreshAfterWriteMins = DynamicPropertyFactory.getInstance().getLongProperty("pixelle.organic.refresh.write.minutes", 1);
     private static final DynamicIntProperty channelLruSize = DynamicPropertyFactory.getInstance().getIntProperty("pixelle.channel.lru.size", 1000);
     private static final DynamicIntProperty videoLruSize = DynamicPropertyFactory.getInstance().getIntProperty("pixelle.organic.lru.size", 1000);
@@ -44,12 +46,12 @@ public class CacheService {
 
     private static final LoadingCache<String, Table<String, String, Long>> perCountryCountCache = CacheBuilder.newBuilder()
             .recordStats()
-            .maximumSize(eventLruSize.get()).refreshAfterWrite(eventCountRefreshAfterWriteMins.get(), TimeUnit.MINUTES)
+            .maximumSize(eventLruSize.get()).refreshAfterWrite(countryCountRefreshAfterWriteMins.get(), TimeUnit.MINUTES)
             .build(
                     new CacheLoader<String, Table<String, String, Long>>() {
                         @Override
                         public Table<String, String, Long> load(String target) throws DeException {
-                            logger.info("Caching and indexing channel video..");
+                            logger.info("Caching and indexing.." + target);
                             return BigQuery.getCountryCountTableFromFile(target);
                         }
 

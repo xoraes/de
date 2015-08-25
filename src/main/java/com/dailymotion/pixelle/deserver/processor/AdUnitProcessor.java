@@ -161,7 +161,7 @@ public class AdUnitProcessor {
                 sq.setExcludedVideoIds(null);
                 return recommend(sq, positions);
             } else {
-                logger.info("No ads returned =======> " + (sq != null ? sq.toString() : null));
+                logger.info("No ads returned =======> " + sq.toString());
             }
 
         } else {

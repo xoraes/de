@@ -1,16 +1,19 @@
 package com.dailymotion.pixelle.deserver.processor.service;
 
+import com.dailymotion.pixelle.deserver.processor.DeException;
 import com.dailymotion.pixelle.deserver.processor.DeHelper;
-import com.google.common.base.Charsets;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
-import com.google.common.io.Files;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -19,7 +22,7 @@ import java.util.List;
 public class FileLoader {
     private static final Logger logger = LoggerFactory.getLogger(FileLoader.class);
 
-    public static Table<String, String, Long> getTable(String target) {
+    public static Table<String, String, Long> getTable(String target) throws DeException {
         DataFile f = null;
         switch (target) {
             case DeHelper.CATEGORIESBYCOUNTRY:
@@ -67,14 +70,24 @@ public class FileLoader {
         return t;
     }
 
-    private static List<String> getLines(String filepath) {
-        String filePath = FileLoader.class.getClassLoader().getResource(filepath).getFile();
-        logger.info(filePath);
-        List<String> lines = null;
+    private static List<String> getLines(String filename) throws DeException {
+        InputStream in = FileLoader.class.getClassLoader().getResourceAsStream(filename);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+        List<String> lines = new ArrayList<>();
+        String line;
         try {
-            lines = Files.readLines(new File(filePath), Charsets.UTF_8);
+            while ((line = reader.readLine()) != null) {
+                lines.add(line);
+            }
         } catch (IOException e) {
-            logger.error(e.getMessage());
+            throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
+        } finally {
+            try {
+                reader.close();
+                in.close();
+            } catch (IOException e) {
+                throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
+            }
         }
         return lines;
     }

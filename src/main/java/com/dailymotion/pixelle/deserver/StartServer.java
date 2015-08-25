@@ -39,7 +39,6 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.EnumSet;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -86,17 +85,17 @@ final class StartServer {
         ConfigurationManager.loadCascadedPropertiesFromResources("application");
         final DynamicStringProperty appName =
                 DynamicPropertyFactory.getInstance().getStringProperty("appname", "de");
-        ExecutorService ex = Executors.newFixedThreadPool(5);
+
+        logger.info("Application: " + appName.get());
 
         if (appName.get().equalsIgnoreCase("forecast")) {
-            //warm up cache - these
-            ex.submit(() -> CacheService.getPerCountryCountCache().get(DeHelper.CATEGORIESBYCOUNTRY));
-            ex.submit(() -> CacheService.getPerCountryCountCache().get(DeHelper.DEVICESBYCOUNTRY));
-            ex.submit(() -> CacheService.getPerCountryCountCache().get(DeHelper.FORMATSBYCOUNTRY));
-            ex.submit(() -> CacheService.getPerCountryCountCache().get(DeHelper.EVENTSBYCOUNTRY));
-            ex.submit(() -> CacheService.getPerCountryCountCache().get(DeHelper.LANGUAGEBYCOUNTRY));
+            //warm up cache
+            CacheService.getCountryCategoryCountCache();
+            CacheService.getCountryDeviceCountCache();
+            CacheService.getCountryEventCountCache();
+            CacheService.getCountryFormatCountCache();
+            CacheService.getCountryLangCountCache();
         }
-
         HystrixPlugins.getInstance().registerMetricsPublisher(HystrixServoMetricsPublisher.getInstance());
 
         ServiceLocator locator = BootstrapUtils.newServiceLocator();
@@ -209,7 +208,6 @@ final class StartServer {
                 try {
                     logger.info("Server shutting down...");
                     scheduledExecutorService.shutdownNow();
-                    ex.shutdownNow();
                     server.stop();
                 } catch (Exception e) {
                     logger.error("Can not stop the Jetty server", e);
@@ -224,7 +222,6 @@ final class StartServer {
             logger.error("Could not start Jetty server", err);
             throw new IOException(err);
         }
-        ex.awaitTermination(5, TimeUnit.MINUTES);
     }
 
 }
