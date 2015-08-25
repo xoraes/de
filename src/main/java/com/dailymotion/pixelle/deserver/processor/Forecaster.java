@@ -101,7 +101,7 @@ public class Forecaster {
                 dailyOppCount = dailyOppCount * getFilteredPercentCountry(forecastRequest, country);
 
                 totalDailyOppCount = totalDailyOppCount + dailyOppCount;
-                totalDailyViewCount = totalDailyViewCount + (CacheService.getCountryEventCountCache().get(country, "view") / bqTimePeriod.get());
+                totalDailyViewCount = totalDailyViewCount + CacheService.getCountryEventCountCache().get(country, "view") / bqTimePeriod.get();
 
             }
         } else {
