@@ -40,6 +40,7 @@ public class Forecaster {
             DynamicPropertyFactory.getInstance().getFloatProperty("pixelle.forecast.cpv.max", 100.0f);
     private static final DynamicFloatProperty MIN_CPV =
             DynamicPropertyFactory.getInstance().getFloatProperty("pixelle.forecast.cpv.min", 1.0f);
+
     private static final Float HOUSRSINWEEK = 168.0f;
     private static final String TOTAL = "total";
     private static final float BQ_TIMEPERIOD = 21.0f;
@@ -121,7 +122,7 @@ public class Forecaster {
         }
 
 
-        float dailyAvailableViews = totalDailyOppCount * VTR.get() - totalDailyViewCount;
+        float dailyAvailableViews = totalDailyOppCount * VTR.get();
 
         float ratio = 1.0f;
         float diffCpv = maxCpvValue - minCpvValue;
@@ -133,15 +134,15 @@ public class Forecaster {
             ratio = ((float) cpv - minCpvValue) / diffCpv;
         }
 
-        Long dailyMaxViews = (long)(dailyAvailableViews * 1.0f * ratio);
-        Long dailyMinViews = (long) (dailyAvailableViews * 0.25f * ratio);
+        Long dailyMaxViews = (long)(dailyAvailableViews * ratio - totalDailyViewCount * (1 - ratio)) ;
+        Long dailyMinViews = (long) ((dailyAvailableViews * ratio - totalDailyViewCount * (1 - ratio)) * 0.25f);
 
         if (dailyMaxViews <= 1) {
             dailyMaxViews = 100L;
         }
 
         if (dailyMinViews <= 1) {
-            dailyMinViews = 50L;
+            dailyMinViews = 10L;
         }
         ForecastResponse response = new ForecastResponse();
         response.setDailyMaxViews(dailyMaxViews);
