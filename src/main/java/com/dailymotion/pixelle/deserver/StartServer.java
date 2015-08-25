@@ -2,6 +2,7 @@ package com.dailymotion.pixelle.deserver; /**
  * Created by n.dhupia on 10/29/14.
  */
 
+import com.dailymotion.pixelle.deserver.servlets.JSONParseExceptionMapper;
 import com.dailymotion.pixelle.deserver.processor.DeExceptionMapper;
 import com.dailymotion.pixelle.deserver.processor.DeHelper;
 import com.dailymotion.pixelle.deserver.processor.service.CacheService;
@@ -106,6 +107,7 @@ final class StartServer {
         config.register(MultiPartFeature.class);
         config.register(DEServlet.class);
         config.register(DeExceptionMapper.class);
+        config.register(JSONParseExceptionMapper.class);
 
         ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
 
