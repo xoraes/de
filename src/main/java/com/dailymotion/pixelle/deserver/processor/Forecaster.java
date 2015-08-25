@@ -3,6 +3,7 @@ package com.dailymotion.pixelle.deserver.processor;
 import com.dailymotion.pixelle.deserver.model.ForecastRequest;
 import com.dailymotion.pixelle.deserver.model.ForecastResponse;
 import com.dailymotion.pixelle.deserver.processor.service.CacheService;
+import com.google.api.client.repackaged.com.google.common.base.Objects;
 import com.google.inject.Inject;
 import com.netflix.config.DynamicFloatProperty;
 import com.netflix.config.DynamicPropertyFactory;
@@ -35,14 +36,13 @@ import java.util.List;
 public class Forecaster {
     private static final DynamicFloatProperty VTR =
             DynamicPropertyFactory.getInstance().getFloatProperty("pixelle.forecast.vtr", 0.0025f);
-    private static final DynamicFloatProperty BQ_TIMEPERIOD =
-            DynamicPropertyFactory.getInstance().getFloatProperty("pixelle.forecast.bq.eventdata.timelapse", 21.0f);
     private static final DynamicFloatProperty MAX_CPV =
             DynamicPropertyFactory.getInstance().getFloatProperty("pixelle.forecast.cpv.max", 100.0f);
     private static final DynamicFloatProperty MIN_CPV =
             DynamicPropertyFactory.getInstance().getFloatProperty("pixelle.forecast.cpv.min", 1.0f);
-    private static final float HOUSRSINWEEK = 168.0f;
+    private static final Float HOUSRSINWEEK = 168.0f;
     private static final String TOTAL = "total";
+    private static final float BQ_TIMEPERIOD = 21.0f;
 
     private static final Logger logger = LoggerFactory.getLogger(Forecaster.class);
     static Client client;
@@ -85,18 +85,16 @@ public class Forecaster {
 
         Aggregation maxAggs = searchResponse.getAggregations().get("max");
         Max max = (Max) maxAggs;
-        float maxCpvValue = (float) max.getValue();
+        float maxCpvValue = (float) max.value();
 
         // make sure min and max cpv >= 1
-        if (minCpvValue <= 0) {
-            minCpvValue = MIN_CPV.get();
+        if (Float.isInfinite(minCpvValue)) {
+            minCpvValue = MIN_CPV.getValue();
         }
 
-        if (maxCpvValue <= 0) {
+        if (Float.isInfinite(maxCpvValue)) {
             maxCpvValue = MIN_CPV.get();
-        }
-
-        if (maxCpvValue >= MAX_CPV.get()) {
+        } else if (maxCpvValue >= MAX_CPV.get()) {
             maxCpvValue = MAX_CPV.get();
         }
 
@@ -105,21 +103,23 @@ public class Forecaster {
         if (!DeHelper.isEmptyList(locations)) { // if locations is not provided then look at all countries
             // get the daily view and opp count based on location. add opp/view per location.
             for (String country : locations) {
-                float dailyOppCount = 1.0f;
-                dailyOppCount = CacheService.getCountryEventCountCache().get(country, "opportunity") / BQ_TIMEPERIOD.get();
-                // apply other filters (language/device/category/format)
+                float dailyOppCount = 1.0f, dailyViewCount = 1.0f;
+                dailyOppCount = Objects.firstNonNull(CacheService.getCountryEventCountCache().get(country, "opportunity"), 0l) / BQ_TIMEPERIOD;
+                        // apply other filters (language/device/category/format)
                 dailyOppCount = dailyOppCount * getFilteredPercentCountry(forecastRequest, country);
-
                 totalDailyOppCount = totalDailyOppCount + dailyOppCount;
-                totalDailyViewCount = totalDailyViewCount + CacheService.getCountryEventCountCache().get(country, "view") / BQ_TIMEPERIOD.get();
+
+                dailyViewCount = Objects.firstNonNull(CacheService.getCountryEventCountCache().get(country, "view"), 0l) / BQ_TIMEPERIOD;
+                totalDailyViewCount = totalDailyViewCount + dailyViewCount;
 
             }
         } else {
-            totalDailyOppCount = CacheService.getCountryEventCountCache().get(TOTAL, "opportunity") / BQ_TIMEPERIOD.get();
+            totalDailyOppCount = Objects.firstNonNull(CacheService.getCountryEventCountCache().get(TOTAL, "opportunity"), 0l) / BQ_TIMEPERIOD;
             // apply other filters (language/device/category/format)
             totalDailyOppCount = totalDailyOppCount * getFilteredPercentWithoutCountry(forecastRequest);
-            totalDailyViewCount = CacheService.getCountryEventCountCache().get(TOTAL, "view") / BQ_TIMEPERIOD.get();
+            totalDailyViewCount = Objects.firstNonNull(CacheService.getCountryEventCountCache().get(TOTAL, "view"), 0l) / BQ_TIMEPERIOD;
         }
+
 
         float dailyAvailableViews = totalDailyOppCount * VTR.get() - totalDailyViewCount;
 
@@ -133,8 +133,8 @@ public class Forecaster {
             ratio = ((float) cpv - minCpvValue) / diffCpv;
         }
 
-        Long dailyMaxViews = Float.valueOf((dailyAvailableViews * 1.0f) * ratio).longValue();
-        Long dailyMinViews = Float.valueOf((dailyAvailableViews * 0.25f) * ratio).longValue();
+        Long dailyMaxViews = (long)(dailyAvailableViews * 1.0f * ratio);
+        Long dailyMinViews = (long) (dailyAvailableViews * 0.25f * ratio);
 
         if (dailyMaxViews <= 1) {
             dailyMaxViews = 100L;
@@ -156,8 +156,8 @@ public class Forecaster {
 
         //return total views only if schedules and start/end date is present
         if (avgHours > 0 && numDays > 0) {
-            totalMaxValues = Float.valueOf(dailyMaxViews * avgHours * numDays).longValue();
-            totalMinValues = Float.valueOf(dailyMinViews * avgHours * numDays).longValue();
+            totalMaxValues = (long)(dailyMaxViews * avgHours * numDays);
+            totalMinValues = (long)(dailyMinViews * avgHours * numDays);
             if (totalMaxValues > 0) {
                 response.setTotalMaxViews(totalMaxValues);
                 response.setTotalMinViews(totalMinValues);
@@ -173,7 +173,7 @@ public class Forecaster {
     private static int getHoursPerWeekFromSchedule(Integer[] schedules) {
 
         if (schedules == null || schedules.length < 7) {
-            return 168; // total number of hours in week
+            return HOUSRSINWEEK.intValue(); // total number of hours in week
         }
 
         Boolean hourSet;
@@ -208,11 +208,8 @@ public class Forecaster {
         float langPercent = 0.0f, numer = 1.0f, denom = 1.0f;
         if (!DeHelper.isEmptyList(languages)) {
             for (String lang : languages) {
-                System.out.println(country);
-                System.out.println(CacheService.getCountryLangCountCache());
-                numer = CacheService.getCountryLangCountCache().get(country, lang);
-                denom = CacheService.getCountryLangCountCache().get(country, TOTAL);
-
+                numer = Objects.firstNonNull(CacheService.getCountryLangCountCache().get(country, lang), 0l);
+                denom = Objects.firstNonNull(CacheService.getCountryLangCountCache().get(country, TOTAL), 1l);
                 langPercent = langPercent + numer / denom;
             }
         }
@@ -221,8 +218,8 @@ public class Forecaster {
         float devicePercent = 0.0f;
         if (!DeHelper.isEmptyList(devices)) {
             for (String device : devices) {
-                numer = (float) CacheService.getCountryDeviceCountCache().get(country, device);
-                denom = (float) CacheService.getCountryDeviceCountCache().get(country, TOTAL);
+                numer = Objects.firstNonNull(CacheService.getCountryDeviceCountCache().get(country, device), 0l);
+                denom = Objects.firstNonNull(CacheService.getCountryDeviceCountCache().get(country, TOTAL), 1l);
                 devicePercent = devicePercent + numer / denom;
             }
         }
@@ -231,8 +228,8 @@ public class Forecaster {
         float formatPercent = 0.0f;
         if (!DeHelper.isEmptyList(formats)) {
             for (String format : formats) {
-                numer = (float) CacheService.getCountryFormatCountCache().get(country, format);
-                denom = (float) CacheService.getCountryFormatCountCache().get(country, TOTAL);
+                numer = Objects.firstNonNull(CacheService.getCountryFormatCountCache().get(country, format), 0l);
+                denom = Objects.firstNonNull(CacheService.getCountryFormatCountCache().get(country, TOTAL), 1l);
                 formatPercent = formatPercent + numer / denom;
             }
         }
@@ -242,8 +239,8 @@ public class Forecaster {
         float categoryPercent = 0.0f;
         if (!DeHelper.isEmptyList(categories)) {
             for (String category : categories) {
-                numer = (float) CacheService.getCountryCategoryCountCache().get(country, category);
-                denom = (float) CacheService.getCountryCategoryCountCache().get(country, TOTAL);
+                numer = Objects.firstNonNull(CacheService.getCountryCategoryCountCache().get(country, category), 0l);
+                denom = Objects.firstNonNull(CacheService.getCountryCategoryCountCache().get(country, TOTAL), 1l);
                 categoryPercent = categoryPercent + numer / denom;
             }
         }
@@ -272,8 +269,8 @@ public class Forecaster {
         float langPercent = 0.0f, numer = 1.0f, denom = 1.0f;
         if (!DeHelper.isEmptyList(languages)) {
             for (String lang : languages) {
-                numer = (float) CacheService.getCountryLangCountCache().get(TOTAL, lang);
-                denom = (float) CacheService.getCountryLangCountCache().get(TOTAL, TOTAL);
+                numer = Objects.firstNonNull(CacheService.getCountryLangCountCache().get(TOTAL, lang), 0l);
+                denom = Objects.firstNonNull(CacheService.getCountryLangCountCache().get(TOTAL, TOTAL), 1l);
 
                 langPercent = langPercent + numer / denom;
             }
@@ -284,8 +281,8 @@ public class Forecaster {
         float devicePercent = 0.0f;
         if (!DeHelper.isEmptyList(devices)) {
             for (String device : devices) {
-                numer = (float) CacheService.getCountryDeviceCountCache().get(TOTAL, device);
-                denom = (float) CacheService.getCountryDeviceCountCache().get(TOTAL, TOTAL);
+                numer = Objects.firstNonNull(CacheService.getCountryDeviceCountCache().get(TOTAL, device), 0l);
+                denom = Objects.firstNonNull(CacheService.getCountryDeviceCountCache().get(TOTAL, TOTAL), 1l);
                 devicePercent = devicePercent + numer / denom;
             }
         }
@@ -295,8 +292,8 @@ public class Forecaster {
         float formatPercent = 0.0f;
         if (!DeHelper.isEmptyList(formats)) {
             for (String format : formats) {
-                numer = (float) CacheService.getCountryFormatCountCache().get(TOTAL, format);
-                denom = (float) CacheService.getCountryFormatCountCache().get(TOTAL, TOTAL);
+                numer = Objects.firstNonNull(CacheService.getCountryFormatCountCache().get(TOTAL, format), 0l);
+                denom = Objects.firstNonNull(CacheService.getCountryFormatCountCache().get(TOTAL, TOTAL), 1l);
                 formatPercent = formatPercent + numer / denom;
             }
         }
@@ -306,8 +303,8 @@ public class Forecaster {
         float categoryPercent = 0.0f;
         if (!DeHelper.isEmptyList(categories)) {
             for (String category : categories) {
-                numer = (float) CacheService.getCountryCategoryCountCache().get(TOTAL, category);
-                denom = (float) CacheService.getCountryCategoryCountCache().get(TOTAL, TOTAL);
+                numer = Objects.firstNonNull(CacheService.getCountryCategoryCountCache().get(TOTAL, category), 0l);
+                denom = Objects.firstNonNull(CacheService.getCountryCategoryCountCache().get(TOTAL, TOTAL), 1l);
                 categoryPercent = categoryPercent + numer / denom;
             }
         }

@@ -67,6 +67,7 @@ public class FileLoader {
             }
             t.put(rowKey, "total", tc);
         }
+        //logger.info(t.toString());
         return t;
     }
 
