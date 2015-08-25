@@ -34,7 +34,7 @@ public class ESChannelVideoIntegrationTest {
 
     @BeforeClass
     public static void setUp() throws Exception {
-        ConfigurationManager.loadCascadedPropertiesFromResources("de");
+        ConfigurationManager.loadCascadedPropertiesFromResources("application");
         System.out.println("Running Setup");
         Injector injector = Guice.createInjector(new AbstractModule() {
 
