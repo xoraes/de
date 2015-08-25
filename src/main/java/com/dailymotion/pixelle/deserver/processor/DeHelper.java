@@ -3,7 +3,6 @@ package com.dailymotion.pixelle.deserver.processor;
 import com.netflix.config.DynamicIntProperty;
 import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.config.DynamicStringProperty;
-import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
@@ -44,21 +43,15 @@ public final class DeHelper {
 
     public static final DynamicIntProperty dePort =
             DynamicPropertyFactory.getInstance().getIntProperty("port", 8080);
+    public static final String EVENTSBYCOUNTRY = "COUNTRY_EVENTS";
+    public static final String LANGUAGEBYCOUNTRY = "COUNTRY_LANG";
+    public static final String CATEGORIESBYCOUNTRY = "COUNTRY_CATEGORY";
+    public static final String DEVICESBYCOUNTRY = "COUNTRY_DEVICE";
+    public static final String FORMATSBYCOUNTRY = "COUNTRY_FORMAT";
     private static final String DATETIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ssZ";
     private static Logger logger = LoggerFactory.getLogger(DeHelper.class);
 
     private DeHelper() {
-    }
-
-    public static List<String> stringListToLowerCase(List<String> listStr) {
-        if (isEmptyList(listStr)) {
-            return null;
-        }
-        for (int i = 0; i < listStr.size(); i++) {
-            String str = StringUtils.lowerCase(listStr.get(i));
-            listStr.set(i, str);
-        }
-        return listStr;
     }
 
     public static Boolean isEmptyList(List<?> cList) {
@@ -82,8 +75,10 @@ public final class DeHelper {
     }
 
     public static List<String> toLowerCase(List<String> list) {
-        for (int i = 0; i < list.size(); i++) {
-            list.set(i, list.get(i).toLowerCase());
+        if (!isEmptyList(list)) {
+            for (int i = 0; i < list.size(); i++) {
+                list.set(i, list.get(i).toLowerCase());
+            }
         }
         return list;
     }

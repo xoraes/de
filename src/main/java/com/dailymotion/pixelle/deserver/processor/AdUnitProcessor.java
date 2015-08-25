@@ -243,13 +243,13 @@ public class AdUnitProcessor {
             unit.setEndDate(DeHelper.timeToISO8601String(DeHelper.currentUTCTime().plusYears(MAX_YEARS)));
         }
 
-        unit.setCategories(DeHelper.stringListToLowerCase(unit.getCategories()));
-        unit.setDevices(DeHelper.stringListToLowerCase(unit.getDevices()));
-        unit.setExcludedCategories(DeHelper.stringListToLowerCase(unit.getExcludedCategories()));
-        unit.setExcludedLocations(DeHelper.stringListToLowerCase(unit.getExcludedLocations()));
-        unit.setFormats(DeHelper.stringListToLowerCase(unit.getFormats()));
-        unit.setLanguages(DeHelper.stringListToLowerCase(unit.getLanguages()));
-        unit.setLocations(DeHelper.stringListToLowerCase(unit.getLocations()));
+        unit.setCategories(DeHelper.toLowerCase(unit.getCategories()));
+        unit.setDevices(DeHelper.toLowerCase(unit.getDevices()));
+        unit.setExcludedCategories(DeHelper.toLowerCase(unit.getExcludedCategories()));
+        unit.setExcludedLocations(DeHelper.toLowerCase(unit.getExcludedLocations()));
+        unit.setFormats(DeHelper.toLowerCase(unit.getFormats()));
+        unit.setLanguages(DeHelper.toLowerCase(unit.getLanguages()));
+        unit.setLocations(DeHelper.toLowerCase(unit.getLocations()));
 
         return unit;
     }

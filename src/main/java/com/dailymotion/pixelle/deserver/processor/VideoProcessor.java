@@ -121,8 +121,8 @@ public class VideoProcessor {
             video.setCategories(Arrays.asList("all"));
         }
 
-        video.setCategories(DeHelper.stringListToLowerCase(video.getCategories()));
-        video.setLanguages(DeHelper.stringListToLowerCase(video.getLanguages()));
+        video.setCategories(DeHelper.toLowerCase(video.getCategories()));
+        video.setLanguages(DeHelper.toLowerCase(video.getLanguages()));
 
         video.setVideoId(video.getId());
         return video;

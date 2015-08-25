@@ -28,7 +28,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Created by n.dhupia on 8/12/15.
@@ -55,13 +54,14 @@ public class Forecaster {
         if (forecastRequest.getCpv() == null || forecastRequest.getCpv() < 1) {
             throw new DeException(HttpStatus.BAD_REQUEST_400, "Cpv must be provided and be greater or equal to 1");
         }
-        if (DeHelper.isEmptyList(forecastRequest.getLocations())) {
-            throw new DeException(HttpStatus.BAD_REQUEST_400, "Location list must be provided");
-        }
+
         // get the min and max cpv given the location(s)
         List<String> locations = forecastRequest.getLocations();
         Long cpv = forecastRequest.getCpv();
-        TermsFilterBuilder fb = FilterBuilders.termsFilter("locations", DeHelper.toLowerCase(locations));
+        TermsFilterBuilder fb = null;
+        if (!DeHelper.isEmptyList(locations)) {
+            fb = FilterBuilders.termsFilter("locations", DeHelper.toLowerCase(locations));
+        }
         FilteredQueryBuilder qb = QueryBuilders.filteredQuery(null, fb);
         SearchRequestBuilder srb1 = client.prepareSearch(DeHelper.promotedIndex.get())
                 .setTypes(DeHelper.adunitsType.get())
@@ -90,26 +90,28 @@ public class Forecaster {
             maxCpvValue = 1;
         }
 
-        float dailyOppCount = 1.0f, dailyViewCount = 1.0f;
+        float totalDailyOppCount = 1.0f, totalDailyViewCount = 1.0f;
 
-        // get the daily view and opp count based on location. add opp/view per location.
-        for (String country : locations) {
-            try {
-                dailyOppCount = (dailyOppCount + CacheService.getEventCountCache().get("opportunity").get(country.toUpperCase())) / bqTimePeriod.get();
+        if (!DeHelper.isEmptyList(locations)) { // if locations is not provided then look at all countries
+            // get the daily view and opp count based on location. add opp/view per location.
+            for (String country : locations) {
+                float dailyOppCount = 1.0f;
+                dailyOppCount = CacheService.getCountryEventCountCache().get(country, "opportunity") / bqTimePeriod.get();
+                // apply other filters (language/device/category/format)
+                dailyOppCount = dailyOppCount * getFilteredPercentCountry(forecastRequest, country);
 
-            } catch (ExecutionException e) {
-                logger.error("Error getting opportunity count from cache for country {}", country);
+                totalDailyOppCount = totalDailyOppCount + dailyOppCount;
+                totalDailyViewCount = totalDailyViewCount + (CacheService.getCountryEventCountCache().get(country, "view") / bqTimePeriod.get());
+
             }
-            try {
-                dailyViewCount = (dailyViewCount + CacheService.getEventCountCache().get("view").get(country.toUpperCase())) / bqTimePeriod.get();
-            } catch (ExecutionException e) {
-                logger.error("Error getting opportunity count from cache for country {}", country);
-            }
+        } else {
+            totalDailyOppCount = CacheService.getCountryEventCountCache().get("total", "opportunity") / bqTimePeriod.get();
+            // apply other filters (language/device/category/format)
+            totalDailyOppCount = totalDailyOppCount * getFilteredPercentWithoutCountry(forecastRequest);
+            totalDailyViewCount = CacheService.getCountryEventCountCache().get("total", "view") / bqTimePeriod.get();
         }
 
-        Float dailyAvailableViews = dailyOppCount * vtr.get() - dailyViewCount;
-
-        dailyAvailableViews = applyStaticFilterRules(dailyAvailableViews, forecastRequest);
+        Float dailyAvailableViews = totalDailyOppCount * vtr.get() - totalDailyViewCount;
 
         float ratio = 1.0f;
         Float diffCpv = maxCpvValue - minCpvValue;
@@ -188,46 +190,131 @@ public class Forecaster {
         return Days.daysBetween(sDate.toLocalDate(), eDate.toLocalDate()).getDays();
     }
 
-    private static float applyStaticFilterRules(float dailyAvailableViews, ForecastRequest forecastRequest) {
+    private static float getFilteredPercentCountry(ForecastRequest forecastRequest, String country) throws DeException {
         List<String> devices = forecastRequest.getDevices();
         List<String> formats = forecastRequest.getFormats();
         List<String> categories = forecastRequest.getCategories();
+        List<String> languages = forecastRequest.getLanguages();
+        float langPercent = 0.0f, numer = 1.0f, denom = 1.0f;
+        if (!DeHelper.isEmptyList(languages)) {
+            for (String lang : languages) {
+                System.out.println(country);
+                System.out.println(CacheService.getCountryLangCountCache());
+                numer = CacheService.getCountryLangCountCache().get(country, lang);
+                denom = CacheService.getCountryLangCountCache().get(country, "total");
 
+                langPercent = langPercent + numer / denom;
+            }
+        }
+        numer = 1.0f;
+        denom = 1.0f;
+        float devicePercent = 0.0f;
         if (!DeHelper.isEmptyList(devices)) {
-            if (!devices.contains("desktop")) {
-                dailyAvailableViews = dailyAvailableViews - dailyAvailableViews * 0.45f;
-            }
-            if (!devices.contains("mobile")) {
-                dailyAvailableViews = dailyAvailableViews - dailyAvailableViews * 0.45f;
-            }
-            if (!devices.contains("tablet")) {
-                dailyAvailableViews = dailyAvailableViews - dailyAvailableViews * 0.09f;
-            }
-            if (!devices.contains("tv")) {
-                dailyAvailableViews = dailyAvailableViews - dailyAvailableViews * 0.01f;
+            for (String device : devices) {
+                numer = (float) CacheService.getCountryDeviceCountCache().get(country, device);
+                denom = (float) CacheService.getCountryDeviceCountCache().get(country, "total");
+                devicePercent = devicePercent + numer / denom;
             }
         }
-
+        numer = 1.0f;
+        denom = 1.0f;
+        float formatPercent = 0.0f;
         if (!DeHelper.isEmptyList(formats)) {
-            if (!devices.contains("in-feed")) {
-                dailyAvailableViews = dailyAvailableViews - dailyAvailableViews * 0.15f;
-            }
-            if (!devices.contains("in-search")) {
-                dailyAvailableViews = dailyAvailableViews - dailyAvailableViews * 0.10f;
-            }
-            if (!devices.contains("in-related")) {
-                dailyAvailableViews = dailyAvailableViews - dailyAvailableViews * 0.60f;
-            }
-            if (!devices.contains("in-widget")) {
-                dailyAvailableViews = dailyAvailableViews - dailyAvailableViews * 0.15f;
+            for (String format : formats) {
+                numer = (float) CacheService.getCountryFormatCountCache().get(country, format);
+                denom = (float) CacheService.getCountryFormatCountCache().get(country, "total");
+                formatPercent = formatPercent + numer / denom;
             }
         }
 
+        numer = 1.0f;
+        denom = 1.0f;
+        float categoryPercent = 0.0f;
         if (!DeHelper.isEmptyList(categories)) {
-            int numCategories = categories.size();
-            dailyAvailableViews = dailyAvailableViews * numCategories / 16.0f;
+            for (String category : categories) {
+                numer = (float) CacheService.getCountryCategoryCountCache().get(country, category);
+                denom = (float) CacheService.getCountryCategoryCountCache().get(country, "total");
+                categoryPercent = categoryPercent + numer / denom;
+            }
         }
-        return dailyAvailableViews;
-    }
-}
 
+        if (langPercent <= 0.0f) {
+            langPercent = 1.0f;
+        }
+        if (devicePercent <= 0.0f) {
+            devicePercent = 1.0f;
+        }
+        if (categoryPercent <= 0.0f) {
+            categoryPercent = 1.0f;
+        }
+        if (formatPercent <= 0.0f) {
+            formatPercent = 1.0f;
+        }
+
+        return langPercent * categoryPercent * formatPercent * devicePercent;
+    }
+
+    private static float getFilteredPercentWithoutCountry(ForecastRequest forecastRequest) throws DeException {
+        List<String> devices = forecastRequest.getDevices();
+        List<String> formats = forecastRequest.getFormats();
+        List<String> categories = forecastRequest.getCategories();
+        List<String> languages = forecastRequest.getLanguages();
+        float langPercent = 0.0f, numer = 1.0f, denom = 1.0f;
+        if (!DeHelper.isEmptyList(languages)) {
+            for (String lang : languages) {
+                numer = (float) CacheService.getCountryLangCountCache().get("total", lang);
+                denom = (float) CacheService.getCountryLangCountCache().get("total", "total");
+
+                langPercent = langPercent + numer / denom;
+            }
+        }
+
+        numer = 1.0f;
+        denom = 1.0f;
+        float devicePercent = 0.0f;
+        if (!DeHelper.isEmptyList(devices)) {
+            for (String device : devices) {
+                numer = (float) CacheService.getCountryDeviceCountCache().get("total", device);
+                denom = (float) CacheService.getCountryDeviceCountCache().get("total", "total");
+                devicePercent = devicePercent + numer / denom;
+            }
+        }
+
+        numer = 1.0f;
+        denom = 1.0f;
+        float formatPercent = 0.0f;
+        if (!DeHelper.isEmptyList(formats)) {
+            for (String format : formats) {
+                numer = (float) CacheService.getCountryFormatCountCache().get("total", format);
+                denom = (float) CacheService.getCountryFormatCountCache().get("total", "total");
+                formatPercent = formatPercent + numer / denom;
+            }
+        }
+
+        numer = 1.0f;
+        denom = 1.0f;
+        float categoryPercent = 0.0f;
+        if (!DeHelper.isEmptyList(categories)) {
+            for (String category : categories) {
+                numer = (float) CacheService.getCountryCategoryCountCache().get("total", category);
+                denom = (float) CacheService.getCountryCategoryCountCache().get("total", "total");
+                categoryPercent = categoryPercent + numer / denom;
+            }
+        }
+
+        if (langPercent <= 0.0f) {
+            langPercent = 1.0f;
+        }
+        if (devicePercent <= 0.0f) {
+            devicePercent = 1.0f;
+        }
+        if (categoryPercent <= 0.0f) {
+            categoryPercent = 1.0f;
+        }
+        if (formatPercent <= 0.0f) {
+            formatPercent = 1.0f;
+        }
+        return langPercent * categoryPercent * formatPercent * devicePercent;
+    }
+
+}

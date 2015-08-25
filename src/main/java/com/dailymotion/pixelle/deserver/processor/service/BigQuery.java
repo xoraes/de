@@ -1,5 +1,6 @@
 package com.dailymotion.pixelle.deserver.processor.service;
 
+import com.dailymotion.pixelle.deserver.processor.DeHelper;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
@@ -9,15 +10,15 @@ import com.google.api.services.bigquery.Bigquery;
 import com.google.api.services.bigquery.Bigquery.Jobs.Insert;
 import com.google.api.services.bigquery.BigqueryScopes;
 import com.google.api.services.bigquery.model.*;
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 
 public class BigQuery {
@@ -32,15 +33,22 @@ public class BigQuery {
     private static final JsonFactory JSON_FACTORY = new JacksonFactory();
     private static Logger logger = LoggerFactory.getLogger(BigQuery.class);
 
-    public static Map<String, Long> getEventCountMap(String event) throws IOException, InterruptedException, GeneralSecurityException {
+    public static Table<String, String, Long> getCountryCountTable(String target) throws IOException, InterruptedException, GeneralSecurityException {
         Bigquery bigquery = createAuthorizedClient();
         String query = null;
 
-        if (event.equalsIgnoreCase("opportunity")) {
-            query = "select visitor_country,count(*) as count from events.last_3_months where visitor_country is not null and event == 'opportunity' and timestamp < timestamp(current_date()) and timestamp >= timestamp(date_add(timestamp(current_date()), -21, 'DAY')) group by visitor_country";
-        } else if (event.equalsIgnoreCase("view")) {
-            query = "select visitor_country,count(*) as count from events.last_3_months where visitor_country is not null and event == 'view' and occurrence == 1 and timestamp < timestamp(current_date()) and timestamp >= timestamp(date_add(timestamp(current_date()), -21, 'DAY')) group by visitor_country";
+        if (target.equalsIgnoreCase(DeHelper.EVENTSBYCOUNTRY)) {
+            query = "select visitor_country, event, count(*) as count from events.last_3_months where event is not null and (event == 'opportunity' or event == 'view') and visitor_country is not null and (occurrence is null or occurrence == 1) and timestamp < timestamp(current_date()) and timestamp >= timestamp(date_add(timestamp(current_date()), -21, 'DAY')) group by event, visitor_country";
+        } else if (target.equalsIgnoreCase(DeHelper.LANGUAGEBYCOUNTRY)) {
+            query = "select visitor_country,visitor_language,count(*) as count from events.last_3_months where visitor_country is not null and visitor_language is not null and event == 'view' and occurrence == 1 and timestamp < timestamp(current_date()) and timestamp >= timestamp(date_add(timestamp(current_date()), -21, 'DAY')) group by visitor_language, visitor_country";
+        } else if (target.equalsIgnoreCase(DeHelper.DEVICESBYCOUNTRY)) {
+            query = "select visitor_country,visitor_device,count(*) as count from events.last_3_months where visitor_country is not null and visitor_device is not null and event == 'view' and occurrence == 1 and timestamp < timestamp(current_date()) and timestamp >= timestamp(date_add(timestamp(current_date()), -21, 'DAY')) group by visitor_device, visitor_country";
+        } else if (target.equalsIgnoreCase(DeHelper.FORMATSBYCOUNTRY)) {
+            query = "select visitor_country,req_format,count(*) as count from events.last_3_months where visitor_country is not null and req_format is not null and event == 'view' and occurrence == 1 and timestamp < timestamp(current_date()) and timestamp >= timestamp(date_add(timestamp(current_date()), -21, 'DAY')) group by req_format, visitor_country";
+        } else if (target.equalsIgnoreCase(DeHelper.CATEGORIESBYCOUNTRY)) {
+            query = "select visitor_country,req_category,count(*) as count from events.last_3_months where visitor_country is not null and req_category is not null and event == 'view' and occurrence == 1 and timestamp < timestamp(current_date()) and timestamp >= timestamp(date_add(timestamp(current_date()), -21, 'DAY')) group by req_category, visitor_country";
         }
+
 
         JobReference jobId = startQuery(bigquery, PROJECT_ID, query);
 
@@ -141,10 +149,10 @@ public class BigQuery {
      * @param projectId    a string containing the current project ID
      * @param completedJob to the completed Job
      * @throws IOException
-     * @returns map of query results
+     * @returns Table (map f map of query results
      */
-    private static Map<String, Long> getQueryResultsMap(Bigquery bigquery,
-                                                        String projectId, Job completedJob) throws IOException {
+    private static Table<String, String, Long> getQueryResultsMap(Bigquery bigquery,
+                                                                  String projectId, Job completedJob) throws IOException {
         GetQueryResultsResponse queryResult = bigquery.jobs()
                 .getQueryResults(
                         projectId, completedJob
@@ -153,23 +161,50 @@ public class BigQuery {
                 ).execute();
         List<TableRow> rows = queryResult.getRows();
         logger.info("\nQuery Results:\n------------\n");
-        HashMap res = new HashMap();
+        Table<String, String, Long> res = HashBasedTable.create();
+
+        long total = 0;
         for (TableRow row : rows) {
             int i = 0;
             String country = null;
-            String count = null;
+            String target = null;
+            Long count = 0l;
             for (TableCell field : row.getF()) {
                 if (i == 0) {
                     country = (String) field.getV();
                     i++;
-                } else {
-                    count = (String) field.getV();
+                } else if (i == 1) {
+                    target = (String) field.getV();
+                    i++;
+                } else if (i == 2) {
+                    total = total + Long.valueOf((String) field.getV());
+                    count = Long.valueOf((String) field.getV());
                     i = 0;
                 }
             }
-            logger.info(country + "       " + count);
-            res.put(country, Long.valueOf(count));
+            res.put(country, target, count);
+        }
+        res.put("total", "total", total);
+        // set column key totals
+        for (String column : res.columnKeySet()) {
+            Long tc = 0l;
+            for (Long v : res.column(column).values()) {
+                tc = v + tc;
+            }
+            res.put("total", column, tc);
+        }
+        // set country totals
+        for (String rowKey : res.rowKeySet()) {
+            Long tc = 0l;
+            for (Long v : res.row(rowKey).values()) {
+                tc = v + tc;
+            }
+            res.put(rowKey, "total", tc);
         }
         return res;
+    }
+
+    public static Table<String, String, Long> getCountryCountTableFromFile(String target) {
+        return FileLoader.getTable(target);
     }
 }

@@ -10,6 +10,7 @@ import com.dailymotion.pixelle.deserver.servlets.DeServletModule;
 import com.google.inject.servlet.GuiceFilter;
 import com.netflix.config.ConfigurationManager;
 import com.netflix.config.DynamicPropertyFactory;
+import com.netflix.config.DynamicStringProperty;
 import com.netflix.hystrix.contrib.servopublisher.HystrixServoMetricsPublisher;
 import com.netflix.hystrix.strategy.HystrixPlugins;
 import com.netflix.servo.DefaultMonitorRegistry;
@@ -46,15 +47,15 @@ import java.util.concurrent.TimeUnit;
 final class StartServer {
     private static final DoubleGauge videoCacheHitRate = new DoubleGauge(MonitorConfig.builder("videoCacheHitRate_gauge").build());
     private static final DoubleGauge channelCacheHitRate = new DoubleGauge(MonitorConfig.builder("channelCacheHitRate_gauge").build());
-    private static final DoubleGauge eventCountCacheHitRate = new DoubleGauge(MonitorConfig.builder("eventCountCacheHitRate_gauge").build());
+    private static final DoubleGauge countryCountCacheHitRate = new DoubleGauge(MonitorConfig.builder("countryCountCacheHitRate_gauge").build());
 
     private static final DoubleGauge channelCacheLoadExceptionRate = new DoubleGauge(MonitorConfig.builder("channelCacheLoadExceptionRate_gauge").build());
     private static final DoubleGauge videoCacheLoadExceptionRate = new DoubleGauge(MonitorConfig.builder("videoCacheLoadExceptionRate_gauge").build());
-    private static final DoubleGauge eventCountCacheLoadExceptionRate = new DoubleGauge(MonitorConfig.builder("eventCountCacheLoadExceptionRate_gauge").build());
+    private static final DoubleGauge countryCountCacheLoadExceptionRate = new DoubleGauge(MonitorConfig.builder("countryCountCacheLoadExceptionRate_gauge").build());
 
     private static final LongGauge videoCacheEvictionCount = new LongGauge(MonitorConfig.builder("videoCacheEvictionCount_gauge").build());
     private static final LongGauge channelCacheEvictionCount = new LongGauge(MonitorConfig.builder("channelCacheEvictionCount_gauge").build());
-    private static final LongGauge eventCountCacheEvictionCount = new LongGauge(MonitorConfig.builder("eventCountCacheEvictionCount_gauge").build());
+    private static final LongGauge countryCountCacheEvictionCount = new LongGauge(MonitorConfig.builder("countryCountCacheEvictionCount_gauge").build());
 
 
     private static Logger logger = LoggerFactory.getLogger(StartServer.class);
@@ -66,6 +67,9 @@ final class StartServer {
         DefaultMonitorRegistry.getInstance().register(videoCacheLoadExceptionRate);
         DefaultMonitorRegistry.getInstance().register(videoCacheEvictionCount);
         DefaultMonitorRegistry.getInstance().register(channelCacheEvictionCount);
+        DefaultMonitorRegistry.getInstance().register(countryCountCacheEvictionCount);
+        DefaultMonitorRegistry.getInstance().register(countryCountCacheLoadExceptionRate);
+        DefaultMonitorRegistry.getInstance().register(countryCountCacheHitRate);
     }
 
     private StartServer() {
@@ -79,7 +83,19 @@ final class StartServer {
         if (!StringUtils.isBlank(env)) {
             System.setProperty("archaius.deployment.environment", env);
         }
-        ConfigurationManager.loadCascadedPropertiesFromResources("de");
+        ConfigurationManager.loadCascadedPropertiesFromResources("application");
+        final DynamicStringProperty appName =
+                DynamicPropertyFactory.getInstance().getStringProperty("appname", "de");
+        ExecutorService ex = Executors.newFixedThreadPool(5);
+
+        if (appName.get().equalsIgnoreCase("forecast")) {
+            //warm up cache - these
+            ex.submit(() -> CacheService.getPerCountryCountCache().get(DeHelper.CATEGORIESBYCOUNTRY));
+            ex.submit(() -> CacheService.getPerCountryCountCache().get(DeHelper.DEVICESBYCOUNTRY));
+            ex.submit(() -> CacheService.getPerCountryCountCache().get(DeHelper.FORMATSBYCOUNTRY));
+            ex.submit(() -> CacheService.getPerCountryCountCache().get(DeHelper.EVENTSBYCOUNTRY));
+            ex.submit(() -> CacheService.getPerCountryCountCache().get(DeHelper.LANGUAGEBYCOUNTRY));
+        }
 
         HystrixPlugins.getInstance().registerMetricsPublisher(HystrixServoMetricsPublisher.getInstance());
 
@@ -94,23 +110,19 @@ final class StartServer {
 
         ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
 
-        ExecutorService ex = Executors.newFixedThreadPool(2);
-        //warm up cache - these
-        ex.submit(() -> CacheService.getEventCountCache().get("opportunity"));
-        ex.submit(() -> CacheService.getEventCountCache().get("view"));
 
         scheduledExecutorService.schedule(() -> {
             channelCacheHitRate.set(CacheService.getChannelVideosCache().stats().hitRate());
             videoCacheHitRate.set(CacheService.getOrganicVideosCache().stats().hitRate());
-            eventCountCacheHitRate.set(CacheService.getEventCountCache().stats().hitRate());
+            countryCountCacheHitRate.set(CacheService.getPerCountryCountCache().stats().hitRate());
 
             channelCacheLoadExceptionRate.set(CacheService.getChannelVideosCache().stats().loadExceptionRate());
             videoCacheLoadExceptionRate.set(CacheService.getOrganicVideosCache().stats().loadExceptionRate());
-            eventCountCacheLoadExceptionRate.set(CacheService.getEventCountCache().stats().loadExceptionRate());
+            countryCountCacheLoadExceptionRate.set(CacheService.getPerCountryCountCache().stats().loadExceptionRate());
 
             videoCacheEvictionCount.set(CacheService.getOrganicVideosCache().stats().evictionCount());
             channelCacheEvictionCount.set(CacheService.getChannelVideosCache().stats().evictionCount());
-            eventCountCacheEvictionCount.set(CacheService.getEventCountCache().stats().evictionCount());
+            countryCountCacheEvictionCount.set(CacheService.getPerCountryCountCache().stats().evictionCount());
 
         }, 30, TimeUnit.SECONDS);
 

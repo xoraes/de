@@ -3,24 +3,25 @@ package com.dailymotion.pixelle.deserver.processor.service;
 import com.dailymotion.pixelle.deserver.model.*;
 import com.dailymotion.pixelle.deserver.processor.ChannelProcessor;
 import com.dailymotion.pixelle.deserver.processor.DeException;
+import com.dailymotion.pixelle.deserver.processor.DeHelper;
 import com.dailymotion.pixelle.deserver.processor.VideoProcessor;
 import com.dailymotion.pixelle.deserver.processor.hystrix.DMApiQueryCommand;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.Table;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.netflix.config.DynamicIntProperty;
 import com.netflix.config.DynamicLongProperty;
 import com.netflix.config.DynamicPropertyFactory;
+import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -30,6 +31,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class CacheService {
     private static final Logger logger = LoggerFactory.getLogger(CacheService.class);
+
     private static final DynamicLongProperty chanRefreshAfterWriteMins = DynamicPropertyFactory.getInstance().getLongProperty("pixelle.channel.refresh.write.minutes", 4);
     private static final DynamicLongProperty eventCountRefreshAfterWriteMins = DynamicPropertyFactory.getInstance().getLongProperty("pixelle.bq.eventcounts.refresh.write.minutes", 1440); // 24 hours
     private static final DynamicLongProperty videoRefreshAfterWriteMins = DynamicPropertyFactory.getInstance().getLongProperty("pixelle.organic.refresh.write.minutes", 1);
@@ -40,29 +42,21 @@ public class CacheService {
     //exiting service makes sure the thread terminates 120 secs after jvm shutdown
     private static final ListeningExecutorService cacheMaintainer = MoreExecutors.listeningDecorator(MoreExecutors.getExitingExecutorService((ThreadPoolExecutor) Executors.newCachedThreadPool()));
 
-    private static final LoadingCache<String, Map<String, Long>> eventCountCache = CacheBuilder.newBuilder()
+    private static final LoadingCache<String, Table<String, String, Long>> perCountryCountCache = CacheBuilder.newBuilder()
             .recordStats()
             .maximumSize(eventLruSize.get()).refreshAfterWrite(eventCountRefreshAfterWriteMins.get(), TimeUnit.MINUTES)
             .build(
-                    new CacheLoader<String, Map<String, Long>>() {
+                    new CacheLoader<String, Table<String, String, Long>>() {
                         @Override
-                        public Map<String, Long> load(String event) throws DeException {
+                        public Table<String, String, Long> load(String target) throws DeException {
                             logger.info("Caching and indexing channel video..");
-                            try {
-                                return BigQuery.getEventCountMap(event);
-                            } catch (IOException e) {
-                                throw new DeException(e, 500);
-                            } catch (InterruptedException e) {
-                                throw new DeException(e, 500);
-                            } catch (GeneralSecurityException e) {
-                                throw new DeException(e, 500);
-                            }
+                            return BigQuery.getCountryCountTableFromFile(target);
                         }
 
                         @Override
-                        public ListenableFuture<Map<String, Long>> reload(final String event, Map<String, Long> oldValue) throws DeException {
-                            logger.info("Reloading cache for key " + event);
-                            return cacheMaintainer.submit(() -> BigQuery.getEventCountMap(event));
+                        public ListenableFuture<Table<String, String, Long>> reload(final String target, Table<String, String, Long> oldValue) throws DeException {
+                            logger.info("Reloading cache for key " + target);
+                            return cacheMaintainer.submit(() -> BigQuery.getCountryCountTable(target));
                         }
                     });
 
@@ -122,6 +116,7 @@ public class CacheService {
                         }
                     });
 
+
     public static final LoadingCache<Channels, List<Video>> getChannelVideosCache() {
         return channelVideosCache;
     }
@@ -130,7 +125,49 @@ public class CacheService {
         return organicVideosCache;
     }
 
-    public static final LoadingCache<String, Map<String, Long>> getEventCountCache() {
-        return eventCountCache;
+
+    public static final LoadingCache<String, Table<String, String, Long>> getPerCountryCountCache() {
+        return perCountryCountCache;
     }
+
+    public static Table<String, String, Long> getCountryEventCountCache() throws DeException {
+        try {
+            return perCountryCountCache.get(DeHelper.EVENTSBYCOUNTRY);
+        } catch (ExecutionException e) {
+            throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
+        }
+    }
+
+    public static Table<String, String, Long> getCountryDeviceCountCache() throws DeException {
+        try {
+            return perCountryCountCache.get(DeHelper.DEVICESBYCOUNTRY);
+        } catch (ExecutionException e) {
+            throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
+        }
+    }
+
+    public static Table<String, String, Long> getCountryFormatCountCache() throws DeException {
+        try {
+            return perCountryCountCache.get(DeHelper.FORMATSBYCOUNTRY);
+        } catch (ExecutionException e) {
+            throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
+        }
+    }
+
+    public static Table<String, String, Long> getCountryCategoryCountCache() throws DeException {
+        try {
+            return perCountryCountCache.get(DeHelper.CATEGORIESBYCOUNTRY);
+        } catch (ExecutionException e) {
+            throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
+        }
+    }
+
+    public static Table<String, String, Long> getCountryLangCountCache() throws DeException {
+        try {
+            return perCountryCountCache.get(DeHelper.LANGUAGEBYCOUNTRY);
+        } catch (ExecutionException e) {
+            throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
+        }
+    }
+
 }

@@ -2,7 +2,7 @@
 <!-- de.properties is only for dev purposes -->
 
 <configuration debug="true" scan="true" scanPeriod="120 seconds">
-    <property resource="de.properties"/>
+    <property resource="application.properties"/>
     <property file="/etc/de.conf"/>
     <jmxConfigurator/>
 

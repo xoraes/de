@@ -10,7 +10,6 @@ import com.dailymotion.pixelle.deserver.processor.hystrix.*;
 import com.netflix.hystrix.exception.HystrixBadRequestException;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jetty.http.HttpStatus;
-import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.glassfish.jersey.server.ManagedAsync;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
