@@ -67,6 +67,7 @@ public class Forecaster {
         Long cpv = forecastRequest.getCpv();
         TermsFilterBuilder fb = null;
         if (!DeHelper.isEmptyList(locations)) {
+            locations.add("all");
             fb = FilterBuilders.termsFilter("locations", DeHelper.toLowerCase(locations));
         }
         FilteredQueryBuilder qb = QueryBuilders.filteredQuery(null, fb);
