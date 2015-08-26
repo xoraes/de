@@ -211,8 +211,8 @@ public class Forecaster {
         float langPercent = 0.0f, numer = 1.0f, denom = 1.0f;
         if (!DeHelper.isEmptyList(languages)) {
             for (String lang : languages) {
-                numer = Objects.firstNonNull(CacheService.getCountryLangCountCache().get(country, lang), 0l);
-                denom = Objects.firstNonNull(CacheService.getCountryLangCountCache().get(country, TOTAL), 1l);
+                numer = Objects.firstNonNull(CacheService.getCountryLangCountCache().get(country, lang), 0L);
+                denom = Objects.firstNonNull(CacheService.getCountryLangCountCache().get(country, TOTAL), 1L);
                 langPercent = langPercent + numer / denom;
             }
         }
@@ -221,8 +221,8 @@ public class Forecaster {
         float devicePercent = 0.0f;
         if (!DeHelper.isEmptyList(devices)) {
             for (String device : devices) {
-                numer = Objects.firstNonNull(CacheService.getCountryDeviceCountCache().get(country, device), 0l);
-                denom = Objects.firstNonNull(CacheService.getCountryDeviceCountCache().get(country, TOTAL), 1l);
+                numer = Objects.firstNonNull(CacheService.getCountryDeviceCountCache().get(country, device), 0L);
+                denom = Objects.firstNonNull(CacheService.getCountryDeviceCountCache().get(country, TOTAL), 1L);
                 devicePercent = devicePercent + numer / denom;
             }
         }
@@ -231,8 +231,8 @@ public class Forecaster {
         float formatPercent = 0.0f;
         if (!DeHelper.isEmptyList(formats)) {
             for (String format : formats) {
-                numer = Objects.firstNonNull(CacheService.getCountryFormatCountCache().get(country, format), 0l);
-                denom = Objects.firstNonNull(CacheService.getCountryFormatCountCache().get(country, TOTAL), 1l);
+                numer = Objects.firstNonNull(CacheService.getCountryFormatCountCache().get(country, format), 0L);
+                denom = Objects.firstNonNull(CacheService.getCountryFormatCountCache().get(country, TOTAL), 1L);
                 formatPercent = formatPercent + numer / denom;
             }
         }
@@ -242,8 +242,8 @@ public class Forecaster {
         float categoryPercent = 0.0f;
         if (!DeHelper.isEmptyList(categories)) {
             for (String category : categories) {
-                numer = Objects.firstNonNull(CacheService.getCountryCategoryCountCache().get(country, category), 0l);
-                denom = Objects.firstNonNull(CacheService.getCountryCategoryCountCache().get(country, TOTAL), 1l);
+                numer = Objects.firstNonNull(CacheService.getCountryCategoryCountCache().get(country, category), 0L);
+                denom = Objects.firstNonNull(CacheService.getCountryCategoryCountCache().get(country, TOTAL), 1L);
                 categoryPercent = categoryPercent + numer / denom;
             }
         }
@@ -272,8 +272,8 @@ public class Forecaster {
         float langPercent = 0.0f, numer = 1.0f, denom = 1.0f;
         if (!DeHelper.isEmptyList(languages)) {
             for (String lang : languages) {
-                numer = Objects.firstNonNull(CacheService.getCountryLangCountCache().get(TOTAL, lang), 0l);
-                denom = Objects.firstNonNull(CacheService.getCountryLangCountCache().get(TOTAL, TOTAL), 1l);
+                numer = Objects.firstNonNull(CacheService.getCountryLangCountCache().get(TOTAL, lang), 0L);
+                denom = Objects.firstNonNull(CacheService.getCountryLangCountCache().get(TOTAL, TOTAL), 1L);
 
                 langPercent = langPercent + numer / denom;
             }
@@ -284,8 +284,8 @@ public class Forecaster {
         float devicePercent = 0.0f;
         if (!DeHelper.isEmptyList(devices)) {
             for (String device : devices) {
-                numer = Objects.firstNonNull(CacheService.getCountryDeviceCountCache().get(TOTAL, device), 0l);
-                denom = Objects.firstNonNull(CacheService.getCountryDeviceCountCache().get(TOTAL, TOTAL), 1l);
+                numer = Objects.firstNonNull(CacheService.getCountryDeviceCountCache().get(TOTAL, device), 0L);
+                denom = Objects.firstNonNull(CacheService.getCountryDeviceCountCache().get(TOTAL, TOTAL), 1L);
                 devicePercent = devicePercent + numer / denom;
             }
         }
@@ -295,8 +295,8 @@ public class Forecaster {
         float formatPercent = 0.0f;
         if (!DeHelper.isEmptyList(formats)) {
             for (String format : formats) {
-                numer = Objects.firstNonNull(CacheService.getCountryFormatCountCache().get(TOTAL, format), 0l);
-                denom = Objects.firstNonNull(CacheService.getCountryFormatCountCache().get(TOTAL, TOTAL), 1l);
+                numer = Objects.firstNonNull(CacheService.getCountryFormatCountCache().get(TOTAL, format), 0L);
+                denom = Objects.firstNonNull(CacheService.getCountryFormatCountCache().get(TOTAL, TOTAL), 1L);
                 formatPercent = formatPercent + numer / denom;
             }
         }
@@ -306,8 +306,8 @@ public class Forecaster {
         float categoryPercent = 0.0f;
         if (!DeHelper.isEmptyList(categories)) {
             for (String category : categories) {
-                numer = Objects.firstNonNull(CacheService.getCountryCategoryCountCache().get(TOTAL, category), 0l);
-                denom = Objects.firstNonNull(CacheService.getCountryCategoryCountCache().get(TOTAL, TOTAL), 1l);
+                numer = Objects.firstNonNull(CacheService.getCountryCategoryCountCache().get(TOTAL, category), 0L);
+                denom = Objects.firstNonNull(CacheService.getCountryCategoryCountCache().get(TOTAL, TOTAL), 1L);
                 categoryPercent = categoryPercent + numer / denom;
             }
         }

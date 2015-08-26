@@ -14,7 +14,9 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -74,8 +76,8 @@ public class ForecastTest {
         ESAdUnitsIntegrationTest.loadAdUnitMaps(m1, m2);
 
         ForecastRequest req = new ForecastRequest();
-        String countries[] = new String[]{"US"};
-        req.setLocations(Arrays.asList(countries));
+
+        req.setLocations(new ArrayList<>(Arrays.asList("US")));
         req.setCpv(15L);
         req.setStartDate("2015-01-01T00:00:00Z");
         Integer[] sch = {16777215, 16777215, 16777215, 16777215, 16777215, 16777215, 16777215};
@@ -99,7 +101,8 @@ public class ForecastTest {
         ESAdUnitsIntegrationTest.loadAdUnitMaps(m1, m2);
 
         ForecastRequest req = new ForecastRequest();
-        req.setLocations(Arrays.asList("US", "FR"));
+
+        req.setLocations(new ArrayList<>(Arrays.asList("US", "FR")));
         req.setCpv(15L);
         req.setEndDate("2015-10-30T00:00:00Z");
         req.setStartDate("2015-01-01T00:00:00Z");
