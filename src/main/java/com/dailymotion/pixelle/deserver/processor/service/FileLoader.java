@@ -53,7 +53,7 @@ public class FileLoader {
         t.put("total", "total", total); // set overall total
         // set column key totals
         for (String column : t.columnKeySet()) {
-            Long tc = 0l;
+            Long tc = 0L;
             for (Long v : t.column(column).values()) {
                 tc = v + tc;
             }
@@ -61,7 +61,7 @@ public class FileLoader {
         }
         // set country totals
         for (String rowKey : t.rowKeySet()) {
-            Long tc = 0l;
+            Long tc = 0L;
             for (Long v : t.row(rowKey).values()) {
                 tc = v + tc;
             }
