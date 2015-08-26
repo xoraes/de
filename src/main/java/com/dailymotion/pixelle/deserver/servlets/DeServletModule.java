@@ -1,6 +1,10 @@
 package com.dailymotion.pixelle.deserver.servlets;
 
-import com.dailymotion.pixelle.deserver.processor.*;
+import com.dailymotion.pixelle.deserver.processor.AdUnitProcessor;
+import com.dailymotion.pixelle.deserver.processor.ChannelProcessor;
+import com.dailymotion.pixelle.deserver.processor.DEProcessor;
+import com.dailymotion.pixelle.deserver.processor.Forecaster;
+import com.dailymotion.pixelle.deserver.processor.VideoProcessor;
 import com.dailymotion.pixelle.deserver.providers.ESNodeClientProvider;
 import com.google.inject.servlet.ServletModule;
 import com.netflix.hystrix.contrib.metrics.eventstream.HystrixMetricsStreamServlet;

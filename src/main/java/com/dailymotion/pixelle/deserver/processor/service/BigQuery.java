@@ -10,7 +10,13 @@ import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.bigquery.Bigquery;
 import com.google.api.services.bigquery.Bigquery.Jobs.Insert;
 import com.google.api.services.bigquery.BigqueryScopes;
-import com.google.api.services.bigquery.model.*;
+import com.google.api.services.bigquery.model.GetQueryResultsResponse;
+import com.google.api.services.bigquery.model.Job;
+import com.google.api.services.bigquery.model.JobConfiguration;
+import com.google.api.services.bigquery.model.JobConfigurationQuery;
+import com.google.api.services.bigquery.model.JobReference;
+import com.google.api.services.bigquery.model.TableCell;
+import com.google.api.services.bigquery.model.TableRow;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import net.logstash.logback.encoder.org.apache.commons.lang.StringUtils;
@@ -35,7 +41,6 @@ public class BigQuery {
     private static final int BQ_PAUSE_TIME = 1000;
 
 
-    
     /**
      * Global instances of HTTP transport and JSON factory objects.
      */

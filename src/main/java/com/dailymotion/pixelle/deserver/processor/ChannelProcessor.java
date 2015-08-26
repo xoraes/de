@@ -1,6 +1,11 @@
 package com.dailymotion.pixelle.deserver.processor;
 
-import com.dailymotion.pixelle.deserver.model.*;
+import com.dailymotion.pixelle.deserver.model.ChannelVideo;
+import com.dailymotion.pixelle.deserver.model.ChannelVideos;
+import com.dailymotion.pixelle.deserver.model.Channels;
+import com.dailymotion.pixelle.deserver.model.SearchQueryRequest;
+import com.dailymotion.pixelle.deserver.model.Video;
+import com.dailymotion.pixelle.deserver.model.VideoResponse;
 import com.dailymotion.pixelle.deserver.processor.hystrix.ChannelVideoBulkInsertCommand;
 import com.dailymotion.pixelle.deserver.processor.service.CacheService;
 import com.fasterxml.jackson.databind.DeserializationFeature;

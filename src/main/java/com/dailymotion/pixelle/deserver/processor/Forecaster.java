@@ -63,12 +63,13 @@ public class Forecaster {
         }
 
         // get the min and max cpv given the location(s)
-        List<String> locations = forecastRequest.getLocations();
         Long cpv = forecastRequest.getCpv();
         TermsFilterBuilder fb = null;
+
+        List<String> locations = forecastRequest.getLocations();
         if (!DeHelper.isEmptyList(locations)) {
             locations.add("all");
-            fb = FilterBuilders.termsFilter("locations", DeHelper.toLowerCase(locations));
+            fb = FilterBuilders.termsFilter("locations", locations);
         }
         FilteredQueryBuilder qb = QueryBuilders.filteredQuery(null, fb);
         SearchRequestBuilder srb1 = client.prepareSearch(DeHelper.promotedIndex.get())
@@ -107,7 +108,7 @@ public class Forecaster {
             for (String country : locations) {
                 float dailyOppCount = 1.0f, dailyViewCount = 1.0f;
                 dailyOppCount = Objects.firstNonNull(CacheService.getCountryEventCountCache().get(country, "opportunity"), 0l) / BQ_TIMEPERIOD;
-                        // apply other filters (language/device/category/format)
+                // apply other filters (language/device/category/format)
                 dailyOppCount = dailyOppCount * getFilteredPercentCountry(forecastRequest, country);
                 totalDailyOppCount = totalDailyOppCount + dailyOppCount;
 
@@ -135,7 +136,7 @@ public class Forecaster {
             ratio = ((float) cpv - minCpvValue) / diffCpv;
         }
 
-        Long dailyMaxViews = (long)(dailyAvailableViews * ratio - totalDailyViewCount * (1 - ratio)) ;
+        Long dailyMaxViews = (long) (dailyAvailableViews * ratio - totalDailyViewCount * (1 - ratio));
         Long dailyMinViews = (long) ((dailyAvailableViews * ratio - totalDailyViewCount * (1 - ratio)) * 0.25f);
 
         if (dailyMaxViews <= 1) {
@@ -158,8 +159,8 @@ public class Forecaster {
 
         //return total views only if schedules and start/end date is present
         if (avgHours > 0 && numDays > 0) {
-            totalMaxValues = (long)(dailyMaxViews * avgHours * numDays);
-            totalMinValues = (long)(dailyMinViews * avgHours * numDays);
+            totalMaxValues = (long) (dailyMaxViews * avgHours * numDays);
+            totalMinValues = (long) (dailyMinViews * avgHours * numDays);
             if (totalMaxValues > 0) {
                 response.setTotalMaxViews(totalMaxValues);
                 response.setTotalMinViews(totalMinValues);
@@ -325,5 +326,4 @@ public class Forecaster {
         }
         return langPercent * categoryPercent * formatPercent * devicePercent;
     }
-
 }

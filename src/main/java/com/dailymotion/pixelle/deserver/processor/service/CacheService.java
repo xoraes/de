@@ -1,6 +1,10 @@
 package com.dailymotion.pixelle.deserver.processor.service;
 
-import com.dailymotion.pixelle.deserver.model.*;
+import com.dailymotion.pixelle.deserver.model.ChannelVideos;
+import com.dailymotion.pixelle.deserver.model.Channels;
+import com.dailymotion.pixelle.deserver.model.SearchQueryRequest;
+import com.dailymotion.pixelle.deserver.model.Video;
+import com.dailymotion.pixelle.deserver.model.VideoResponse;
 import com.dailymotion.pixelle.deserver.processor.ChannelProcessor;
 import com.dailymotion.pixelle.deserver.processor.DeException;
 import com.dailymotion.pixelle.deserver.processor.DeHelper;
@@ -20,8 +24,6 @@ import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;

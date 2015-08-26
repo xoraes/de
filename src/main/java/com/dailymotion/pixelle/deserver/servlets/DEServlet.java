@@ -2,11 +2,20 @@ package com.dailymotion.pixelle.deserver.servlets; /**
  * Created by n.dhupia on 10/29/14.
  */
 
-import com.dailymotion.pixelle.deserver.model.*;
+import com.dailymotion.pixelle.deserver.model.AdUnit;
+import com.dailymotion.pixelle.deserver.model.ForecastRequest;
+import com.dailymotion.pixelle.deserver.model.ForecastResponse;
+import com.dailymotion.pixelle.deserver.model.ItemsResponse;
+import com.dailymotion.pixelle.deserver.model.SearchQueryRequest;
+import com.dailymotion.pixelle.deserver.model.Video;
 import com.dailymotion.pixelle.deserver.processor.DEProcessor;
 import com.dailymotion.pixelle.deserver.processor.DeException;
 import com.dailymotion.pixelle.deserver.processor.DeHelper;
-import com.dailymotion.pixelle.deserver.processor.hystrix.*;
+import com.dailymotion.pixelle.deserver.processor.hystrix.AdInsertCommand;
+import com.dailymotion.pixelle.deserver.processor.hystrix.AdUnitBulkInsertCommand;
+import com.dailymotion.pixelle.deserver.processor.hystrix.AdUpdateCommand;
+import com.dailymotion.pixelle.deserver.processor.hystrix.QueryCommand;
+import com.dailymotion.pixelle.deserver.processor.hystrix.VideoBulkInsertCommand;
 import com.netflix.hystrix.exception.HystrixBadRequestException;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jetty.http.HttpStatus;
@@ -16,7 +25,14 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.servlet.annotation.WebServlet;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;

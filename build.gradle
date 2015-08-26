@@ -49,7 +49,7 @@ dependencies {
     compile 'org.eclipse.jetty:jetty-servlet:9.3.2.v20150730'
     compile 'org.eclipse.jetty:jetty-server:9.3.2.v20150730'
     compile 'org.eclipse.jetty:jetty-jmx:9.3.2.v20150730'
-    compile 'com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.5.4'
+    compile 'com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.6.1'
     compile 'com.squarespace.jersey2-guice:jersey2-guice:0.10'
     compile 'com.google.inject.extensions:guice-servlet:4.0'
 
@@ -63,8 +63,6 @@ dependencies {
     compile 'org.glassfish.jersey.media:jersey-media-jaxb:2.18'
     compile 'org.glassfish.jersey.media:jersey-media-multipart:2.18'
     compile 'org.glassfish.jersey.containers:jersey-container-servlet:2.18'
-
-    //compile 'org.glassfish.jersey.core:jersey-server:2.15'
 
     compile 'org.slf4j:slf4j-api:1.7.12'
     compile 'joda-time:joda-time:2.8.1'

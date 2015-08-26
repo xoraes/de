@@ -2,12 +2,12 @@ package com.dailymotion.pixelle.deserver; /**
  * Created by n.dhupia on 10/29/14.
  */
 
-import com.dailymotion.pixelle.deserver.servlets.JSONParseExceptionMapper;
 import com.dailymotion.pixelle.deserver.processor.DeExceptionMapper;
 import com.dailymotion.pixelle.deserver.processor.DeHelper;
 import com.dailymotion.pixelle.deserver.processor.service.CacheService;
 import com.dailymotion.pixelle.deserver.servlets.DEServlet;
 import com.dailymotion.pixelle.deserver.servlets.DeServletModule;
+import com.dailymotion.pixelle.deserver.servlets.JSONParseExceptionMapper;
 import com.google.inject.servlet.GuiceFilter;
 import com.netflix.config.ConfigurationManager;
 import com.netflix.config.DynamicPropertyFactory;
@@ -21,7 +21,11 @@ import com.netflix.servo.monitor.MonitorConfig;
 import com.squarespace.jersey2.guice.BootstrapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jetty.jmx.MBeanContainer;
-import org.eclipse.jetty.server.*;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.LowResourceMonitor;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.StatisticsHandler;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.FilterHolder;
@@ -29,6 +33,7 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.glassfish.hk2.api.ServiceLocator;
+import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
@@ -104,6 +109,7 @@ final class StartServer {
         BootstrapUtils.install(locator);
 
         ResourceConfig config = new ResourceConfig();
+        config.register(JacksonFeature.class);
         config.register(MultiPartFeature.class);
         config.register(DEServlet.class);
         config.register(DeExceptionMapper.class);
