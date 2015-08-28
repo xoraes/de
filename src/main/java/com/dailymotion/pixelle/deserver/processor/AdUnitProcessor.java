@@ -286,6 +286,10 @@ public class AdUnitProcessor {
 
 
         for (AdUnit adUnit : adUnits) {
+            if (adUnit.getCpv() == null || adUnit.getCpv() == 0L) {
+                logger.warn("failed inserting adunit due to no cpv: " + adUnit.toString());
+                continue;
+            }
             adUnit = modifyAdUnitForInsert(adUnit);
             logger.info("Loading adunit" + adUnit.toString());
             try {
@@ -299,22 +303,24 @@ public class AdUnitProcessor {
             }
         }
 
-        BulkResponse bulkResponse;
-        try {
-            bulkResponse = bulkRequest.execute().actionGet();
-        } catch (ElasticsearchException e) {
-            throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
-        }
-        if (bulkResponse != null && bulkResponse.hasFailures()) {
-            logger.error("Error Bulk loading:" + adUnits.size() + " adUnits");
-            while (bulkResponse.iterator().hasNext()) {
-                BulkItemResponse br = bulkResponse.iterator().next();
-                if (br.isFailed()) {
-                    logger.error(br.getFailureMessage());
-                }
+        if (bulkRequest.numberOfActions() > 0) {
+            BulkResponse bulkResponse;
+            try {
+                bulkResponse = bulkRequest.execute().actionGet();
+            } catch (ElasticsearchException e) {
+                throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
             }
-            // process failures by iterating through each bulk response item
-            throw new DeException(new Throwable("Error inserting adunits in Bulk"), HttpStatus.INTERNAL_SERVER_ERROR_500);
+            if (bulkResponse != null && bulkResponse.hasFailures()) {
+                logger.error("Error Bulk loading:" + adUnits.size() + " adUnits");
+                while (bulkResponse.iterator().hasNext()) {
+                    BulkItemResponse br = bulkResponse.iterator().next();
+                    if (br.isFailed()) {
+                        logger.error(br.getFailureMessage());
+                    }
+                }
+                // process failures by iterating through each bulk response item
+                throw new DeException(new Throwable("Error inserting adunits in Bulk"), HttpStatus.INTERNAL_SERVER_ERROR_500);
+            }
         }
     }
 
