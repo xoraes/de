@@ -86,7 +86,7 @@ public class AdUnitProcessor {
             fb.mustNot(FilterBuilders.termFilter("timetable", timetable));
 
             //do not target categories for widget format
-            if (! sq.getFormat().equalsIgnoreCase(DeHelper.FORMAT.INWIDGET.toString())) {
+            if (!StringUtils.equalsIgnoreCase(sq.getFormat(), DeHelper.FORMAT.INWIDGET.toString())) {
                 fb.must(FilterBuilders.termsFilter("categories", DeHelper.toLowerCase(sq.getCategories())));
             }
             fb.must(FilterBuilders.termsFilter("languages", DeHelper.toLowerCase(sq.getLanguages())));
@@ -109,7 +109,7 @@ public class AdUnitProcessor {
                 fb.mustNot(FilterBuilders.termsFilter("excluded_locations", DeHelper.toLowerCase(sq.getLocations())));
             }
             //do not target categories for widget format
-            if (!DeHelper.isEmptyList(sq.getCategories()) && ! sq.getFormat().equalsIgnoreCase(DeHelper.FORMAT.INWIDGET.toString())) {
+            if (!DeHelper.isEmptyList(sq.getCategories()) && ! StringUtils.equalsIgnoreCase(sq.getFormat(),DeHelper.FORMAT.INWIDGET.toString())) {
                 fb.mustNot(FilterBuilders.termsFilter("excluded_categories", DeHelper.toLowerCase(sq.getCategories())));
             }
             fb.must(FilterBuilders.orFilter(FilterBuilders.missingFilter("goal_views"),

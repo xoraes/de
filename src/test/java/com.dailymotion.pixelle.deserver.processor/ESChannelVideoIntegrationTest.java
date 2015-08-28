@@ -63,6 +63,7 @@ public class ESChannelVideoIntegrationTest {
 
         SearchQueryRequest sq = new SearchQueryRequest();
         sq.setChannels(Arrays.asList("buzzfeedvideo", "spi0n"));
+        sq.setFormat(DeHelper.FORMAT.INWIDGET.toString());
         sq.setSortOrder("recent");
         System.out.println("Search Query ====>" + sq.toString());
         ItemsResponse i = new QueryCommand(sq, 1, "promoted,channel").execute();

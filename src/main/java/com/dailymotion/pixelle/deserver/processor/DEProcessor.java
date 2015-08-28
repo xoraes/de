@@ -143,7 +143,7 @@ public class DEProcessor {
                         throw new DeException(e.getCause(), HttpStatus.BAD_REQUEST_400);
                     }
                     logger.error("DE error while querying DM API");
-                    throw new DeException(HttpStatus.INTERNAL_SERVER_ERROR_500, "DE Error while query DM API");
+                    throw new DeException(e, HttpStatus.INTERNAL_SERVER_ERROR_500);
                 }
 
                 //if we have enough ads and videos, merge and send
