@@ -109,7 +109,7 @@ public class AdUnitProcessor {
                 fb.mustNot(FilterBuilders.termsFilter("excluded_locations", DeHelper.toLowerCase(sq.getLocations())));
             }
             //do not target categories for widget format
-            if (!DeHelper.isEmptyList(sq.getCategories()) && ! sq.getFormat().equalsIgnoreCase("in-widget")) {
+            if (!DeHelper.isEmptyList(sq.getCategories()) && ! sq.getFormat().equalsIgnoreCase(DeHelper.FORMAT.INWIDGET.toString())) {
                 fb.mustNot(FilterBuilders.termsFilter("excluded_categories", DeHelper.toLowerCase(sq.getCategories())));
             }
             fb.must(FilterBuilders.orFilter(FilterBuilders.missingFilter("goal_views"),
