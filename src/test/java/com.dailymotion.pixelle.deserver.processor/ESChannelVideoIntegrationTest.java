@@ -89,7 +89,7 @@ public class ESChannelVideoIntegrationTest {
         sq.setTime("2014-12-31T15:00:00-0800");
         sq.setCategories(new ArrayList(Arrays.asList("cat1")));
         sq.setDevice("dev1");
-        sq.setFormat("fmt1");
+        sq.setFormat(DeHelper.FORMAT.INWIDGET.toString());
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
         sq.setChannels(Arrays.asList("buzzfeedvideo", "spi0n"));
@@ -108,7 +108,7 @@ public class ESChannelVideoIntegrationTest {
         sq.setTime("2014-12-31T15:00:00-0800");
         sq.setCategories(new ArrayList(Arrays.asList("cat1")));
         sq.setDevice("dev1");
-        sq.setFormat("fmt1");
+        sq.setFormat(DeHelper.FORMAT.INWIDGET.toString());
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
         sq.setChannel("buzzfeedvideo");
@@ -131,7 +131,7 @@ public class ESChannelVideoIntegrationTest {
         sq.setTime("2014-12-31T15:00:00-0800");
         sq.setCategories(new ArrayList(Arrays.asList("cat1")));
         sq.setDevice("dev1");
-        sq.setFormat("fmt1");
+        sq.setFormat(DeHelper.FORMAT.INWIDGET.toString());
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
         sq.setChannels(Arrays.asList("buzzfeedvideo", "spi0n", "buzzfeedvideo", "spi0n", "buzzfeedvideo", "spi0n", "buzzfeedvideo", "spi0n"));

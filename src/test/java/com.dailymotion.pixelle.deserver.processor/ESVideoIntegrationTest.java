@@ -124,7 +124,7 @@ public class ESVideoIntegrationTest {
         sq.setTime("2014-12-31T15:00:00-0800");
         sq.setCategories(new ArrayList(Arrays.asList("cat1")));
         sq.setDevice("dev1");
-        sq.setFormat("fmt1");
+        sq.setFormat(DeHelper.FORMAT.INWIDGET.toString());
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
 
@@ -132,19 +132,19 @@ public class ESVideoIntegrationTest {
         ItemsResponse i = new QueryCommand(sq, 6, "promoted,organic").execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
-        Assert.assertTrue(i.getResponse().size() == 6);
+        Assert.assertEquals(6, i.getResponse().size());
 
         System.out.println("Search Query ====>" + sq.toString());
         i = new QueryCommand(sq, 6, "promoted").execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
-        Assert.assertTrue(i.getResponse().size() == 3);
+        Assert.assertEquals(3, i.getResponse().size());
 
         System.out.println("Search Query ====>" + sq.toString());
         i = new QueryCommand(sq, 6, "organic").execute();
         System.out.println("Response ====>:" + i.toString());
         Assert.assertNotNull(i);
-        Assert.assertTrue(i.getResponse().size() == 3);
+        Assert.assertEquals(3, i.getResponse().size());
 
         System.out.println("Search Query ====>" + sq.toString());
         i = new QueryCommand(sq, 3, "promoted,organic").execute();
@@ -173,7 +173,7 @@ public class ESVideoIntegrationTest {
         sq.setTime("2014-12-31T15:00:00-0800");
         sq.setCategories(new ArrayList(Arrays.asList("cat1")));
         sq.setDevice("dev1");
-        sq.setFormat("fmt1");
+        sq.setFormat(DeHelper.FORMAT.INWIDGET.toString());
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
 
@@ -222,14 +222,14 @@ public class ESVideoIntegrationTest {
         SearchQueryRequest sq = new SearchQueryRequest();
         sq.setCategories(new ArrayList(Arrays.asList("cat1")));
         sq.setDevice("dev1");
-        sq.setFormat("fmt1");
+        sq.setFormat(DeHelper.FORMAT.INWIDGET.toString());
         sq.setTime("2014-11-21T01:00:00Z");
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
 
         ItemsResponse i = new QueryCommand(sq, 1, "organic").execute();
         Assert.assertNotNull(i);
-        Assert.assertTrue(i.getResponse().size() == 1);
+        Assert.assertEquals(1, i.getResponse().size());
         VideoResponse video = (VideoResponse) i.getResponse().get(0);
         Assert.assertEquals("1", video.getVideoId());
         Assert.assertEquals("channel_tier", video.getChannelTier());
@@ -252,7 +252,7 @@ public class ESVideoIntegrationTest {
         SearchQueryRequest sq = new SearchQueryRequest();
         sq.setCategories(new ArrayList(Arrays.asList("cat1")));
         sq.setDevice("dev1");
-        sq.setFormat("fmt1");
+        sq.setFormat(DeHelper.FORMAT.INWIDGET.toString());
         sq.setTime("2014-11-21T01:00:00Z");
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
@@ -273,7 +273,7 @@ public class ESVideoIntegrationTest {
         SearchQueryRequest sq = new SearchQueryRequest();
         sq.setCategories(new ArrayList(Arrays.asList("cat1")));
         sq.setDevice("dev1");
-        sq.setFormat("fmt1");
+        sq.setFormat(DeHelper.FORMAT.INWIDGET.toString());
         sq.setTime("2014-11-21T01:00:00Z");
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
@@ -297,39 +297,13 @@ public class ESVideoIntegrationTest {
         sq.setTime("2014-12-31T15:00:00-0800");
         sq.setCategories(new ArrayList(Arrays.asList("cat1")));
         sq.setDevice("dev1");
-        sq.setFormat("fmt1");
+        sq.setFormat(DeHelper.FORMAT.INWIDGET.toString());
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
 
         System.out.println("Search Query ====>" + sq.toString());
         ItemsResponse i = new QueryCommand(sq, 10, "organic").execute();
         System.out.println("Response ====>:" + i.toString());
-        Assert.assertNotNull(i);
-        Assert.assertTrue(i.getResponse().size() == 3);
-        deleteVideosByIds("1", "2", "3");
-    }
-
-    @Test
-    public void testCategoryTargetingNegativeWithFallback() throws Exception {
-        Map m1 = createVideoDataMap("1");
-        Map m2 = createVideoDataMap("2");
-        Map m3 = createVideoDataMap("3");
-        m1.put("languages", new ArrayList<String>(Arrays.asList("en")));
-        m2.put("languages", new ArrayList<String>(Arrays.asList("en")));
-        m3.put("languages", new ArrayList<String>(Arrays.asList("fr")));
-        loadVideoMaps(m1, m2, m3);
-        SearchQueryRequest sq = new SearchQueryRequest();
-        sq.setTime("2014-12-31T15:00:00-0800");
-        sq.setCategories(new ArrayList(Arrays.asList("ZZZZ")));
-        sq.setDevice("dev1");
-        sq.setFormat("fmt1");
-        sq.setLanguages(new ArrayList<String>(Arrays.asList("fr")));
-        sq.setLocations(new ArrayList<String>(Arrays.asList("fr")));
-        sq.setDebugEnabled(true);
-
-        System.out.println("Search Query ====>" + sq.toString());
-        ItemsResponse i = new QueryCommand(sq, 10, "organic").execute();
-        System.out.println("Language Response ====>:" + i.toString());
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 3);
         deleteVideosByIds("1", "2", "3");
@@ -353,7 +327,7 @@ public class ESVideoIntegrationTest {
         sq.setTime("2014-12-31T15:00:00-0800");
         sq.setCategories(new ArrayList(Arrays.asList("cat1")));
         sq.setDevice("dev1");
-        sq.setFormat("fmt1");
+        sq.setFormat(DeHelper.FORMAT.INWIDGET.toString());
         sq.setLanguages(new ArrayList<String>(Arrays.asList("fr")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("fr")));
 

@@ -50,6 +50,30 @@ public final class DeHelper {
     public static final String FORMATSBYCOUNTRY = "COUNTRY_FORMAT";
     private static final String DATETIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ssZ";
     private static Logger logger = LoggerFactory.getLogger(DeHelper.class);
+    public enum FORMAT {
+        INWIDGET("in-widget"),
+        INRELATED("in-related"),
+        INSEARCH("in-search"),
+        INFEED("in-feed");
+
+
+        private final String text;
+
+        /**
+         * @param text
+         */
+        FORMAT(final String text) {
+            this.text = text;
+        }
+
+        /* (non-Javadoc)
+         * @see java.lang.Enum#toString()
+         */
+        @Override
+        public String toString() {
+            return text;
+        }
+    }
 
     private DeHelper() {
     }

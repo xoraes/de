@@ -66,7 +66,7 @@ public class ESAdUnitsIntegrationTest {
         m.put("_created", timeNow);
         m.put("categories", new ArrayList<String>(Arrays.asList("cat1", "cat2")));
         m.put("devices", new ArrayList<String>(Arrays.asList("dev1", "dev2")));
-        m.put("formats", new ArrayList<String>(Arrays.asList("fmt1", "fmt2")));
+        m.put("formats", new ArrayList<String>(Arrays.asList(DeHelper.FORMAT.INWIDGET.toString(), DeHelper.FORMAT.INFEED.toString())));
         m.put("locations", new ArrayList<String>(Arrays.asList("us", "fr")));
         m.put("languages", new ArrayList<String>(Arrays.asList("en", "fr")));
         m.put("excluded_locations", new ArrayList<String>(Arrays.asList("nn", "mm")));
@@ -116,6 +116,24 @@ public class ESAdUnitsIntegrationTest {
             Assert.assertTrue(DEProcessor.deleteById(DeHelper.promotedIndex.get(), DeHelper.adunitsType.get(), id));
         }
     }
+    @Test
+    public void testCategoryTargetingNegative() throws Exception {
+        Map m1 = createAdUnitDataMap("1", "1");
+        loadAdUnitMaps(m1);
+        SearchQueryRequest sq = new SearchQueryRequest();
+        sq.setCategories(new ArrayList(Arrays.asList("cat5")));
+        sq.setDevice("dev1");
+        sq.setFormat(DeHelper.FORMAT.INFEED.toString());
+        sq.setTime("2014-11-21T01:00:00Z");
+        sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
+        sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
+        sq.setDebugEnabled(true);
+
+        ItemsResponse i = new QueryCommand(sq, 1, "promoted").execute();
+        Assert.assertNotNull(i);
+        Assert.assertTrue(i.getResponse().size() == 0);
+        deleteAdUnitsByIds("1");
+    }
 
     @Test
     public void testCheckAllFields() throws Exception {
@@ -124,7 +142,7 @@ public class ESAdUnitsIntegrationTest {
         SearchQueryRequest sq = new SearchQueryRequest();
         sq.setCategories(new ArrayList(Arrays.asList("cat1")));
         sq.setDevice("dev1");
-        sq.setFormat("fmt1");
+        sq.setFormat(DeHelper.FORMAT.INFEED.toString());
         sq.setTime("2014-11-21T01:00:00Z");
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
@@ -164,7 +182,7 @@ public class ESAdUnitsIntegrationTest {
         sq.setTime("2014-11-21T01:00:00Z");
         sq.setCategories(new ArrayList(Arrays.asList("cat1")));
         sq.setDevice("dev1");
-        sq.setFormat("fmt1");
+        sq.setFormat(DeHelper.FORMAT.INFEED.toString());
         sq.setLanguages(new ArrayList<String>(Arrays.asList("EN")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("US")));
         sq.setDebugEnabled(true);
@@ -196,7 +214,7 @@ public class ESAdUnitsIntegrationTest {
         sq.setTime("2014-11-21T01:00:00Z");
         sq.setCategories(new ArrayList(Arrays.asList("cat1")));
         sq.setDevice("dev1");
-        sq.setFormat("fmt1");
+        sq.setFormat(DeHelper.FORMAT.INFEED.toString());
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
 
@@ -216,7 +234,7 @@ public class ESAdUnitsIntegrationTest {
         sq.setTime("2014-11-21T01:00:00Z"); //2014-11-21 is a friday
         sq.setCategories(new ArrayList(Arrays.asList("cat1")));
         sq.setDevice("dev1");
-        sq.setFormat("fmt1");
+        sq.setFormat(DeHelper.FORMAT.INFEED.toString());
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
         sq.setDebugEnabled(true);
@@ -245,7 +263,7 @@ public class ESAdUnitsIntegrationTest {
         sq.setTime("2014-10-31T23:00:00-0800");
         sq.setCategories(new ArrayList(Arrays.asList("cat1")));
         sq.setDevice("dev1");
-        sq.setFormat("fmt1");
+        sq.setFormat(DeHelper.FORMAT.INFEED.toString());
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
         sq.setDebugEnabled(true);
@@ -268,7 +286,7 @@ public class ESAdUnitsIntegrationTest {
         sq.setTime("2014-10-31T15:00:00-0800");
         sq.setCategories(new ArrayList(Arrays.asList("cat1")));
         sq.setDevice("dev1");
-        sq.setFormat("fmt1");
+        sq.setFormat(DeHelper.FORMAT.INFEED.toString());
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
         sq.setDebugEnabled(true);
@@ -294,7 +312,7 @@ public class ESAdUnitsIntegrationTest {
         sq.setTime("2014-12-31T15:00:00-0800");
         sq.setCategories(new ArrayList(Arrays.asList("cat1")));
         sq.setDevice("dev1");
-        sq.setFormat("fmt1");
+        sq.setFormat(DeHelper.FORMAT.INFEED.toString());
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
         sq.setDebugEnabled(true);
@@ -329,7 +347,7 @@ public class ESAdUnitsIntegrationTest {
         sq.setTime("2014-12-31T15:00:00-0800");
         sq.setCategories(new ArrayList(Arrays.asList("cat1")));
         sq.setDevice("dev1");
-        sq.setFormat("fmt1");
+        sq.setFormat(DeHelper.FORMAT.INFEED.toString());
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
         sq.setDebugEnabled(true);
@@ -355,7 +373,7 @@ public class ESAdUnitsIntegrationTest {
         sq.setTime("2014-12-31T15:00:00-0800");
         sq.setCategories(new ArrayList(Arrays.asList("cat1")));
         sq.setDevice("dev1");
-        sq.setFormat("fmt1");
+        sq.setFormat(DeHelper.FORMAT.INFEED.toString());
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
         sq.setDebugEnabled(true);
@@ -381,7 +399,7 @@ public class ESAdUnitsIntegrationTest {
         sq.setTime("2014-12-31T15:00:00-0800");
         sq.setCategories(new ArrayList(Arrays.asList("cat1")));
         sq.setDevice("dev1");
-        sq.setFormat("fmt1");
+        sq.setFormat(DeHelper.FORMAT.INFEED.toString());
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
         sq.setDebugEnabled(true);
@@ -418,7 +436,7 @@ public class ESAdUnitsIntegrationTest {
         sq.setTime("2014-12-31T15:00:00-0800");
         sq.setCategories(new ArrayList(Arrays.asList("cat1")));
         sq.setDevice("dev1");
-        sq.setFormat("fmt1");
+        sq.setFormat(DeHelper.FORMAT.INFEED.toString());
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
         sq.setDebugEnabled(true);
@@ -493,7 +511,7 @@ public class ESAdUnitsIntegrationTest {
         sq.setTime("2014-12-31T15:00:00-0800");
         sq.setCategories(new ArrayList(Arrays.asList("cat1")));
         sq.setDevice("dev1");
-        sq.setFormat("fmt1");
+        sq.setFormat(DeHelper.FORMAT.INFEED.toString());
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
         sq.setDebugEnabled(true);
@@ -525,7 +543,7 @@ public class ESAdUnitsIntegrationTest {
         sq.setTime("2014-12-31T15:00:00-0800");
         sq.setCategories(new ArrayList(Arrays.asList("cat1")));
         sq.setDevice("dev1");
-        sq.setFormat("fmt1");
+        sq.setFormat(DeHelper.FORMAT.INFEED.toString());
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
         sq.setDebugEnabled(true);

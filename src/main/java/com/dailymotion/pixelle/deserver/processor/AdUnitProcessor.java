@@ -73,6 +73,7 @@ public class AdUnitProcessor {
     }
 
     public static List<AdUnitResponse> recommend(SearchQueryRequest sq, Integer positions) throws DeException {
+
         List<AdUnitResponse> adUnitResponses = null;
         if (sq != null) {
             DateTimeFormatter df = DateTimeFormat.forPattern(DeHelper.getDateTimeFormatString());
@@ -83,7 +84,11 @@ public class AdUnitProcessor {
 
             BoolFilterBuilder fb = FilterBuilders.boolFilter();
             fb.mustNot(FilterBuilders.termFilter("timetable", timetable));
-            fb.must(FilterBuilders.termsFilter("categories", DeHelper.toLowerCase(sq.getCategories())));
+
+            //do not target categories for widget format
+            if (! sq.getFormat().equalsIgnoreCase(DeHelper.FORMAT.INWIDGET.toString())) {
+                fb.must(FilterBuilders.termsFilter("categories", DeHelper.toLowerCase(sq.getCategories())));
+            }
             fb.must(FilterBuilders.termsFilter("languages", DeHelper.toLowerCase(sq.getLanguages())));
             fb.must(FilterBuilders.termsFilter("locations", DeHelper.toLowerCase(sq.getLocations())));
             fb.mustNot(FilterBuilders.termFilter("paused", true));
@@ -103,8 +108,8 @@ public class AdUnitProcessor {
             if (!DeHelper.isEmptyList(sq.getLocations())) {
                 fb.mustNot(FilterBuilders.termsFilter("excluded_locations", DeHelper.toLowerCase(sq.getLocations())));
             }
-
-            if (!DeHelper.isEmptyList(sq.getCategories())) {
+            //do not target categories for widget format
+            if (!DeHelper.isEmptyList(sq.getCategories()) && ! sq.getFormat().equalsIgnoreCase("in-widget")) {
                 fb.mustNot(FilterBuilders.termsFilter("excluded_categories", DeHelper.toLowerCase(sq.getCategories())));
             }
             fb.must(FilterBuilders.orFilter(FilterBuilders.missingFilter("goal_views"),
