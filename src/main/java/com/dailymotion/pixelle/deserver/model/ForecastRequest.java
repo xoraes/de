@@ -23,10 +23,6 @@ public class ForecastRequest {
     private List<String> locations;
     @JsonProperty("formats")
     private List<String> formats;
-    @JsonProperty("goal_period")
-    private String goalPeriod;
-    @JsonProperty("goal_views")
-    private Float goalViews;
     @JsonProperty("duration")
     private Integer duration;
     @JsonProperty("devices")
@@ -34,7 +30,7 @@ public class ForecastRequest {
     @JsonProperty("categories")
     private List<String> categories;
     @JsonProperty("cpv")
-    private Long cpv;
+    private Integer cpv;
     @JsonProperty("schedules")
     private Integer[] schedules;
     @JsonProperty("timetable")

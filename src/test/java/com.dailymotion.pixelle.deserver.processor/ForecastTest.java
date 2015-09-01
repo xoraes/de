@@ -77,17 +77,17 @@ public class ForecastTest {
 
         ForecastRequest req = new ForecastRequest();
 
-        req.setLocations(new ArrayList<>(Arrays.asList("US")));
-        req.setCpv(15L);
+        req.setLocations(new ArrayList<>(Arrays.asList("us")));
+        req.setCpv(15);
         req.setStartDate("2015-01-01T00:00:00Z");
         Integer[] sch = {16777215, 16777215, 16777215, 16777215, 16777215, 16777215, 16777215};
         req.setSchedules(sch);
 
         ForecastResponse response = DEProcessor.forecast(req);
-        Assert.assertTrue(response.getDailyMaxViews() > 0);
-        Assert.assertTrue(response.getDailyMinViews() > 0);
-        Assert.assertNull(response.getTotalMaxViews());
-        Assert.assertNull(response.getTotalMinViews());
+        Assert.assertTrue(response.getForecastViewsList().get(15).getDailyMaxViews() > 0);
+        Assert.assertTrue(response.getForecastViewsList().get(15).getDailyMinViews() > 0);
+        Assert.assertNull(response.getForecastViewsList().get(15).getTotalMaxViews());
+        Assert.assertNull(response.getForecastViewsList().get(15).getTotalMinViews());
         System.out.println(response.toString());
         ESAdUnitsIntegrationTest.deleteAdUnitsByIds("1", "2");
     }
@@ -102,8 +102,8 @@ public class ForecastTest {
 
         ForecastRequest req = new ForecastRequest();
 
-        req.setLocations(new ArrayList<>(Arrays.asList("US", "FR")));
-        req.setCpv(15L);
+        req.setLocations(new ArrayList<>(Arrays.asList("us", "fr")));
+        req.setCpv(15);
         req.setEndDate("2015-10-30T00:00:00Z");
         req.setStartDate("2015-01-01T00:00:00Z");
         req.setDevices(Arrays.asList("desktop", "tablet", "tv"));
@@ -113,10 +113,10 @@ public class ForecastTest {
         req.setSchedules(sch);
 
         ForecastResponse response = DEProcessor.forecast(req);
-        Assert.assertTrue(response.getDailyMaxViews() > 0);
-        Assert.assertTrue(response.getDailyMinViews() > 0);
-        Assert.assertTrue(response.getTotalMaxViews() > 0);
-        Assert.assertTrue(response.getTotalMinViews() > 0);
+        Assert.assertTrue(response.getForecastViewsList().get(15).getDailyMinViews() > 0);
+        Assert.assertTrue(response.getForecastViewsList().get(15).getDailyMinViews() > 0);
+        Assert.assertTrue(response.getForecastViewsList().get(15).getTotalMaxViews() > 0);
+        Assert.assertTrue(response.getForecastViewsList().get(15).getTotalMinViews() > 0);
         System.out.println(response.toString());
         ESAdUnitsIntegrationTest.deleteAdUnitsByIds("1", "2");
     }
@@ -130,15 +130,15 @@ public class ForecastTest {
         ESAdUnitsIntegrationTest.loadAdUnitMaps(m1, m2);
 
         ForecastRequest req = new ForecastRequest();
-        req.setCpv(15L);
+        req.setCpv(15);
         req.setEndDate("2015-10-30T00:00:00Z");
         req.setStartDate("2015-01-01T00:00:00Z");
 
         ForecastResponse response = DEProcessor.forecast(req);
-        Assert.assertTrue(response.getDailyMaxViews() > 0);
-        Assert.assertTrue(response.getDailyMinViews() > 0);
-        Assert.assertTrue(response.getTotalMaxViews() > 0);
-        Assert.assertTrue(response.getTotalMinViews() > 0);
+        Assert.assertTrue(response.getForecastViewsList().get(15).getDailyMaxViews() > 0);
+        Assert.assertTrue(response.getForecastViewsList().get(15).getDailyMinViews() > 0);
+        Assert.assertTrue(response.getForecastViewsList().get(15).getTotalMaxViews() > 0);
+        Assert.assertTrue(response.getForecastViewsList().get(15).getTotalMinViews() > 0);
 
         System.out.println(response.toString());
 

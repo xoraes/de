@@ -2,10 +2,12 @@ package com.dailymotion.pixelle.deserver.processor;
 
 import com.dailymotion.pixelle.deserver.model.ForecastRequest;
 import com.dailymotion.pixelle.deserver.model.ForecastResponse;
+import com.dailymotion.pixelle.deserver.model.ForecastViews;
 import com.dailymotion.pixelle.deserver.processor.service.CacheService;
 import com.google.api.client.repackaged.com.google.common.base.Objects;
 import com.google.inject.Inject;
 import com.netflix.config.DynamicFloatProperty;
+import com.netflix.config.DynamicIntProperty;
 import com.netflix.config.DynamicPropertyFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.http.HttpStatus;
@@ -28,7 +30,10 @@ import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by n.dhupia on 8/12/15.
@@ -36,10 +41,10 @@ import java.util.List;
 public class Forecaster {
     private static final DynamicFloatProperty VTR =
             DynamicPropertyFactory.getInstance().getFloatProperty("pixelle.forecast.vtr", 0.0025f);
-    private static final DynamicFloatProperty MAX_CPV =
-            DynamicPropertyFactory.getInstance().getFloatProperty("pixelle.forecast.cpv.max", 100.0f);
-    private static final DynamicFloatProperty MIN_CPV =
-            DynamicPropertyFactory.getInstance().getFloatProperty("pixelle.forecast.cpv.min", 1.0f);
+    private static final DynamicIntProperty MAX_CPV =
+            DynamicPropertyFactory.getInstance().getIntProperty("pixelle.forecast.cpv.max", 100);
+    private static final DynamicIntProperty MIN_CPV =
+            DynamicPropertyFactory.getInstance().getIntProperty("pixelle.forecast.cpv.min", 1);
 
     private static final Float HOUSRSINWEEK = 168.0f;
     private static final String TOTAL = "total";
@@ -62,8 +67,9 @@ public class Forecaster {
             throw new DeException(HttpStatus.BAD_REQUEST_400, "Cpv must be provided and be greater or equal to 1");
         }
 
+        Integer cpv = forecastRequest.getCpv();
+
         // get the min and max cpv given the location(s)
-        Long cpv = forecastRequest.getCpv();
         TermsFilterBuilder fb = null;
 
         List<String> locations = forecastRequest.getLocations();
@@ -83,29 +89,44 @@ public class Forecaster {
 
         logger.info(searchResponse.toString());
         Aggregation minAggs = searchResponse.getAggregations().get("min");
-        Min min = (Min) minAggs;
-        float minCpvValue = (float) min.getValue();
-
         Aggregation maxAggs = searchResponse.getAggregations().get("max");
-        Max max = (Max) maxAggs;
-        float maxCpvValue = (float) max.value();
 
-        // make sure min and max cpv >= 1
-        if (Float.isInfinite(minCpvValue)) {
-            minCpvValue = MIN_CPV.getValue();
+        Min min = (Min) minAggs;
+        Integer minCpvValue = 1, maxCpvValue = cpv;
+        if (! Double.valueOf(min.getValue()).isInfinite()) {
+            minCpvValue = Double.valueOf(min.getValue()).intValue();
         }
-
-        if (Float.isInfinite(maxCpvValue)) {
-            maxCpvValue = MIN_CPV.get();
-        } else if (maxCpvValue >= MAX_CPV.get()) {
+        Max max = (Max) maxAggs;
+        if (! Double.valueOf(max.getValue()).isInfinite()) {
+            maxCpvValue = Double.valueOf(max.getValue()).intValue();
+        }
+        if (maxCpvValue > MAX_CPV.get()) {
             maxCpvValue = MAX_CPV.get();
         }
+
+       List<ForecastViews> forecastViewList = new ArrayList<>();
+        for (int i = cpv; i <= maxCpvValue; i++) {
+            ForecastViews forecastViews =  forecastViews(i, maxCpvValue, minCpvValue, forecastRequest);
+            forecastViewList.add(forecastViews);
+        }
+        ForecastResponse response = new ForecastResponse();
+        response.setForecastViewsList(forecastViewList);
+        return response;
+    }
+
+
+    public static ForecastViews forecastViews(int cpv, Integer maxCpvValue, Integer minCpvValue, ForecastRequest forecastRequest) throws DeException {
+        List<String> locations = forecastRequest.getLocations();
 
         float totalDailyOppCount = 1.0f, totalDailyViewCount = 1.0f;
 
         if (!DeHelper.isEmptyList(locations)) { // if locations is not provided then look at all countries
             // get the daily view and opp count based on location. add opp/view per location.
             for (String country : locations) {
+                country = StringUtils.lowerCase(country);
+                if (StringUtils.equals(country,"all")) {
+                    continue;
+                }
                 float dailyOppCount = 1.0f, dailyViewCount = 1.0f;
                 dailyOppCount = Objects.firstNonNull(CacheService.getCountryEventCountCache().get(country, "opportunity"), 0l) / BQ_TIMEPERIOD;
                 // apply other filters (language/device/category/format)
@@ -127,7 +148,7 @@ public class Forecaster {
         float dailyAvailableViews = totalDailyOppCount * VTR.get();
 
         float ratio = 1.0f;
-        float diffCpv = maxCpvValue - minCpvValue;
+        Integer diffCpv = maxCpvValue - minCpvValue;
         if (cpv >= maxCpvValue) {
             ratio = 1.0f;
         } else if (cpv <= minCpvValue || diffCpv < 1) { // we don't want num or denominator to be zero
@@ -136,8 +157,10 @@ public class Forecaster {
             ratio = ((float) cpv - minCpvValue) / diffCpv;
         }
 
-        Long dailyMaxViews = (long) (dailyAvailableViews * ratio - totalDailyViewCount * (1 - ratio));
-        Long dailyMinViews = (long) ((dailyAvailableViews * ratio - totalDailyViewCount * (1 - ratio)) * 0.25f);
+        Long dailyMaxViews = (long)(dailyAvailableViews * ratio - totalDailyViewCount * (1 - ratio));
+        Long dailyMinViews = (long) (dailyMaxViews * 0.25f);
+        Long dailyAvgViews = (long) (dailyMaxViews * 0.5f);
+
 
         if (dailyMaxViews <= 1) {
             dailyMaxViews = 100L;
@@ -146,27 +169,37 @@ public class Forecaster {
         if (dailyMinViews <= 1) {
             dailyMinViews = 10L;
         }
-        ForecastResponse response = new ForecastResponse();
-        response.setDailyMaxViews(dailyMaxViews);
-        response.setDailyMinViews(dailyMinViews);
+
+        if (dailyAvgViews <= 1) {
+            dailyAvgViews = 50L;
+        }
+        ForecastViews forecastViews = new ForecastViews();
+        forecastViews.setCpv(cpv);
+
+        forecastViews.setDailyMaxViews(dailyMaxViews);
+        forecastViews.setDailyMinViews(dailyMinViews);
+        forecastViews.setDailyAvgViews(dailyAvgViews);
 
 
         // calculate total
         float avgHours = getHoursPerWeekFromSchedule(forecastRequest.getSchedules()) / HOUSRSINWEEK;
         Integer numDays = getDaysInBetween(forecastRequest.getStartDate(), forecastRequest.getEndDate());
 
-        Long totalMaxValues, totalMinValues;
+        Long totalMaxValues, totalMinValues, totalAvgValues;
 
         //return total views only if schedules and start/end date is present
         if (avgHours > 0 && numDays > 0) {
             totalMaxValues = (long) (dailyMaxViews * avgHours * numDays);
             totalMinValues = (long) (dailyMinViews * avgHours * numDays);
+            totalAvgValues = (long) (dailyAvgViews * avgHours * numDays);
             if (totalMaxValues > 0) {
-                response.setTotalMaxViews(totalMaxValues);
-                response.setTotalMinViews(totalMinValues);
+                forecastViews.setTotalMaxViews(totalMaxValues);
+                forecastViews.setTotalMinViews(totalMinValues);
+                forecastViews.setTotalAvgViews(totalAvgValues);
             }
         }
-        return response;
+        return forecastViews;
+
     }
 
     private static Boolean isHourSet(int hour, int mask) {
