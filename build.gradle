@@ -92,7 +92,7 @@ dependencies {
     testCompile 'junit:junit:latest.release'
 }
 
-mainClassName = "com.dailymotion.pixelle.deserver.StartServer"
+mainClassName = "com.dailymotion.pixelle.common.server.StartServer"
 task wrapper(type: Wrapper) {
     gradleVersion = '2.6'
 }
@@ -131,7 +131,7 @@ applicationDefaultJvmArgs += "-Dcom.sun.management.jmxremote.authenticate=false"
 applicationDefaultJvmArgs += "-Dcom.sun.management.jmxremote.ssl=false"
 
 task de(type: OneJar) {
-    mainClass = 'com.dailymotion.pixelle.deserver.StartServer'
+    mainClass = 'com.dailymotion.pixelle.common.server.StartServer'
     archiveName = 'pxl-deserver.jar'
 }
 
