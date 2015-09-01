@@ -1,0 +1,14 @@
+appname = de
+datadir = /data
+port = 7001
+loglevel = error
+env = {{ if eq .Env.DE_ENV "prod" }}prod{{ else }}dev{{ end }}
+domain = pxlad.{{ if eq .Env.DE_ENV "prod" }}io{{ else }}in{{ end }}
+videoquery.usecache = {{ if eq .Env.DE_VIDEO_QUERY_USE_CACHE "true" }}true{{ else }}false{{ end }}
+index.organic.reset = false
+index.promoted.reset = false
+index.channel.reset = false
+widget.pattern = op
+pixelle.channel.es.store = false
+impressions.max = 3
+hystrix.dm.api.timeout=60000
