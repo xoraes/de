@@ -7,7 +7,13 @@
     <jmxConfigurator/>
 
     <appender name="SYSLOG" class="net.logstash.logback.appender.LogstashSocketAppender">
-        <customFields>{"appname":"${appname}"}</customFields>
+        <host>127.0.0.1</host>
+        <port>514</port>
+        <prefix class="ch.qos.logback.classic.PatternLayout">
+            <pattern>
+                ${appname}:\
+            </pattern>
+        </prefix>
     </appender>
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
