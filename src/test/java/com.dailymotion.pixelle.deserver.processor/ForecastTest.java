@@ -84,10 +84,10 @@ public class ForecastTest {
         req.setSchedules(sch);
 
         ForecastResponse response = DEProcessor.forecast(req);
-        Assert.assertTrue(response.getForecastViewsList().get(15).getDailyMaxViews() > 0);
-        Assert.assertTrue(response.getForecastViewsList().get(15).getDailyMinViews() > 0);
-        Assert.assertNull(response.getForecastViewsList().get(15).getTotalMaxViews());
-        Assert.assertNull(response.getForecastViewsList().get(15).getTotalMinViews());
+        Assert.assertTrue(response.getForecastViewsList().get(0).getDailyMaxViews() > 0);
+        Assert.assertTrue(response.getForecastViewsList().get(0).getDailyMinViews() > 0);
+        Assert.assertNull(response.getForecastViewsList().get(0).getTotalMaxViews());
+        Assert.assertNull(response.getForecastViewsList().get(0).getTotalMinViews());
         System.out.println(response.toString());
         ESAdUnitsIntegrationTest.deleteAdUnitsByIds("1", "2");
     }
@@ -113,10 +113,10 @@ public class ForecastTest {
         req.setSchedules(sch);
 
         ForecastResponse response = DEProcessor.forecast(req);
-        Assert.assertTrue(response.getForecastViewsList().get(15).getDailyMinViews() > 0);
-        Assert.assertTrue(response.getForecastViewsList().get(15).getDailyMinViews() > 0);
-        Assert.assertTrue(response.getForecastViewsList().get(15).getTotalMaxViews() > 0);
-        Assert.assertTrue(response.getForecastViewsList().get(15).getTotalMinViews() > 0);
+        Assert.assertTrue(response.getForecastViewsList().get(0).getDailyMinViews() > 0);
+        Assert.assertTrue(response.getForecastViewsList().get(0).getDailyMinViews() > 0);
+        Assert.assertTrue(response.getForecastViewsList().get(0).getTotalMaxViews() > 0);
+        Assert.assertTrue(response.getForecastViewsList().get(0).getTotalMinViews() > 0);
         System.out.println(response.toString());
         ESAdUnitsIntegrationTest.deleteAdUnitsByIds("1", "2");
     }
@@ -135,10 +135,10 @@ public class ForecastTest {
         req.setStartDate("2015-01-01T00:00:00Z");
 
         ForecastResponse response = DEProcessor.forecast(req);
-        Assert.assertTrue(response.getForecastViewsList().get(15).getDailyMaxViews() > 0);
-        Assert.assertTrue(response.getForecastViewsList().get(15).getDailyMinViews() > 0);
-        Assert.assertTrue(response.getForecastViewsList().get(15).getTotalMaxViews() > 0);
-        Assert.assertTrue(response.getForecastViewsList().get(15).getTotalMinViews() > 0);
+        Assert.assertTrue(response.getForecastViewsList().get(0).getDailyMaxViews() > 0);
+        Assert.assertTrue(response.getForecastViewsList().get(0).getDailyMinViews() > 0);
+        Assert.assertTrue(response.getForecastViewsList().get(0).getTotalMaxViews() > 0);
+        Assert.assertTrue(response.getForecastViewsList().get(0).getTotalMinViews() > 0);
 
         System.out.println(response.toString());
 
