@@ -1,12 +1,9 @@
 package com.dailymotion.pixelle.de.processor;
 
 import com.netflix.config.DynamicIntProperty;
-import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.config.DynamicStringProperty;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -56,31 +53,6 @@ public final class DeHelper {
     private static final String DATETIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ssZ";
     private static Logger LOGGER = getLogger(DeHelper.class);
 
-    public enum FORMAT {
-        INWIDGET("in-widget"),
-        INRELATED("in-related"),
-        INSEARCH("in-search"),
-        INFEED("in-feed");
-
-
-        private final String text;
-
-        /**
-         * @param text
-         */
-        FORMAT(final String text) {
-            this.text = text;
-        }
-
-        /* (non-Javadoc)
-         * @see java.lang.Enum#toString()
-         */
-        @Override
-        public String toString() {
-            return text;
-        }
-    }
-
     private DeHelper() {
     }
 
@@ -111,5 +83,30 @@ public final class DeHelper {
             }
         }
         return list;
+    }
+
+    public enum FORMAT {
+        INWIDGET("in-widget"),
+        INRELATED("in-related"),
+        INSEARCH("in-search"),
+        INFEED("in-feed");
+
+
+        private final String text;
+
+        /**
+         * @param text
+         */
+        FORMAT(final String text) {
+            this.text = text;
+        }
+
+        /* (non-Javadoc)
+         * @see java.lang.Enum#toString()
+         */
+        @Override
+        public String toString() {
+            return text;
+        }
     }
 }

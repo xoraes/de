@@ -1,13 +1,10 @@
 package com.dailymotion.pixelle.de.providers;
 
 import com.dailymotion.pixelle.de.processor.DeException;
-import com.dailymotion.pixelle.de.processor.DeHelper;
 import com.google.inject.Provider;
 import com.google.inject.ProvisionException;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.settings.ImmutableSettings;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static com.dailymotion.pixelle.de.processor.DeHelper.adunitsType;
 import static com.dailymotion.pixelle.de.processor.DeHelper.channelIndex;

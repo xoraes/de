@@ -1,16 +1,12 @@
 package com.dailymotion.pixelle.de.providers;
 
 import com.dailymotion.pixelle.de.processor.DeException;
-import com.dailymotion.pixelle.de.processor.DeHelper;
 import com.google.inject.ProvisionException;
 import com.netflix.config.DynamicIntProperty;
-import com.netflix.config.DynamicPropertyFactory;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentFactory;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 

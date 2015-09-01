@@ -117,6 +117,7 @@ public class ESAdUnitsIntegrationTest {
             Assert.assertTrue(DEProcessor.deleteById(DeHelper.promotedIndex.get(), DeHelper.adunitsType.get(), id));
         }
     }
+
     @Test
     public void testCategoryTargetingNegative() throws Exception {
         Map m1 = createAdUnitDataMap("1", "1");

@@ -1,14 +1,13 @@
 package com.dailymotion.pixelle.forecast;
 
+import com.dailymotion.pixelle.common.services.CacheService;
 import com.dailymotion.pixelle.de.processor.AdUnitProcessor;
 import com.dailymotion.pixelle.de.processor.DEProcessor;
-import com.dailymotion.pixelle.de.processor.DeException;
 import com.dailymotion.pixelle.de.processor.DeHelper;
 import com.dailymotion.pixelle.de.processor.ESAdUnitsIntegrationTest;
+import com.dailymotion.pixelle.de.providers.ESTestNodeClientProvider;
 import com.dailymotion.pixelle.forecast.model.ForecastRequest;
 import com.dailymotion.pixelle.forecast.model.ForecastResponse;
-import com.dailymotion.pixelle.common.services.CacheService;
-import com.dailymotion.pixelle.de.providers.ESTestNodeClientProvider;
 import com.dailymotion.pixelle.forecast.processor.ForecastException;
 import com.dailymotion.pixelle.forecast.processor.Forecaster;
 import com.google.inject.AbstractModule;

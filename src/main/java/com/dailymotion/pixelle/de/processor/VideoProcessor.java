@@ -3,41 +3,30 @@ package com.dailymotion.pixelle.de.processor;
 import com.dailymotion.pixelle.de.model.SearchQueryRequest;
 import com.dailymotion.pixelle.de.model.Video;
 import com.dailymotion.pixelle.de.model.VideoResponse;
-import com.dailymotion.pixelle.common.services.CacheService;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import com.netflix.config.DynamicBooleanProperty;
 import com.netflix.config.DynamicDoubleProperty;
 import com.netflix.config.DynamicFloatProperty;
-import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.config.DynamicStringProperty;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.search.Explanation;
-import org.eclipse.jetty.http.HttpStatus;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.BoolFilterBuilder;
-import org.elasticsearch.index.query.FilterBuilders;
 import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilder;
-import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -259,8 +248,8 @@ public class VideoProcessor {
         // origin is current date by default
         ScoreFunctionBuilder pubDateScoreBuilder =
                 gaussDecayFunction("publication_date", pubDateScale.getValue())
-                .setDecay(pubDateDecay.getValue())
-                .setOffset(pubDateOffset.getValue());
+                        .setDecay(pubDateDecay.getValue())
+                        .setOffset(pubDateOffset.getValue());
 
         QueryBuilder qb = functionScoreQuery(fb)
                 .add(pubDateScoreBuilder)

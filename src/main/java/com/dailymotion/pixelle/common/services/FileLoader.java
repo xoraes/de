@@ -1,14 +1,8 @@
 package com.dailymotion.pixelle.common.services;
 
-import com.dailymotion.pixelle.de.processor.DeException;
-import com.dailymotion.pixelle.de.processor.DeHelper;
 import com.dailymotion.pixelle.forecast.processor.ForecastException;
-import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
-import org.apache.commons.lang3.StringUtils;
-import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;

@@ -10,26 +10,20 @@ import com.dailymotion.pixelle.de.providers.ESTestNodeClientProvider;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.netflix.config.ConfigurationManager;
 import org.elasticsearch.client.Client;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static com.dailymotion.pixelle.de.processor.DEProcessor.deleteById;
 import static com.dailymotion.pixelle.de.processor.DEProcessor.deleteIndex;
-import static com.dailymotion.pixelle.de.processor.DeHelper.FORMAT;
 import static com.dailymotion.pixelle.de.processor.DeHelper.FORMAT.INWIDGET;
 import static com.dailymotion.pixelle.de.processor.DeHelper.currentUTCTimeString;
 import static com.dailymotion.pixelle.de.processor.DeHelper.organicIndex;

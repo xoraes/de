@@ -1,7 +1,5 @@
 package com.dailymotion.pixelle.common.services;
 
-import com.dailymotion.pixelle.de.processor.DeException;
-import com.dailymotion.pixelle.de.processor.DeHelper;
 import com.dailymotion.pixelle.forecast.processor.ForecastException;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.http.HttpTransport;
@@ -10,7 +8,6 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.bigquery.Bigquery;
 import com.google.api.services.bigquery.Bigquery.Jobs.Insert;
-import com.google.api.services.bigquery.BigqueryScopes;
 import com.google.api.services.bigquery.model.GetQueryResultsResponse;
 import com.google.api.services.bigquery.model.Job;
 import com.google.api.services.bigquery.model.JobConfiguration;
@@ -18,16 +15,11 @@ import com.google.api.services.bigquery.model.JobConfigurationQuery;
 import com.google.api.services.bigquery.model.JobReference;
 import com.google.api.services.bigquery.model.TableCell;
 import com.google.api.services.bigquery.model.TableRow;
-import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
-import net.logstash.logback.encoder.org.apache.commons.lang.StringUtils;
-import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.util.Arrays;
 import java.util.List;
 
 import static com.dailymotion.pixelle.common.services.FileLoader.getTable;

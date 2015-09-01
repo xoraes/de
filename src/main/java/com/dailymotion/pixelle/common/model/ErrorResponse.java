@@ -23,6 +23,7 @@ public class ErrorResponse {
         this.status = ex.getStatus();
         this.msg = ex.getMsg();
     }
+
     public ErrorResponse(ForecastException ex) {
         this.status = ex.getStatus();
         this.msg = ex.getMsg();

@@ -7,27 +7,19 @@ import com.dailymotion.pixelle.de.model.SearchQueryRequest;
 import com.dailymotion.pixelle.de.model.Video;
 import com.dailymotion.pixelle.de.model.VideoResponse;
 import com.dailymotion.pixelle.de.processor.hystrix.ChannelVideoBulkInsertCommand;
-import com.dailymotion.pixelle.common.services.CacheService;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Ordering;
 import com.google.inject.Inject;
 import com.netflix.config.DynamicBooleanProperty;
-import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.config.DynamicStringProperty;
-import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.client.Client;
 import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static com.dailymotion.pixelle.common.services.CacheService.getChannelVideosCache;

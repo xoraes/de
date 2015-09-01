@@ -281,6 +281,7 @@ public class AppServlet {
             return ok(id + " not found").build();
         }
     }
+
     /**
      * Forecast daily and total views based on given data.
      *

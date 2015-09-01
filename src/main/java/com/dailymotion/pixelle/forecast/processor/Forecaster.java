@@ -1,36 +1,23 @@
 package com.dailymotion.pixelle.forecast.processor;
 
-import com.dailymotion.pixelle.de.processor.DeException;
-import com.dailymotion.pixelle.de.processor.DeHelper;
 import com.dailymotion.pixelle.forecast.model.ForecastRequest;
 import com.dailymotion.pixelle.forecast.model.ForecastResponse;
 import com.dailymotion.pixelle.forecast.model.ForecastViews;
-import com.dailymotion.pixelle.common.services.CacheService;
-import com.google.api.client.repackaged.com.google.common.base.Objects;
 import com.google.inject.Inject;
 import com.netflix.config.DynamicFloatProperty;
 import com.netflix.config.DynamicIntProperty;
-import com.netflix.config.DynamicPropertyFactory;
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.jetty.http.HttpStatus;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.index.query.FilterBuilders;
 import org.elasticsearch.index.query.FilteredQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.TermsFilterBuilder;
 import org.elasticsearch.search.aggregations.Aggregation;
-import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.metrics.max.Max;
 import org.elasticsearch.search.aggregations.metrics.min.Min;
 import org.joda.time.DateTime;
-import org.joda.time.Days;
-import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;

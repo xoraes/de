@@ -1,34 +1,24 @@
 package com.dailymotion.pixelle.de.processor.hystrix;
 
+import com.dailymotion.pixelle.common.services.DMApiErrorDecoder;
+import com.dailymotion.pixelle.common.services.DMApiService;
 import com.dailymotion.pixelle.de.model.ChannelVideos;
 import com.dailymotion.pixelle.de.model.Channels;
 import com.dailymotion.pixelle.de.processor.DeException;
-import com.dailymotion.pixelle.common.services.DMApiErrorDecoder;
-import com.dailymotion.pixelle.common.services.DMApiService;
 import com.netflix.config.DynamicIntProperty;
 import com.netflix.config.DynamicLongProperty;
-import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.config.DynamicStringProperty;
 import com.netflix.hystrix.HystrixCommand;
-import com.netflix.hystrix.HystrixCommandGroupKey;
 import com.netflix.hystrix.HystrixCommandKey;
 import com.netflix.hystrix.HystrixCommandProperties;
 import com.netflix.hystrix.HystrixThreadPoolKey;
 import com.netflix.hystrix.exception.HystrixBadRequestException;
-import feign.Feign;
-import feign.Retryer;
 import feign.jackson.JacksonDecoder;
 import feign.jackson.JacksonEncoder;
-import org.apache.commons.lang3.StringUtils;
-import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.TimeUnit;
 
 import static com.netflix.config.DynamicPropertyFactory.getInstance;
 import static com.netflix.hystrix.HystrixCommand.Setter.withGroupKey;
-import static com.netflix.hystrix.HystrixCommandGroupKey.Factory;
 import static com.netflix.hystrix.HystrixCommandGroupKey.Factory.asKey;
 import static feign.Feign.builder;
 import static feign.Retryer.Default;

@@ -2,8 +2,8 @@ package com.dailymotion.pixelle.common.server; /**
  * Created by n.dhupia on 10/29/14.
  */
 
-import com.dailymotion.pixelle.de.processor.DeExceptionMapper;
 import com.dailymotion.pixelle.common.exceptionmapper.JSONParseExceptionMapper;
+import com.dailymotion.pixelle.de.processor.DeExceptionMapper;
 import com.google.inject.servlet.GuiceFilter;
 import com.netflix.config.DynamicPropertyFactory;
 import com.netflix.config.DynamicStringProperty;
