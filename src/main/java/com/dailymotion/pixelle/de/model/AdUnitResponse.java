@@ -16,7 +16,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 @Data
 @EqualsAndHashCode(callSuper = false)
 public class AdUnitResponse extends ItemsResponse {
-    private static Logger LOGGER = getLogger(AdUnitResponse.class);
+    private static Logger logger = getLogger(AdUnitResponse.class);
     @JsonProperty("ad")
     private String ad;
     @JsonProperty("campaign")

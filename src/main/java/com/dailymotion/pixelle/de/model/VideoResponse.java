@@ -15,7 +15,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 @Data
 @EqualsAndHashCode(callSuper = false)
 public class VideoResponse extends ItemsResponse {
-    private static Logger LOGGER = getLogger(VideoResponse.class);
+    private static Logger logger = getLogger(VideoResponse.class);
     @JsonProperty("video_id")
     private String videoId;
     @JsonProperty("channel")

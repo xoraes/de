@@ -16,7 +16,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class ChannelVideos {
     @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonInclude(NON_EMPTY)
-    private static Logger LOGGER = getLogger(ChannelVideos.class);
+    private static Logger logger = getLogger(ChannelVideos.class);
 
     @JsonProperty("list")
     private List<ChannelVideo> list;

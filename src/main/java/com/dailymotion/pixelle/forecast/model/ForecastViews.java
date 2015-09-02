@@ -19,7 +19,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Data
 public class ForecastViews {
-    private static Logger LOGGER = getLogger(ForecastViews.class);
+    private static Logger logger = getLogger(ForecastViews.class);
     @JsonProperty("total_avg")
     private Long totalAvgViews;
     @JsonProperty("total_max")

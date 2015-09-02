@@ -12,7 +12,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 @Data
 @EqualsAndHashCode(callSuper = false)
 public class DeException extends Exception {
-    private static final Logger LOGGER = getLogger(DeException.class);
+    private static final Logger logger = getLogger(DeException.class);
 
     private int status;
     private String msg;
@@ -21,13 +21,13 @@ public class DeException extends Exception {
         super(msg);
         this.status = status;
         this.msg = msg;
-        LOGGER.error(msg);
+        logger.error(msg);
     }
 
     public DeException(Throwable throwable, int status) {
         super(throwable);
         this.msg = throwable.getMessage();
         this.status = status;
-        LOGGER.error(throwable.getMessage());
+        logger.error(throwable.getMessage());
     }
 }

@@ -51,7 +51,7 @@ public final class DeHelper {
     public static final String DEVICESBYCOUNTRY = "COUNTRY_DEVICE";
     public static final String FORMATSBYCOUNTRY = "COUNTRY_FORMAT";
     private static final String DATETIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ssZ";
-    private static Logger LOGGER = getLogger(DeHelper.class);
+    private static Logger logger = getLogger(DeHelper.class);
 
     private DeHelper() {
     }

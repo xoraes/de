@@ -57,7 +57,7 @@ public class BigQuery {
      */
     private static final HttpTransport TRANSPORT = new NetHttpTransport();
     private static final JsonFactory JSON_FACTORY = new JacksonFactory();
-    private static Logger LOGGER = getLogger(BigQuery.class);
+    private static Logger logger = getLogger(BigQuery.class);
 
     public static Table<String, String, Long> getCountryCountTable(String target) throws ForecastException {
         Bigquery bigquery = null;
@@ -141,7 +141,7 @@ public class BigQuery {
      */
     public static JobReference startQuery(Bigquery bigquery, String projectId,
                                           String querySql) throws IOException {
-        LOGGER.info("\nInserting Query Job: {}\n", querySql);
+        logger.info("\nInserting Query Job: {}\n", querySql);
 
         Job job = new Job();
         JobConfiguration config = new JobConfiguration();
@@ -155,7 +155,7 @@ public class BigQuery {
         insert.setProjectId(projectId);
         JobReference jobId = insert.execute().getJobReference();
 
-        LOGGER.info("\nJob ID of Query Job is: {}\n", jobId.getJobId());
+        logger.info("\nJob ID of Query Job is: {}\n", jobId.getJobId());
 
         return jobId;
     }
@@ -179,7 +179,7 @@ public class BigQuery {
         while (true) {
             Job pollJob = bigquery.jobs().get(projectId, jobId.getJobId()).execute();
             elapsedTime = currentTimeMillis() - startTime;
-            LOGGER.info("Job status ({}ms) {}: {}", elapsedTime,
+            logger.info("Job status ({}ms) {}: {}", elapsedTime,
                     jobId.getJobId(), pollJob.getStatus().getState());
             if (pollJob.getStatus().getState().equals(BQ_DONE_STATE)) {
                 return pollJob;
@@ -209,7 +209,7 @@ public class BigQuery {
                                 .getJobId()
                 ).execute();
         List<TableRow> rows = queryResult.getRows();
-        LOGGER.info("\nQuery Results:\n------------\n");
+        logger.info("\nQuery Results:\n------------\n");
         Table<String, String, Long> res = create();
 
         long total = 0;

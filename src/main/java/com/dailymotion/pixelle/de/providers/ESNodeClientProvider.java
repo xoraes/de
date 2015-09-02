@@ -33,7 +33,7 @@ public class ESNodeClientProvider implements Provider<Client> {
     private static final DynamicBooleanProperty resetChannel =
             getInstance().getBooleanProperty("index.channel.reset", false);
 
-    private static final Logger LOGGER = getLogger(ESNodeClientProvider.class);
+    private static final Logger logger = getLogger(ESNodeClientProvider.class);
 
     /**
      * Provider that creates the indices, mapping and then returns the client for use in the application.
@@ -72,17 +72,17 @@ public class ESNodeClientProvider implements Provider<Client> {
         if (resetOrganic.get()
                 && client.admin().indices().prepareExists(organicIndex.get()).execute().actionGet().isExists()
                 && client.admin().indices().prepareDelete(organicIndex.get()).execute().actionGet().isAcknowledged()) {
-            LOGGER.info("successfully deleted index: " + organicIndex.get());
+            logger.info("successfully deleted index: " + organicIndex.get());
         }
         if (resetPromoted.get()
                 && client.admin().indices().prepareExists(promotedIndex.get()).execute().actionGet().isExists()
                 && client.admin().indices().prepareDelete(promotedIndex.get()).execute().actionGet().isAcknowledged()) {
-            LOGGER.info("successfully deleted index: " + promotedIndex.get());
+            logger.info("successfully deleted index: " + promotedIndex.get());
         }
         if (resetChannel.get()
                 && client.admin().indices().prepareExists(channelIndex.get()).execute().actionGet().isExists()
                 && client.admin().indices().prepareDelete(channelIndex.get()).execute().actionGet().isAcknowledged()) {
-            LOGGER.info("successfully deleted index: " + channelIndex.get());
+            logger.info("successfully deleted index: " + channelIndex.get());
         }
         //creates index only if it does not exist
         try {
@@ -91,7 +91,7 @@ public class ESNodeClientProvider implements Provider<Client> {
             createIndex(client, channelIndex.get(), channelSettings.build(), videosType.get());
 
         } catch (DeException e) {
-            LOGGER.error(e.getMessage());
+            logger.error(e.getMessage());
             throw new ProvisionException(e.getMessage());
         }
         return client;

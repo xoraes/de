@@ -15,7 +15,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 @JsonInclude(JsonInclude.Include.NON_EMPTY) //this will ensure only non-null values are included in the serialized json
 @Data
 public class ItemsResponse {
-    private static Logger LOGGER = getLogger(ItemsResponse.class);
+    private static Logger logger = getLogger(ItemsResponse.class);
 
     @JsonProperty("_items")
     private List<? extends ItemsResponse> response;

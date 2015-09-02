@@ -64,7 +64,7 @@ public class VideoProcessor {
     private static final String GOLD = "gold";
     private static final String BRONZE = "bronze";
     private static final String SILVER = "silver";
-    private static final Logger LOGGER = getLogger(VideoProcessor.class);
+    private static final Logger logger = getLogger(VideoProcessor.class);
     private static final DynamicFloatProperty goldPartnerWeight =
             getInstance().getFloatProperty("goldPartner.weightPercent", 0.5f);
     private static final DynamicFloatProperty silverPartnerWeight =
@@ -112,7 +112,7 @@ public class VideoProcessor {
             try {
                 video = OBJECT_MAPPER.readValue(responseSourceAsBytes, Video.class);
             } catch (IOException e) {
-                LOGGER.error("error parsing video", e);
+                logger.error("error parsing video", e);
                 throw new DeException(e, INTERNAL_SERVER_ERROR_500);
             }
         }
@@ -160,11 +160,11 @@ public class VideoProcessor {
         }
         BulkRequestBuilder bulkRequest = client.prepareBulk();
 
-        LOGGER.info("Bulk loading:" + videos.size() + " videos");
+        logger.info("Bulk loading:" + videos.size() + " videos");
         for (Video video : videos) {
             if (!filterVideo(video)) {
                 video = modifyVideoForInsert(video);
-                LOGGER.info("Loading video to " + index + " : " + video.toString());
+                logger.info("Loading video to " + index + " : " + video.toString());
 
                 try {
                     bulkRequest.add(client.prepareUpdate(index, videosType.get(), video.getId())
@@ -172,7 +172,7 @@ public class VideoProcessor {
                             .setRetryOnConflict(retryOnConflictVideos.get())
                             .setDocAsUpsert(true));
                 } catch (JsonProcessingException e) {
-                    LOGGER.error("Error converting video to string", e);
+                    logger.error("Error converting video to string", e);
                     throw new DeException(e, INTERNAL_SERVER_ERROR_500);
                 }
             }
@@ -212,7 +212,7 @@ public class VideoProcessor {
                 }
                 return vr;
             } catch (ExecutionException e) {
-                LOGGER.warn("execution exception while getting data form video cache...will send from es directly", e.getCause());
+                logger.warn("execution exception while getting data form video cache...will send from es directly", e.getCause());
                 return recommend(sq, positions);
             }
         }
@@ -271,7 +271,7 @@ public class VideoProcessor {
         if (sq.isDebugEnabled()) {
             srb1.setExplain(true);
         }
-        LOGGER.info(srb1.toString());
+        logger.info(srb1.toString());
 
         SearchResponse searchResponse = srb1.execute().actionGet();
         videoResponses = new ArrayList<VideoResponse>();
@@ -285,20 +285,20 @@ public class VideoProcessor {
                     ex.setDescription("Source ====>" + hit.getSourceAsString());
                     ex.addDetail(hit.explanation());
                     video.setDebugInfo(ex.toHtml().replace("\n", ""));
-                    LOGGER.info(ex.toString());
+                    logger.info(ex.toString());
                 }
                 videoResponses.add(video);
             } catch (IOException e) {
                 throw new DeException(e, INTERNAL_SERVER_ERROR_500);
             }
         }
-        LOGGER.info("Num video responses:" + videoResponses.size());
+        logger.info("Num video responses:" + videoResponses.size());
 
         return videoResponses;
     }
 
     public static List<VideoResponse> getUntargetedVideos(List<VideoResponse> targetedVideo, int positions, SearchQueryRequest sq) throws DeException {
-        LOGGER.info("Trying to fill query with untargetted videos: Search Query" + sq.toString());
+        logger.info("Trying to fill query with untargetted videos: Search Query" + sq.toString());
         List<String> languages = sq.getLanguages();
         if (isEmptyList(languages)) {
             languages = asList("en"); // default language if none provided

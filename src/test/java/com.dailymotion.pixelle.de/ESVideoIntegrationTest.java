@@ -26,6 +26,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.dailymotion.pixelle.de.ESAdUnitsIntegrationTest.createAdUnitDataMap;
+import static com.dailymotion.pixelle.de.ESAdUnitsIntegrationTest.deleteAdUnitsByIds;
+import static com.dailymotion.pixelle.de.ESAdUnitsIntegrationTest.loadAdUnitMaps;
 import static com.dailymotion.pixelle.de.processor.DEProcessor.deleteById;
 import static com.dailymotion.pixelle.de.processor.DEProcessor.deleteIndex;
 import static com.dailymotion.pixelle.de.processor.DeHelper.FORMAT.INWIDGET;
@@ -49,7 +52,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 public class ESVideoIntegrationTest {
     private static final ObjectMapper mapper = new ObjectMapper();
-    private static final Logger LOGGER = getLogger(ESVideoIntegrationTest.class);
+    private static final Logger logger = getLogger(ESVideoIntegrationTest.class);
     private static Injector injector;
 
     @BeforeClass
@@ -75,7 +78,7 @@ public class ESVideoIntegrationTest {
 
     @AfterClass
     public static void tearDown() throws Exception {
-        LOGGER.info("Deleting all known indices");
+        logger.info("Deleting all known indices");
         deleteIndex(organicIndex.get());
         deleteIndex(promotedIndex.get());
         injector = null;
@@ -131,10 +134,10 @@ public class ESVideoIntegrationTest {
         Map m3 = createVideoDataMap("3");
         loadVideoMaps(m1, m2, m3);
 
-        Map m4 = ESAdUnitsIntegrationTest.createAdUnitDataMap("1", "1");
-        Map m5 = ESAdUnitsIntegrationTest.createAdUnitDataMap("2", "2");
-        Map m6 = ESAdUnitsIntegrationTest.createAdUnitDataMap("3", "3");
-        ESAdUnitsIntegrationTest.loadAdUnitMaps(m4, m5, m6);
+        Map m4 = createAdUnitDataMap("1", "1");
+        Map m5 = createAdUnitDataMap("2", "2");
+        Map m6 = createAdUnitDataMap("3", "3");
+        loadAdUnitMaps(m4, m5, m6);
 
 
         SearchQueryRequest sq = new SearchQueryRequest();
@@ -171,7 +174,7 @@ public class ESVideoIntegrationTest {
         assertTrue(i.getResponse().get(2).getClass().getCanonicalName().contains("AdUnit"));
 
         deleteVideosByIds("1", "2", "3");
-        ESAdUnitsIntegrationTest.deleteAdUnitsByIds("1", "2", "3");
+        deleteAdUnitsByIds("1", "2", "3");
     }
 
     @Test
@@ -182,8 +185,8 @@ public class ESVideoIntegrationTest {
         Map m4 = createVideoDataMap("4");
         loadVideoMaps(m1, m2, m3, m4);
 
-        Map m5 = ESAdUnitsIntegrationTest.createAdUnitDataMap("1", "1");
-        ESAdUnitsIntegrationTest.loadAdUnitMaps(m5);
+        Map m5 = createAdUnitDataMap("1", "1");
+        loadAdUnitMaps(m5);
 
 
         SearchQueryRequest sq = new SearchQueryRequest();
@@ -201,7 +204,7 @@ public class ESVideoIntegrationTest {
         assertTrue(i.getResponse().size() == 5);
 
         deleteVideosByIds("1", "2", "3", "4");
-        ESAdUnitsIntegrationTest.deleteAdUnitsByIds("1");
+        deleteAdUnitsByIds("1");
     }
 
     @Test
@@ -211,8 +214,8 @@ public class ESVideoIntegrationTest {
         Map m3 = createVideoDataMap("3");
         loadVideoMaps(m1, m2, m3);
 
-        Map m4 = ESAdUnitsIntegrationTest.createAdUnitDataMap("1", "1");
-        ESAdUnitsIntegrationTest.loadAdUnitMaps(m4);
+        Map m4 = createAdUnitDataMap("1", "1");
+        loadAdUnitMaps(m4);
 
 
         SearchQueryRequest sq = new SearchQueryRequest();
@@ -229,7 +232,7 @@ public class ESVideoIntegrationTest {
         assertNotNull(i);
         assertTrue(i.getResponse().size() == 3);
         deleteVideosByIds("1", "2", "3");
-        ESAdUnitsIntegrationTest.deleteAdUnitsByIds("1");
+        deleteAdUnitsByIds("1");
     }
 
     @Test

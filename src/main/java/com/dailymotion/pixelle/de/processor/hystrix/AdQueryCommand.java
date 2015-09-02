@@ -4,7 +4,6 @@ import com.dailymotion.pixelle.de.model.AdUnitResponse;
 import com.dailymotion.pixelle.de.model.SearchQueryRequest;
 import com.netflix.config.DynamicIntProperty;
 import com.netflix.hystrix.HystrixCommand;
-import com.netflix.hystrix.HystrixCommandKey;
 import com.netflix.hystrix.HystrixCommandProperties;
 import org.slf4j.Logger;
 
@@ -14,6 +13,7 @@ import static com.dailymotion.pixelle.de.processor.AdUnitProcessor.recommend;
 import static com.netflix.config.DynamicPropertyFactory.getInstance;
 import static com.netflix.hystrix.HystrixCommand.Setter.withGroupKey;
 import static com.netflix.hystrix.HystrixCommandGroupKey.Factory.asKey;
+import static com.netflix.hystrix.HystrixCommandKey.Factory;
 import static com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy.SEMAPHORE;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -24,7 +24,7 @@ public class AdQueryCommand extends HystrixCommand<List<AdUnitResponse>> {
     private static final DynamicIntProperty semaphoreCount =
             getInstance().getIntProperty("adquery.semaphore.count", 100);
 
-    private static Logger LOGGER = getLogger(AdQueryCommand.class);
+    private static Logger logger = getLogger(AdQueryCommand.class);
     private final SearchQueryRequest sq;
     private final int positions;
 
@@ -32,7 +32,7 @@ public class AdQueryCommand extends HystrixCommand<List<AdUnitResponse>> {
     public AdQueryCommand(SearchQueryRequest sq, int pos) {
 
         super(withGroupKey(asKey("DecisioningEngine"))
-                .andCommandKey(HystrixCommandKey.Factory.asKey("AdQuery"))
+                .andCommandKey(Factory.asKey("AdQuery"))
                 .andCommandPropertiesDefaults(HystrixCommandProperties.Setter()
                         .withExecutionIsolationStrategy(SEMAPHORE)
                         .withExecutionIsolationSemaphoreMaxConcurrentRequests(semaphoreCount.get())));

@@ -3,7 +3,6 @@ package com.dailymotion.pixelle.de.processor.hystrix;
 import com.dailymotion.pixelle.de.model.AdUnit;
 import com.netflix.config.DynamicIntProperty;
 import com.netflix.hystrix.HystrixCommand;
-import com.netflix.hystrix.HystrixCommandKey;
 import com.netflix.hystrix.HystrixCommandProperties;
 import org.slf4j.Logger;
 
@@ -13,6 +12,7 @@ import static com.dailymotion.pixelle.de.processor.AdUnitProcessor.insertAdUnits
 import static com.netflix.config.DynamicPropertyFactory.getInstance;
 import static com.netflix.hystrix.HystrixCommand.Setter.withGroupKey;
 import static com.netflix.hystrix.HystrixCommandGroupKey.Factory.asKey;
+import static com.netflix.hystrix.HystrixCommandKey.Factory;
 import static com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy.SEMAPHORE;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -25,12 +25,12 @@ public class AdUnitBulkInsertCommand extends HystrixCommand<Void> {
     private static final DynamicIntProperty timeoutMillis =
             getInstance().getIntProperty("adunitbulkbinsert.timeout.milliseconds", 60000);
 
-    private static Logger LOGGER = getLogger(AdUnitBulkInsertCommand.class);
+    private static Logger logger = getLogger(AdUnitBulkInsertCommand.class);
     private final List<AdUnit> adUnits;
 
     public AdUnitBulkInsertCommand(List<AdUnit> adUnits) {
         super(withGroupKey(asKey("DecisioningEngine"))
-                .andCommandKey(HystrixCommandKey.Factory.asKey("AdUnitBulkInsert"))
+                .andCommandKey(Factory.asKey("AdUnitBulkInsert"))
                 .andCommandPropertiesDefaults(HystrixCommandProperties.Setter()
                         .withExecutionTimeoutInMilliseconds(timeoutMillis.get())
                         .withExecutionIsolationStrategy(SEMAPHORE)

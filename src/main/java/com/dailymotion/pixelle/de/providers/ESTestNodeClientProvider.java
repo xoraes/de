@@ -23,7 +23,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  * Created by n.dhupia on 10/29/14.
  */
 public final class ESTestNodeClientProvider implements Provider<Client> {
-    private static final Logger LOGGER = getLogger(ESTestNodeClientProvider.class);
+    private static final Logger logger = getLogger(ESTestNodeClientProvider.class);
 
     protected ESTestNodeClientProvider() {
     }
@@ -53,15 +53,15 @@ public final class ESTestNodeClientProvider implements Provider<Client> {
 
         if (client.admin().indices().prepareExists(organicIndex.get()).execute().actionGet().isExists()
                 && client.admin().indices().prepareDelete(organicIndex.get()).execute().actionGet().isAcknowledged()) {
-            LOGGER.info("successfully deleted index: " + organicIndex.get());
+            logger.info("successfully deleted index: " + organicIndex.get());
         }
         if (client.admin().indices().prepareExists(promotedIndex.get()).execute().actionGet().isExists()
                 && client.admin().indices().prepareDelete(promotedIndex.get()).execute().actionGet().isAcknowledged()) {
-            LOGGER.info("successfully deleted index: " + promotedIndex.get());
+            logger.info("successfully deleted index: " + promotedIndex.get());
         }
         if (client.admin().indices().prepareExists(channelIndex.get()).execute().actionGet().isExists()
                 && client.admin().indices().prepareDelete(channelIndex.get()).execute().actionGet().isAcknowledged()) {
-            LOGGER.info("successfully deleted index: " + channelIndex.get());
+            logger.info("successfully deleted index: " + channelIndex.get());
         }
 
 
@@ -70,7 +70,7 @@ public final class ESTestNodeClientProvider implements Provider<Client> {
             createIndex(client, organicIndex.get(), elasticsearchSettings.build(), videosType.get());
             createIndex(client, channelIndex.get(), elasticsearchSettings.build(), videosType.get());
         } catch (DeException e) {
-            LOGGER.error(e.getMessage());
+            logger.error(e.getMessage());
             throw new ProvisionException(e.getMessage());
         }
         return client;

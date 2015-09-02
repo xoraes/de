@@ -46,7 +46,7 @@ public class ChannelProcessor extends VideoProcessor {
     private static final DynamicStringProperty listOfValidCategories = getInstance().getStringProperty("pixelle.channel.categories", "");
     private static final DynamicStringProperty listOfValidSortOrders = getInstance().getStringProperty("pixelle.channel.sortorders", "recent,visited,random");
     private static final DynamicBooleanProperty persistChanneltoES = getInstance().getBooleanProperty("pixelle.channel.es.store", false);
-    private static final Logger LOGGER = getLogger(ChannelProcessor.class);
+    private static final Logger logger = getLogger(ChannelProcessor.class);
 
     static {
         OBJECT_MAPPER.configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -62,7 +62,7 @@ public class ChannelProcessor extends VideoProcessor {
 
         if (isBlank(sortOrder) || !listOfValidSortOrders.get().contains(sortOrder)) {
             sq.setSortOrder("recent"); //default to recent when provided invalid sort order
-            LOGGER.info("Invalid sort order provided, defaulting to 'recent' sort order: ", sq.toString());
+            logger.info("Invalid sort order provided, defaulting to 'recent' sort order: ", sq.toString());
         }
         List<VideoResponse> videoResponses = new ArrayList<>();
         /*
@@ -72,7 +72,7 @@ public class ChannelProcessor extends VideoProcessor {
          * and fresh data is replaced into the cache asynchronously from DM
          */
         List<Video> videos = null;
-        LOGGER.info("getting videos from cache");
+        logger.info("getting videos from cache");
         LoadingCache<Channels, List<Video>> cache = getChannelVideosCache();
         if (cache != null) {
             Channels channels;
@@ -103,7 +103,7 @@ public class ChannelProcessor extends VideoProcessor {
             }
         }
 
-        LOGGER.info("Num video responses:" + videoResponses.size());
+        logger.info("Num video responses:" + videoResponses.size());
         return videoResponses;
     }
 

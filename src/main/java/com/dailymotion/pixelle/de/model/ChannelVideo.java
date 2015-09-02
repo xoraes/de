@@ -17,7 +17,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Data
 public class ChannelVideo {
-    private static Logger LOGGER = getLogger(ChannelVideo.class);
+    private static Logger logger = getLogger(ChannelVideo.class);
     @JsonProperty("channel")
     private String channel;
     @JsonProperty("created_time")

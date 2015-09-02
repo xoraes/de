@@ -31,7 +31,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  * Created by n.dhupia on 8/20/15.
  */
 public class FileLoader {
-    private static final Logger LOGGER = getLogger(FileLoader.class);
+    private static final Logger logger = getLogger(FileLoader.class);
 
     public static Table<String, String, Long> getTable(String target) throws ForecastException {
         DataFile f = null;

@@ -21,7 +21,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 @Data
 @EqualsAndHashCode(of = {"categories", "languages"})
 public class SearchQueryRequest {
-    private static Logger LOGGER = getLogger(SearchQueryRequest.class);
+    private static Logger logger = getLogger(SearchQueryRequest.class);
     @JsonProperty("languages")
     private List<String> languages;
     @JsonProperty("locations")

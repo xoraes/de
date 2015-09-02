@@ -7,7 +7,6 @@ package com.dailymotion.pixelle.de.processor.hystrix;
 import com.dailymotion.pixelle.de.model.Video;
 import com.netflix.config.DynamicIntProperty;
 import com.netflix.hystrix.HystrixCommand;
-import com.netflix.hystrix.HystrixCommandKey;
 import com.netflix.hystrix.HystrixCommandProperties;
 import org.slf4j.Logger;
 
@@ -17,6 +16,7 @@ import static com.dailymotion.pixelle.de.processor.VideoProcessor.insertChannelV
 import static com.netflix.config.DynamicPropertyFactory.getInstance;
 import static com.netflix.hystrix.HystrixCommand.Setter.withGroupKey;
 import static com.netflix.hystrix.HystrixCommandGroupKey.Factory.asKey;
+import static com.netflix.hystrix.HystrixCommandKey.Factory;
 import static com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy.SEMAPHORE;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -28,13 +28,13 @@ public class ChannelVideoBulkInsertCommand extends HystrixCommand<Void> {
             getInstance().getIntProperty("channel.videobulkbinsert.semaphore.count", 10);
     private static final DynamicIntProperty timeoutMillis =
             getInstance().getIntProperty("channel.videobulkbinsert.timeout.milliseconds", 60000);
-    private static Logger LOGGER = getLogger(ChannelVideoBulkInsertCommand.class);
+    private static Logger logger = getLogger(ChannelVideoBulkInsertCommand.class);
     private final List<Video> videos;
 
 
     public ChannelVideoBulkInsertCommand(List<Video> videos) {
         super(withGroupKey(asKey("DecisioningEngine"))
-                .andCommandKey(HystrixCommandKey.Factory.asKey("ChannelVideoBulkInsert"))
+                .andCommandKey(Factory.asKey("ChannelVideoBulkInsert"))
                 .andCommandPropertiesDefaults(HystrixCommandProperties.Setter()
                         .withExecutionTimeoutInMilliseconds(timeoutMillis.get())
                         .withExecutionIsolationStrategy(SEMAPHORE)

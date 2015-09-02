@@ -54,21 +54,26 @@ public class Forecaster {
             getInstance().getFloatProperty("pixelle.forecast.vtr", 0.0025f);
     private static final DynamicIntProperty MAX_CPV =
             getInstance().getIntProperty("pixelle.forecast.cpv.max", 100);
-    private static final DynamicIntProperty MIN_CPV =
-            getInstance().getIntProperty("pixelle.forecast.cpv.min", 1);
 
     private static final Float HOUSRSINWEEK = 168.0f;
     private static final String TOTAL = "total";
     private static final float BQ_TIMEPERIOD = 21.0f;
 
-    private static final Logger LOGGER = getLogger(Forecaster.class);
-    static Client client;
+    private static final Logger logger = getLogger(Forecaster.class);
+    private static Client client;
 
     @Inject
     public Forecaster(Client esClient) {
         client = esClient;
     }
 
+    /**
+     * Given a forecast request, responds with a list of views (avg/min/max) for given cpv, and all cpv values upto maxcpv in the system
+     *
+     * @param forecastRequest (cpv is mandatory)
+     * @return
+     * @throws ForecastException
+     */
     public static ForecastResponse forecast(ForecastRequest forecastRequest) throws ForecastException {
 
         if (forecastRequest == null) {
@@ -95,10 +100,10 @@ public class Forecaster {
                 .setQuery(qb)
                 .addAggregation(max("max").field("cpv")).addAggregation(min("min").field("cpv"));
 
-        LOGGER.info(srb1.toString());
+        logger.info(srb1.toString());
         SearchResponse searchResponse = srb1.execute().actionGet();
 
-        LOGGER.info(searchResponse.toString());
+        logger.info(searchResponse.toString());
         Aggregation minAggs = searchResponse.getAggregations().get("min");
         Aggregation maxAggs = searchResponse.getAggregations().get("max");
 
@@ -125,8 +130,7 @@ public class Forecaster {
         return response;
     }
 
-
-    public static ForecastViews forecastViews(int cpv, Integer maxCpvValue, Integer minCpvValue, ForecastRequest forecastRequest) throws ForecastException {
+    private static ForecastViews forecastViews(int cpv, Integer maxCpvValue, Integer minCpvValue, ForecastRequest forecastRequest) throws ForecastException {
         List<String> locations = forecastRequest.getLocations();
 
         float totalDailyOppCount = 1.0f, totalDailyViewCount = 1.0f;
@@ -149,7 +153,8 @@ public class Forecaster {
 
             }
         } else {
-            totalDailyOppCount = firstNonNull(getCountryEventCountCache().get(TOTAL, "opportunity"), 0l) / BQ_TIMEPERIOD;
+            totalDailyOppCount = firstNonNull(getCountryEventCountCache().get(TOTAL, "opportunity"), 0L) /
+                    BQ_TIMEPERIOD;
             // apply other filters (language/device/category/format)
             totalDailyOppCount = totalDailyOppCount * getFilteredPercentWithoutCountry(forecastRequest);
             totalDailyViewCount = firstNonNull(getCountryEventCountCache().get(TOTAL, "view"), 0L) / BQ_TIMEPERIOD;

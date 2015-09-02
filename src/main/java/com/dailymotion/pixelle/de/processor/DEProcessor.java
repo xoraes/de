@@ -56,7 +56,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  * Created by n.dhupia on 12/10/14.
  */
 public class DEProcessor {
-    private static final Logger LOGGER = getLogger(DEProcessor.class);
+    private static final Logger logger = getLogger(DEProcessor.class);
     private static final StatsTimer adsTimer = new StatsTimer(builder("adsQuery_statsTimer").build(), new Builder().withPublishMean(true).build());
     private static final StatsTimer videosTimer = new StatsTimer(builder("videosQuery_statsTimer").build(), new Builder().withPublishMean(true).build());
     private static final StatsTimer openWidgetTimer = new StatsTimer(builder("openWidgetQuery_statsTimer").build(), new Builder().withPublishMean(true).build());
@@ -155,7 +155,7 @@ public class DEProcessor {
                     if (e.getCause() instanceof HystrixBadRequestException) {
                         throw new DeException(e.getCause(), BAD_REQUEST_400);
                     }
-                    LOGGER.error("DE error while querying DM API");
+                    logger.error("DE error while querying DM API");
                     throw new DeException(e, INTERNAL_SERVER_ERROR_500);
                 }
 
@@ -280,7 +280,7 @@ public class DEProcessor {
     public static void deleteIndex(String indexName) {
         if (client.admin().indices().prepareExists(indexName).execute().actionGet().isExists()
                 && client.admin().indices().prepareDelete(indexName).execute().actionGet().isAcknowledged()) {
-            LOGGER.info("successfully deleted index: " + promotedIndex.get());
+            logger.info("successfully deleted index: " + promotedIndex.get());
         }
     }
 

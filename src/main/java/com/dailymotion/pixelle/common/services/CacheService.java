@@ -44,7 +44,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  * Created by n.dhupia on 3/17/15.
  */
 public class CacheService {
-    private static final Logger LOGGER = getLogger(CacheService.class);
+    private static final Logger logger = getLogger(CacheService.class);
 
     private static final DynamicLongProperty chanRefreshAfterWriteMins = getInstance().getLongProperty("pixelle.channel.refresh.write.minutes", 4);
     private static final DynamicLongProperty countryCountRefreshAfterWriteMins = getInstance().getLongProperty("pixelle.bq.countrycounts.refresh.write.minutes", 1440); // 24 hours
@@ -63,13 +63,13 @@ public class CacheService {
                     new CacheLoader<String, Table<String, String, Long>>() {
                         @Override
                         public Table<String, String, Long> load(String target) throws ForecastException {
-                            LOGGER.info("Caching and indexing.." + target);
+                            logger.info("Caching and indexing.." + target);
                             return getCountryCountTableFromFile(target);
                         }
 
                         @Override
                         public ListenableFuture<Table<String, String, Long>> reload(final String target, Table<String, String, Long> oldValue) throws DeException {
-                            LOGGER.info("Reloading cache for key " + target);
+                            logger.info("Reloading cache for key " + target);
                             return cacheMaintainer.submit(() -> getCountryCountTable(target));
                         }
                     });
@@ -81,7 +81,7 @@ public class CacheService {
                     new CacheLoader<Channels, List<Video>>() {
                         @Override
                         public List<Video> load(Channels channels) throws DeException {
-                            LOGGER.info("Caching and indexing channel video..");
+                            logger.info("Caching and indexing channel video..");
                             ChannelVideos cVideos = new DMApiQueryCommand(channels).execute();
                             if (cVideos != null) {
                                 return getFilteredVideos(cVideos);
@@ -91,7 +91,7 @@ public class CacheService {
 
                         @Override
                         public ListenableFuture<List<Video>> reload(final Channels channels, List<Video> oldValue) throws DeException {
-                            LOGGER.info("Reloading cache for key " + channels.getChannels());
+                            logger.info("Reloading cache for key " + channels.getChannels());
                             ListenableFuture<List<Video>> listenableFuture = cacheMaintainer.submit(() -> {
                                 ChannelVideos cVideos = new DMApiQueryCommand(channels).execute();
                                 if (cVideos != null) {
@@ -112,13 +112,13 @@ public class CacheService {
                         @Override
                         public List<VideoResponse> load(SearchQueryRequest sq) throws Exception {
                             List<VideoResponse> vr = recommend(sq, maxVideosToCache.get());
-                            LOGGER.info("Caching organic videos..:", sq.toString());
+                            logger.info("Caching organic videos..:", sq.toString());
                             return vr;
                         }
 
                         @Override
                         public ListenableFuture<List<VideoResponse>> reload(final SearchQueryRequest sq, List<VideoResponse> oldValue) throws Exception {
-                            LOGGER.info("Reloading cache for key " + sq);
+                            logger.info("Reloading cache for key " + sq);
                             ListeningExecutorService executor = listeningDecorator(newSingleThreadExecutor());
                             ListenableFuture<List<VideoResponse>> listenableFuture;
                             try {

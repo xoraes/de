@@ -75,7 +75,7 @@ final class StartServer {
     private static final LongGauge countryCountCacheEvictionCount = new LongGauge(builder("countryCountCacheEvictionCount_gauge").build());
 
 
-    private static Logger LOGGER = getLogger(StartServer.class);
+    private static Logger logger = getLogger(StartServer.class);
 
     static {
         getInstance().register(videoCacheHitRate);
@@ -104,7 +104,7 @@ final class StartServer {
         final DynamicStringProperty appName =
                 DynamicPropertyFactory.getInstance().getStringProperty("appname", "de");
 
-        LOGGER.info("Application: " + appName.get());
+        logger.info("Application: " + appName.get());
 
         if (appName.get().equalsIgnoreCase("forecast")) {
             //warm up cache
@@ -226,11 +226,11 @@ final class StartServer {
             @Override
             public void run() {
                 try {
-                    LOGGER.info("Server shutting down...");
+                    logger.info("Server shutting down...");
                     scheduledExecutorService.shutdownNow();
                     server.stop();
                 } catch (Exception e) {
-                    LOGGER.error("Can not stop the Jetty server", e);
+                    logger.error("Can not stop the Jetty server", e);
                 }
             }
         });
@@ -239,7 +239,7 @@ final class StartServer {
             server.start();
             server.join();
         } catch (Exception err) {
-            LOGGER.error("Could not start Jetty server", err);
+            logger.error("Could not start Jetty server", err);
             throw new IOException(err);
         }
     }

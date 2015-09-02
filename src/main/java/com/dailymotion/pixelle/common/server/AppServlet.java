@@ -33,7 +33,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
 
@@ -54,7 +53,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 @Path("/")
 @WebServlet(asyncSupported = true)
 public class AppServlet {
-    private static Logger LOGGER = getLogger(AppServlet.class);
+    private static Logger logger = getLogger(AppServlet.class);
     private final DEProcessor deProcessor;
 
     @Inject
@@ -286,12 +285,12 @@ public class AppServlet {
      * Forecast daily and total views based on given data.
      *
      * @param forecastRequest
-     * @throws com.dailymotion.pixelle.forecast.processor.ForecastException
+     * @throws ForecastException
      */
     @POST
     @Path("/forecast")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(APPLICATION_JSON)
+    @Produces(APPLICATION_JSON)
     public ForecastResponse forecast(ForecastRequest forecastRequest) throws ForecastException {
         return Forecaster.forecast(forecastRequest);
     }

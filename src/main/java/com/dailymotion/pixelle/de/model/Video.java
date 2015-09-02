@@ -14,7 +14,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Data
 public class Video {
-    private static Logger LOGGER = getLogger(Video.class);
+    private static Logger logger = getLogger(Video.class);
     @JsonProperty("_id")
     private String id;
     @JsonProperty("video_id")

@@ -75,7 +75,7 @@ public class AdUnitProcessor {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final Integer MAX_YEARS = 100;
     private static final Integer SIZ_MULTIPLIER = 4;
-    private static final Logger LOGGER = getLogger(AdUnitProcessor.class);
+    private static final Logger logger = getLogger(AdUnitProcessor.class);
     // JMX: com.netflix.servo.COUNTER.TotalAdsRequestsServed
     private static final Counter totalAdsRequestsServed = new BasicCounter(
             builder("TotalAdsRequestsServed").build());
@@ -161,7 +161,7 @@ public class AdUnitProcessor {
                 srb1.setExplain(true);
             }
 
-            LOGGER.info(srb1.toString());
+            logger.info(srb1.toString());
 
 
             SearchResponse searchResponse = srb1.execute().actionGet();
@@ -176,7 +176,7 @@ public class AdUnitProcessor {
                         ex.setDescription("Source ====>" + hit.getSourceAsString());
                         ex.addDetail(hit.explanation());
                         unit.setDebugInfo(ex.toHtml().replace("\n", ""));
-                        LOGGER.info(ex.toString());
+                        logger.info(ex.toString());
                     }
                     adUnitResponses.add(unit);
                 } catch (IOException e) {
@@ -184,7 +184,7 @@ public class AdUnitProcessor {
                 }
             }
             adUnitResponses = removeDuplicateCampaigns(positions, adUnitResponses);
-            LOGGER.info("Num responses:" + adUnitResponses.size());
+            logger.info("Num responses:" + adUnitResponses.size());
 
         }
         if (isEmptyList(adUnitResponses)) {
@@ -193,11 +193,11 @@ public class AdUnitProcessor {
                 sq.setExcludedVideoIds(null);
                 return recommend(sq, positions);
             } else {
-                LOGGER.info("No ads returned =======> " + sq.toString());
+                logger.info("No ads returned =======> " + sq.toString());
             }
 
         } else {
-            LOGGER.info("Success =======> " + (adUnitResponses != null ? adUnitResponses.toString() : null));
+            logger.info("Success =======> " + (adUnitResponses != null ? adUnitResponses.toString() : null));
             totalAdsRequestsServed.increment();
         }
         return adUnitResponses;
@@ -310,23 +310,23 @@ public class AdUnitProcessor {
         }
         BulkRequestBuilder bulkRequest = client.prepareBulk();
 
-        LOGGER.info("Bulk loading:" + adUnits.size() + " ads");
+        logger.info("Bulk loading:" + adUnits.size() + " ads");
 
 
         for (AdUnit adUnit : adUnits) {
             if (adUnit.getCpv() == null || adUnit.getCpv() == 0L) {
-                LOGGER.warn("failed inserting adunit due to no cpv: " + adUnit.toString());
+                logger.warn("failed inserting adunit due to no cpv: " + adUnit.toString());
                 continue;
             }
             adUnit = modifyAdUnitForInsert(adUnit);
-            LOGGER.info("Loading adunit" + adUnit.toString());
+            logger.info("Loading adunit" + adUnit.toString());
             try {
                 bulkRequest.add(client.prepareUpdate(promotedIndex.get(), adunitsType.get(), adUnit.getId())
                         .setDoc(OBJECT_MAPPER.writeValueAsString(adUnit))
                         .setRetryOnConflict(retryOnConflictAdUnits.get())
                         .setDocAsUpsert(true));
             } catch (JsonProcessingException e) {
-                LOGGER.error("Error converting adunit to string", e);
+                logger.error("Error converting adunit to string", e);
                 throw new DeException(e, INTERNAL_SERVER_ERROR_500);
             }
         }
@@ -339,11 +339,11 @@ public class AdUnitProcessor {
                 throw new DeException(e, INTERNAL_SERVER_ERROR_500);
             }
             if (bulkResponse != null && bulkResponse.hasFailures()) {
-                LOGGER.error("Error Bulk loading:" + adUnits.size() + " adUnits");
+                logger.error("Error Bulk loading:" + adUnits.size() + " adUnits");
                 while (bulkResponse.iterator().hasNext()) {
                     BulkItemResponse br = bulkResponse.iterator().next();
                     if (br.isFailed()) {
-                        LOGGER.error(br.getFailureMessage());
+                        logger.error(br.getFailureMessage());
                     }
                 }
                 // process failures by iterating through each bulk response item
@@ -363,7 +363,7 @@ public class AdUnitProcessor {
             try {
                 unit = OBJECT_MAPPER.readValue(responseSourceAsBytes, AdUnit.class);
             } catch (IOException e) {
-                LOGGER.error("error parsing adunit", e);
+                logger.error("error parsing adunit", e);
                 throw new DeException(e, INTERNAL_SERVER_ERROR_500);
             }
         }

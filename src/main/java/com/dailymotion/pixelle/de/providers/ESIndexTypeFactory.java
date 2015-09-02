@@ -22,7 +22,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  * Created by n.dhupia on 11/19/14.
  */
 final class ESIndexTypeFactory {
-    private static final Logger LOGGER = getLogger(ESIndexTypeFactory.class);
+    private static final Logger logger = getLogger(ESIndexTypeFactory.class);
     private static final DynamicIntProperty channelTtl =
             getInstance().getIntProperty("channel.index.ttl", 300000); // 5 minutes
 
@@ -53,9 +53,9 @@ final class ESIndexTypeFactory {
                         .actionGet()
                         .isAcknowledged();
                 if (ack) {
-                    LOGGER.info("Index creation succeeded");
+                    logger.info("Index creation succeeded");
                 } else {
-                    LOGGER.info("Index already exists ! Not re-creating");
+                    logger.info("Index already exists ! Not re-creating");
                 }
             }
 
@@ -76,14 +76,14 @@ final class ESIndexTypeFactory {
                         .isAcknowledged();
 
                 if (ack) {
-                    LOGGER.info("type creation succeeded");
+                    logger.info("type creation succeeded");
                 }
             } else {
-                LOGGER.info("type adready exists");
+                logger.info("type adready exists");
             }
 
         } catch (IOException e) {
-            LOGGER.error(e.getMessage());
+            logger.error(e.getMessage());
             //TODO Use throwableProvider instead of this
             throw new ProvisionException("Could not create index", e);
         }

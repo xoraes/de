@@ -1,20 +1,4 @@
 <?xml version="1.0"?>
-<!--
-  ~ Copyright 2014 Dailymotion, Inc.
-  ~
-  ~      Licensed under the Apache License, Version 2.0 (the "License");
-  ~      you may not use this file except in compliance with the License.
-  ~      You may obtain a copy of the License at
-  ~
-  ~          http://www.apache.org/licenses/LICENSE-2.0
-  ~
-  ~      Unless required by applicable law or agreed to in writing, software
-  ~      distributed under the License is distributed on an "AS IS" BASIS,
-  ~      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ~      See the License for the specific language governing permissions and
-  ~      limitations under the License.
-  -->
-
 <!DOCTYPE module PUBLIC
         "-//Puppy Crawl//DTD Check Configuration 1.2//EN"
         "http://www.puppycrawl.com/dtds/configuration_1_2.dtd">
@@ -70,6 +54,7 @@
         </module>
         <module name="JavadocType">
             <property name="scope" value="package"/>
+            <property name="allowMissingParamTags" value="true"/>
         </module>
         <module name="JavadocVariable">
             <property name="scope" value="package"/>
@@ -92,7 +77,7 @@
 
         <!-- Checks for imports                              -->
         <!-- See http://checkstyle.sf.net/config_import.html -->
-        <module name="AvoidStarImport"/>
+        <!-- <module name="AvoidStarImport"/> -->
         <module name="IllegalImport"/>
         <!-- defaults to sun.* packages -->
         <module name="RedundantImport"/>
@@ -103,7 +88,7 @@
         <!-- See http://checkstyle.sf.net/config_sizes.html -->
         <module name="LineLength">
             <!-- what is a good max value? -->
-            <property name="max" value="175"/>
+            <property name="max" value="180"/>
             <!-- ignore lines like "$File: //depot/... $" -->
             <property name="ignorePattern" value="\$File.*\$"/>
             <property name="severity" value="info"/>
@@ -138,7 +123,7 @@
             <property name="option" value="text"/>
         </module>
         <module name="LeftCurly"/>
-        <module name="NeedBraces"/>
+        <!--<module name="NeedBraces"/>-->
         <module name="RightCurly"/>
 
 
@@ -154,16 +139,11 @@
         </module>
         <module name="IllegalInstantiation"/>
         <module name="InnerAssignment"/>
-        <module name="MagicNumber">
-            <property name="severity" value="warning"/>
-        </module>
+        <!--<module name="MagicNumber">
+          <property name="severity" value="warning"/>
+        </module>-->
         <module name="MissingSwitchDefault"/>
         <!-- Problem with finding exception types... -->
-        <module name="RedundantThrows">
-            <property name="allowUnchecked" value="true"/>
-            <property name="suppressLoadErrors" value="true"/>
-            <property name="severity" value="info"/>
-        </module>
         <module name="SimplifyBooleanExpression"/>
         <module name="SimplifyBooleanReturn"/>
 
@@ -173,7 +153,9 @@
         <module name="FinalClass"/>
         <module name="HideUtilityClassConstructor"/>
         <module name="InterfaceIsType"/>
-        <module name="VisibilityModifier"/>
+        <module name="VisibilityModifier">
+            <property name="protectedAllowed" value="true"/>
+        </module>
 
 
         <!-- Miscellaneous other checks.                   -->
@@ -203,7 +185,10 @@
         <property name="checkFormat" value="$1"/>
         <property name="influenceFormat" value="1"/>
     </module>
+
     <module name="SuppressionFilter">
         <property name="file" value="codequality/cksuppressions.xml"/>
     </module>
+
 </module>
+

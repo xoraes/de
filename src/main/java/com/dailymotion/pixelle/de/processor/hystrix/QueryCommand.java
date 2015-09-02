@@ -5,7 +5,6 @@ import com.dailymotion.pixelle.de.model.SearchQueryRequest;
 import com.dailymotion.pixelle.de.processor.DeException;
 import com.netflix.config.DynamicIntProperty;
 import com.netflix.hystrix.HystrixCommand;
-import com.netflix.hystrix.HystrixCommandKey;
 import com.netflix.hystrix.HystrixCommandProperties;
 import com.netflix.hystrix.exception.HystrixBadRequestException;
 import org.slf4j.Logger;
@@ -14,6 +13,7 @@ import static com.dailymotion.pixelle.de.processor.DEProcessor.recommend;
 import static com.netflix.config.DynamicPropertyFactory.getInstance;
 import static com.netflix.hystrix.HystrixCommand.Setter.withGroupKey;
 import static com.netflix.hystrix.HystrixCommandGroupKey.Factory.asKey;
+import static com.netflix.hystrix.HystrixCommandKey.Factory;
 import static com.netflix.hystrix.HystrixCommandProperties.ExecutionIsolationStrategy.SEMAPHORE;
 import static org.eclipse.jetty.http.HttpStatus.isClientError;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -25,7 +25,7 @@ public class QueryCommand extends HystrixCommand<ItemsResponse> {
     private static final DynamicIntProperty semaphoreCount =
             getInstance().getIntProperty("query.semaphore.count", 100);
     private static final DynamicIntProperty timeout = getInstance().getIntProperty("hystrix.query.timeout", 5000);
-    private static Logger LOGGER = getLogger(QueryCommand.class);
+    private static Logger logger = getLogger(QueryCommand.class);
     private final SearchQueryRequest sq;
     private final String allowedTypes;
     private final Integer positions;
@@ -33,7 +33,7 @@ public class QueryCommand extends HystrixCommand<ItemsResponse> {
     public QueryCommand(SearchQueryRequest sq, Integer positions, String allowedTypes) {
 
         super(withGroupKey(asKey("DecisioningEngine"))
-                .andCommandKey(HystrixCommandKey.Factory.asKey("Query"))
+                .andCommandKey(Factory.asKey("Query"))
                 .andCommandPropertiesDefaults(HystrixCommandProperties.Setter()
                         .withExecutionIsolationStrategy(SEMAPHORE)
                         .withExecutionIsolationSemaphoreMaxConcurrentRequests(semaphoreCount.get())

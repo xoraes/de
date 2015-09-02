@@ -17,7 +17,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Data
 public class AdUnit {
-    private static Logger LOGGER = getLogger(AdUnit.class);
+    private static Logger logger = getLogger(AdUnit.class);
     @JsonProperty("_id")
     private String id;
     @JsonProperty("ad")
