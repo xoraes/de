@@ -1,9 +1,13 @@
-package com.dailymotion.pixelle.de.processor;
+package com.dailymotion.pixelle.de;
 
 import com.dailymotion.pixelle.de.model.ItemsResponse;
 import com.dailymotion.pixelle.de.model.SearchQueryRequest;
 import com.dailymotion.pixelle.de.model.Video;
 import com.dailymotion.pixelle.de.model.VideoResponse;
+import com.dailymotion.pixelle.de.processor.AdUnitProcessor;
+import com.dailymotion.pixelle.de.processor.DEProcessor;
+import com.dailymotion.pixelle.de.processor.DeException;
+import com.dailymotion.pixelle.de.processor.VideoProcessor;
 import com.dailymotion.pixelle.de.processor.hystrix.QueryCommand;
 import com.dailymotion.pixelle.de.processor.hystrix.VideoBulkInsertCommand;
 import com.dailymotion.pixelle.de.providers.ESTestNodeClientProvider;
@@ -29,9 +33,6 @@ import static com.dailymotion.pixelle.de.processor.DeHelper.currentUTCTimeString
 import static com.dailymotion.pixelle.de.processor.DeHelper.organicIndex;
 import static com.dailymotion.pixelle.de.processor.DeHelper.promotedIndex;
 import static com.dailymotion.pixelle.de.processor.DeHelper.videosType;
-import static com.dailymotion.pixelle.de.processor.ESAdUnitsIntegrationTest.createAdUnitDataMap;
-import static com.dailymotion.pixelle.de.processor.ESAdUnitsIntegrationTest.deleteAdUnitsByIds;
-import static com.dailymotion.pixelle.de.processor.ESAdUnitsIntegrationTest.loadAdUnitMaps;
 import static com.google.inject.Guice.createInjector;
 import static com.netflix.config.ConfigurationManager.loadCascadedPropertiesFromResources;
 import static java.lang.System.out;
@@ -130,10 +131,10 @@ public class ESVideoIntegrationTest {
         Map m3 = createVideoDataMap("3");
         loadVideoMaps(m1, m2, m3);
 
-        Map m4 = createAdUnitDataMap("1", "1");
-        Map m5 = createAdUnitDataMap("2", "2");
-        Map m6 = createAdUnitDataMap("3", "3");
-        loadAdUnitMaps(m4, m5, m6);
+        Map m4 = ESAdUnitsIntegrationTest.createAdUnitDataMap("1", "1");
+        Map m5 = ESAdUnitsIntegrationTest.createAdUnitDataMap("2", "2");
+        Map m6 = ESAdUnitsIntegrationTest.createAdUnitDataMap("3", "3");
+        ESAdUnitsIntegrationTest.loadAdUnitMaps(m4, m5, m6);
 
 
         SearchQueryRequest sq = new SearchQueryRequest();
@@ -170,7 +171,7 @@ public class ESVideoIntegrationTest {
         assertTrue(i.getResponse().get(2).getClass().getCanonicalName().contains("AdUnit"));
 
         deleteVideosByIds("1", "2", "3");
-        deleteAdUnitsByIds("1", "2", "3");
+        ESAdUnitsIntegrationTest.deleteAdUnitsByIds("1", "2", "3");
     }
 
     @Test
@@ -181,8 +182,8 @@ public class ESVideoIntegrationTest {
         Map m4 = createVideoDataMap("4");
         loadVideoMaps(m1, m2, m3, m4);
 
-        Map m5 = createAdUnitDataMap("1", "1");
-        loadAdUnitMaps(m5);
+        Map m5 = ESAdUnitsIntegrationTest.createAdUnitDataMap("1", "1");
+        ESAdUnitsIntegrationTest.loadAdUnitMaps(m5);
 
 
         SearchQueryRequest sq = new SearchQueryRequest();
@@ -200,7 +201,7 @@ public class ESVideoIntegrationTest {
         assertTrue(i.getResponse().size() == 5);
 
         deleteVideosByIds("1", "2", "3", "4");
-        deleteAdUnitsByIds("1");
+        ESAdUnitsIntegrationTest.deleteAdUnitsByIds("1");
     }
 
     @Test
@@ -210,8 +211,8 @@ public class ESVideoIntegrationTest {
         Map m3 = createVideoDataMap("3");
         loadVideoMaps(m1, m2, m3);
 
-        Map m4 = createAdUnitDataMap("1", "1");
-        loadAdUnitMaps(m4);
+        Map m4 = ESAdUnitsIntegrationTest.createAdUnitDataMap("1", "1");
+        ESAdUnitsIntegrationTest.loadAdUnitMaps(m4);
 
 
         SearchQueryRequest sq = new SearchQueryRequest();
@@ -228,7 +229,7 @@ public class ESVideoIntegrationTest {
         assertNotNull(i);
         assertTrue(i.getResponse().size() == 3);
         deleteVideosByIds("1", "2", "3");
-        deleteAdUnitsByIds("1");
+        ESAdUnitsIntegrationTest.deleteAdUnitsByIds("1");
     }
 
     @Test

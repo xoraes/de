@@ -139,12 +139,12 @@ public class Forecaster {
                     continue;
                 }
                 float dailyOppCount = 1.0f, dailyViewCount = 1.0f;
-                dailyOppCount = firstNonNull(getCountryEventCountCache().get(country, "opportunity"), 0l) / BQ_TIMEPERIOD;
+                dailyOppCount = firstNonNull(getCountryEventCountCache().get(country, "opportunity"), 0L) / BQ_TIMEPERIOD;
                 // apply other filters (language/device/category/format)
                 dailyOppCount = dailyOppCount * getFilteredPercentCountry(forecastRequest, country);
                 totalDailyOppCount = totalDailyOppCount + dailyOppCount;
 
-                dailyViewCount = firstNonNull(getCountryEventCountCache().get(country, "view"), 0l) / BQ_TIMEPERIOD;
+                dailyViewCount = firstNonNull(getCountryEventCountCache().get(country, "view"), 0L) / BQ_TIMEPERIOD;
                 totalDailyViewCount = totalDailyViewCount + dailyViewCount;
 
             }
@@ -152,7 +152,7 @@ public class Forecaster {
             totalDailyOppCount = firstNonNull(getCountryEventCountCache().get(TOTAL, "opportunity"), 0l) / BQ_TIMEPERIOD;
             // apply other filters (language/device/category/format)
             totalDailyOppCount = totalDailyOppCount * getFilteredPercentWithoutCountry(forecastRequest);
-            totalDailyViewCount = firstNonNull(getCountryEventCountCache().get(TOTAL, "view"), 0l) / BQ_TIMEPERIOD;
+            totalDailyViewCount = firstNonNull(getCountryEventCountCache().get(TOTAL, "view"), 0L) / BQ_TIMEPERIOD;
         }
 
 

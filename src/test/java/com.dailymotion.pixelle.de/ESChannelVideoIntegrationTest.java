@@ -1,8 +1,12 @@
-package com.dailymotion.pixelle.de.processor;
+package com.dailymotion.pixelle.de;
 
 import com.dailymotion.pixelle.de.model.ItemsResponse;
 import com.dailymotion.pixelle.de.model.SearchQueryRequest;
 import com.dailymotion.pixelle.de.model.VideoResponse;
+import com.dailymotion.pixelle.de.processor.AdUnitProcessor;
+import com.dailymotion.pixelle.de.processor.ChannelProcessor;
+import com.dailymotion.pixelle.de.processor.DEProcessor;
+import com.dailymotion.pixelle.de.processor.VideoProcessor;
 import com.dailymotion.pixelle.de.processor.hystrix.QueryCommand;
 import com.dailymotion.pixelle.de.providers.ESTestNodeClientProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,9 +28,6 @@ import static com.dailymotion.pixelle.de.processor.DeHelper.FORMAT.INWIDGET;
 import static com.dailymotion.pixelle.de.processor.DeHelper.channelIndex;
 import static com.dailymotion.pixelle.de.processor.DeHelper.organicIndex;
 import static com.dailymotion.pixelle.de.processor.DeHelper.promotedIndex;
-import static com.dailymotion.pixelle.de.processor.ESAdUnitsIntegrationTest.createAdUnitDataMap;
-import static com.dailymotion.pixelle.de.processor.ESAdUnitsIntegrationTest.deleteAdUnitsByIds;
-import static com.dailymotion.pixelle.de.processor.ESAdUnitsIntegrationTest.loadAdUnitMaps;
 import static com.google.inject.Guice.createInjector;
 import static com.netflix.config.ConfigurationManager.loadCascadedPropertiesFromResources;
 import static java.lang.System.out;
@@ -95,8 +96,8 @@ public class ESChannelVideoIntegrationTest {
         assertNotNull(video.getDuration());
         assertNotNull(video.getResizableThumbnailUrl());
 
-        Map m4 = createAdUnitDataMap("1", "1");
-        loadAdUnitMaps(m4);
+        Map m4 = ESAdUnitsIntegrationTest.createAdUnitDataMap("1", "1");
+        ESAdUnitsIntegrationTest.loadAdUnitMaps(m4);
 
         sq = new SearchQueryRequest();
         sq.setTime("2014-12-31T15:00:00-0800");
@@ -135,7 +136,7 @@ public class ESChannelVideoIntegrationTest {
         assertEquals(2, getChannelVideosCache().size());
         assertEquals(1, getChannelVideosCache().stats().hitCount());
 
-        deleteAdUnitsByIds("1");
+        ESAdUnitsIntegrationTest.deleteAdUnitsByIds("1");
     }
 
     @Test(expected = HystrixBadRequestException.class)

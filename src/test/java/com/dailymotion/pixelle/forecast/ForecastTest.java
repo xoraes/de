@@ -1,10 +1,10 @@
 package com.dailymotion.pixelle.forecast;
 
 import com.dailymotion.pixelle.common.services.CacheService;
+import com.dailymotion.pixelle.de.ESAdUnitsIntegrationTest;
 import com.dailymotion.pixelle.de.processor.AdUnitProcessor;
 import com.dailymotion.pixelle.de.processor.DEProcessor;
 import com.dailymotion.pixelle.de.processor.DeHelper;
-import com.dailymotion.pixelle.de.processor.ESAdUnitsIntegrationTest;
 import com.dailymotion.pixelle.de.providers.ESTestNodeClientProvider;
 import com.dailymotion.pixelle.forecast.model.ForecastRequest;
 import com.dailymotion.pixelle.forecast.model.ForecastResponse;
@@ -58,18 +58,25 @@ public class ForecastTest {
     }
 
     @Test
-    public void noop() throws Exception {
+    public void testForecastWithoutAnyAdHistory() throws Exception {
+        Thread.sleep(1000);
+        ForecastRequest req = new ForecastRequest();
+        req.setLocations(new ArrayList<>(Arrays.asList("us")));
+        req.setCpv(15);
+        req.setStartDate("2015-01-01T00:00:00Z");
+        Integer[] sch = {16777215, 16777215, 16777215, 16777215, 16777215, 16777215, 16777215};
+        req.setSchedules(sch);
 
-        System.out.println(CacheService.getCountryLangCountCache().toString());
-        System.out.println(CacheService.getCountryDeviceCountCache().toString());
-        System.out.println(CacheService.getCountryFormatCountCache().toString());
-        System.out.println(CacheService.getCountryCategoryCountCache().toString());
-        Long res = 0l;
-        Long total = CacheService.getCountryCategoryCountCache().get("total", "total");
-        res = CacheService.getCountryCategoryCountCache().get("total", "fun");
+        ForecastResponse response = Forecaster.forecast(req);
+        System.out.println(response.toString());
+        Assert.assertEquals(1, response.getForecastViewsList().size());
+        Assert.assertTrue(response.getForecastViewsList().get(0).getDailyMaxViews() > 0);
+        Assert.assertTrue(response.getForecastViewsList().get(0).getDailyMinViews() > 0);
+        Assert.assertTrue(response.getForecastViewsList().get(0).getDailyAvgViews() > 0);
+        Assert.assertNull(response.getForecastViewsList().get(0).getTotalMaxViews());
+        Assert.assertNull(response.getForecastViewsList().get(0).getTotalMinViews());
+        Assert.assertNull(response.getForecastViewsList().get(0).getTotalAvgViews());
 
-        System.out.println(res);
-        System.out.println(total);
     }
 
     @Test
@@ -93,6 +100,7 @@ public class ForecastTest {
         Assert.assertTrue(response.getForecastViewsList().get(0).getDailyMinViews() > 0);
         Assert.assertNull(response.getForecastViewsList().get(0).getTotalMaxViews());
         Assert.assertNull(response.getForecastViewsList().get(0).getTotalMinViews());
+        Assert.assertNull(response.getForecastViewsList().get(0).getTotalAvgViews());
         System.out.println(response.toString());
         ESAdUnitsIntegrationTest.deleteAdUnitsByIds("1", "2");
     }
@@ -122,6 +130,7 @@ public class ForecastTest {
         Assert.assertTrue(response.getForecastViewsList().get(0).getDailyMinViews() > 0);
         Assert.assertTrue(response.getForecastViewsList().get(0).getTotalMaxViews() > 0);
         Assert.assertTrue(response.getForecastViewsList().get(0).getTotalMinViews() > 0);
+        Assert.assertTrue(response.getForecastViewsList().get(0).getTotalAvgViews() > 0);
         System.out.println(response.toString());
         ESAdUnitsIntegrationTest.deleteAdUnitsByIds("1", "2");
     }
@@ -142,11 +151,12 @@ public class ForecastTest {
         ForecastResponse response = Forecaster.forecast(req);
         Assert.assertTrue(response.getForecastViewsList().get(0).getDailyMaxViews() > 0);
         Assert.assertTrue(response.getForecastViewsList().get(0).getDailyMinViews() > 0);
+        Assert.assertTrue(response.getForecastViewsList().get(0).getDailyAvgViews() > 0);
         Assert.assertTrue(response.getForecastViewsList().get(0).getTotalMaxViews() > 0);
         Assert.assertTrue(response.getForecastViewsList().get(0).getTotalMinViews() > 0);
+        Assert.assertTrue(response.getForecastViewsList().get(0).getTotalAvgViews() > 0);
 
         System.out.println(response.toString());
-
         ESAdUnitsIntegrationTest.deleteAdUnitsByIds("1", "2");
     }
 
@@ -160,8 +170,12 @@ public class ForecastTest {
         ForecastRequest req = new ForecastRequest();
         String countries[] = new String[]{"US"};
         req.setLocations(Arrays.asList(countries));
-        ForecastResponse response = Forecaster.forecast(req);
-        ESAdUnitsIntegrationTest.deleteAdUnitsByIds("1", "2");
+        try {
+            ForecastResponse response = Forecaster.forecast(req);
+        } finally {
+            ESAdUnitsIntegrationTest.deleteAdUnitsByIds("1", "2");
+        }
+
     }
 
 }

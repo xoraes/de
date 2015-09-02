@@ -1,9 +1,15 @@
-package com.dailymotion.pixelle.de.processor;
+package com.dailymotion.pixelle.de;
 
 import com.dailymotion.pixelle.de.model.AdUnit;
 import com.dailymotion.pixelle.de.model.AdUnitResponse;
 import com.dailymotion.pixelle.de.model.ItemsResponse;
 import com.dailymotion.pixelle.de.model.SearchQueryRequest;
+import com.dailymotion.pixelle.de.processor.AdUnitProcessor;
+import com.dailymotion.pixelle.de.processor.ChannelProcessor;
+import com.dailymotion.pixelle.de.processor.DEProcessor;
+import com.dailymotion.pixelle.de.processor.DeException;
+import com.dailymotion.pixelle.de.processor.DeHelper;
+import com.dailymotion.pixelle.de.processor.VideoProcessor;
 import com.dailymotion.pixelle.de.processor.hystrix.AdInsertCommand;
 import com.dailymotion.pixelle.de.processor.hystrix.QueryCommand;
 import com.dailymotion.pixelle.de.providers.ESTestNodeClientProvider;
