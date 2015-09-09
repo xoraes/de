@@ -18,6 +18,7 @@ import com.netflix.servo.monitor.Counter;
 import com.netflix.servo.monitor.LongGauge;
 import com.netflix.servo.monitor.StatsTimer;
 import com.netflix.servo.monitor.Stopwatch;
+import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.action.count.CountResponse;
 import org.elasticsearch.client.Client;
 import org.slf4j.Logger;
@@ -93,6 +94,10 @@ public class DEProcessor {
         ItemsResponse itemsResponse = new ItemsResponse();
         String[] at = split(allowedTypes, ",", 2);
         sq = modifySearchQueryReq(sq);
+        String pattern = sq.getPattern();
+        if (StringUtils.isBlank(pattern)) {
+            pattern = widgetPattern.get();
+        }
 
         if (at == null || at.length == 0) {
             stopwatch = adsTimer.start();
@@ -125,7 +130,7 @@ public class DEProcessor {
                     return itemsResponse;
                 } else {
                     List<VideoResponse> untargetedVideos = getUntargetedVideos(targetedVideos, positions, sq);
-                    mergedList = mergeAndFillList(null, targetedVideos, untargetedVideos, positions);
+                    mergedList = mergeAndFillList(null, targetedVideos, untargetedVideos, positions, pattern);
                     itemsResponse.setResponse(mergedList);
                     return itemsResponse;
                 }
@@ -161,7 +166,7 @@ public class DEProcessor {
 
                 //if we have enough ads and videos, merge and send
                 if (!isEmptyList(ads) && !isEmptyList(targetedVideos) && ads.size() + targetedVideos.size() >= positions) {
-                    mergedList = mergeAndFillList(ads, targetedVideos, null, positions);
+                    mergedList = mergeAndFillList(ads, targetedVideos, null, positions, pattern);
                     itemsResponse.setResponse(mergedList);
                     return itemsResponse;
                 } else if (isEmptyList(ads) && targetedVideos.size() >= positions) { //ads empty, enough videos
@@ -169,7 +174,7 @@ public class DEProcessor {
                     return itemsResponse;
                 } else { //fill with untargetged videos
                     List<VideoResponse> untargetedVideos = getUntargetedVideos(targetedVideos, positions, sq);
-                    mergedList = mergeAndFillList(ads, targetedVideos, untargetedVideos, positions);
+                    mergedList = mergeAndFillList(ads, targetedVideos, untargetedVideos, positions, pattern);
                     itemsResponse.setResponse(mergedList);
                     return itemsResponse;
                 }
@@ -198,7 +203,7 @@ public class DEProcessor {
 
                 //if we have enough ads and videos, merge and send
                 if (!isEmptyList(ads) && !isEmptyList(targetedVideos) && ads.size() + targetedVideos.size() >= positions) {
-                    mergedList = mergeAndFillList(ads, targetedVideos, null, positions);
+                    mergedList = mergeAndFillList(ads, targetedVideos, null, positions, pattern);
                     itemsResponse.setResponse(mergedList);
                     return itemsResponse;
                 } else if (isEmptyList(ads) && targetedVideos.size() >= positions) { //ads empty, enough videos
@@ -206,7 +211,7 @@ public class DEProcessor {
                     return itemsResponse;
                 } else { //fill with untargetged videos
                     List<VideoResponse> untargetedVideos = getUntargetedVideos(targetedVideos, positions, sq);
-                    mergedList = mergeAndFillList(ads, targetedVideos, untargetedVideos, positions);
+                    mergedList = mergeAndFillList(ads, targetedVideos, untargetedVideos, positions, pattern);
                     itemsResponse.setResponse(mergedList);
                     return itemsResponse;
                 }
@@ -247,9 +252,9 @@ public class DEProcessor {
     private static List<? extends ItemsResponse> mergeAndFillList(final List<AdUnitResponse> ads,
                                                                   final List<VideoResponse> targetedVideos,
                                                                   final List<VideoResponse> untargetedVideos,
-                                                                  final Integer positions) {
+                                                                  final Integer positions,
+                                                                  final String pattern) {
 
-        String pattern = widgetPattern.get();
         int len = pattern.length();
 
         List<ItemsResponse> items = new ArrayList<ItemsResponse>();

@@ -42,6 +42,8 @@ public class SearchQueryRequest {
     private List<String> channels;
     @JsonProperty("sort")
     private String sortOrder;
+    @JsonProperty("pattern")
+    public String pattern;
     @JsonProperty("impression_history")
     private Map<String, Integer> impressionHistory;
     @JsonIgnore

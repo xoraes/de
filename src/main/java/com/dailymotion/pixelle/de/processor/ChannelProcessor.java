@@ -13,6 +13,7 @@ import com.google.common.collect.Ordering;
 import com.google.inject.Inject;
 import com.netflix.config.DynamicBooleanProperty;
 import com.netflix.config.DynamicStringProperty;
+import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.client.Client;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
@@ -166,7 +167,7 @@ public class ChannelProcessor extends VideoProcessor {
         if (!channelVideo.getAds()) {
             return true;
         }
-        if (!channelVideo.getMode().equalsIgnoreCase("vod")) {
+        if (!StringUtils.equalsIgnoreCase(channelVideo.getMode(),"vod")) {
             return true;
         }
         if (channelVideo.getThreeDim()) {
@@ -178,10 +179,10 @@ public class ChannelProcessor extends VideoProcessor {
         if (channelVideo.getDuration() < 30) {
             return true;
         }
-        if (!channelVideo.getStatus().equalsIgnoreCase("published")) {
+        if (!StringUtils.equalsIgnoreCase(channelVideo.getStatus(),"published")) {
             return true;
         }
-        return !listOfValidCategories.get().contains(channelVideo.getChannel().toLowerCase());
+        return !listOfValidCategories.get().contains(StringUtils.lowerCase(channelVideo.getChannel()));
     }
 
     private static String listToString(List<String> channels) {
