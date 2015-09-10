@@ -95,7 +95,7 @@ public class DEProcessor {
         String[] at = split(allowedTypes, ",", 2);
         sq = modifySearchQueryReq(sq);
         String pattern = sq.getPattern();
-        if (StringUtils.isBlank(pattern)) {
+        if (StringUtils.isBlank(pattern) || !StringUtils.containsOnly(pattern,'p','o','P','O')) {
             pattern = widgetPattern.get();
         }
 
@@ -249,6 +249,9 @@ public class DEProcessor {
         return client.prepareDelete(indexName, type, id).execute().actionGet().isFound();
     }
 
+    /*
+       assume pattern is not empty
+     */
     private static List<? extends ItemsResponse> mergeAndFillList(final List<AdUnitResponse> ads,
                                                                   final List<VideoResponse> targetedVideos,
                                                                   final List<VideoResponse> untargetedVideos,

@@ -178,6 +178,39 @@ public class ESVideoIntegrationTest {
     }
 
     @Test
+    public void testPattern() throws Exception {
+        Map m1 = createVideoDataMap("1");
+        Map m2 = createVideoDataMap("2");
+        Map m3 = createVideoDataMap("3");
+        Map m4 = createVideoDataMap("4");
+        loadVideoMaps(m1, m2, m3, m4);
+
+        Map m5 = createAdUnitDataMap("1", "1");
+        loadAdUnitMaps(m5);
+
+
+        SearchQueryRequest sq = new SearchQueryRequest();
+        sq.setTime("2014-12-31T15:00:00-0800");
+        sq.setCategories(new ArrayList(asList("cat1")));
+        sq.setDevice("dev1");
+        sq.setFormat(INWIDGET.toString());
+        sq.setLanguages(new ArrayList<String>(asList("en")));
+        sq.setLocations(new ArrayList<String>(asList("us")));
+        sq.setPattern("POO");
+
+        out.println("Search Query ====>" + sq.toString());
+        ItemsResponse i = new QueryCommand(sq, 3, "promoted,organic").execute();
+        out.println("Response ====>:" + i.toString());
+        assertNotNull(i);
+        assertTrue(i.getResponse().size() == 3);
+        assertTrue(i.getResponse().get(0).getClass().getCanonicalName().contains("AdUnit"));
+        assertTrue(i.getResponse().get(1).getClass().getCanonicalName().contains("Video"));
+        assertTrue(i.getResponse().get(2).getClass().getCanonicalName().contains("Video"));
+        deleteVideosByIds("1", "2", "3", "4");
+        deleteAdUnitsByIds("1");
+    }
+
+    @Test
     public void testFillWithTargettedVideos() throws Exception {
         Map m1 = createVideoDataMap("1");
         Map m2 = createVideoDataMap("2");
