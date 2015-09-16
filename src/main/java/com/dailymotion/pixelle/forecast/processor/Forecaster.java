@@ -50,8 +50,12 @@ import static org.slf4j.LoggerFactory.getLogger;
  * Created by n.dhupia on 8/12/15.
  */
 public class Forecaster {
-    private static final DynamicFloatProperty VTR =
-            getInstance().getFloatProperty("pixelle.forecast.vtr", 0.0025f);
+    private static final DynamicFloatProperty MAX_VTR =
+            getInstance().getFloatProperty("pixelle.forecast.max.vtr", 0.0090f);
+    private static final DynamicFloatProperty MIN_VTR =
+            getInstance().getFloatProperty("pixelle.forecast.min.vtr", 0.0025f);
+    private static final DynamicFloatProperty AVG_VTR =
+            getInstance().getFloatProperty("pixelle.forecast.min.vtr", 0.0055f);
     private static final DynamicIntProperty MAX_CPV =
             getInstance().getIntProperty("pixelle.forecast.cpv.max", 100);
 
@@ -160,10 +164,7 @@ public class Forecaster {
             totalDailyViewCount = firstNonNull(getCountryEventCountCache().get(TOTAL, "view"), 0L) / BQ_TIMEPERIOD;
         }
 
-
-        float dailyAvailableViews = totalDailyOppCount * VTR.get();
-
-        float ratio = 1.0f;
+        float ratio;
         Integer diffCpv = maxCpvValue - minCpvValue;
         if (cpv >= maxCpvValue) {
             ratio = 1.0f;
@@ -173,9 +174,10 @@ public class Forecaster {
             ratio = ((float) cpv - minCpvValue) / diffCpv;
         }
 
-        Long dailyMaxViews = (long) (dailyAvailableViews * ratio - totalDailyViewCount * (1 - ratio));
-        Long dailyMinViews = (long) (dailyMaxViews * 0.25f);
-        Long dailyAvgViews = (long) (dailyMaxViews * 0.5f);
+        float r = totalDailyViewCount * (1 - ratio);
+        Long dailyMaxViews = (long) (totalDailyOppCount * MAX_VTR.get() * ratio - r);
+        Long dailyMinViews = (long) (totalDailyOppCount * MIN_VTR.get() * ratio - r);
+        Long dailyAvgViews = (long) (totalDailyOppCount * AVG_VTR.get() * ratio - r);
 
 
         if (dailyMaxViews <= 1) {
