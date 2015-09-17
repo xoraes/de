@@ -51,11 +51,11 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 public class Forecaster {
     private static final DynamicFloatProperty MAX_VTR =
-            getInstance().getFloatProperty("pixelle.forecast.max.vtr", 0.0090f);
+            getInstance().getFloatProperty("pixelle.forecast.max.vtr", 0.005f);
     private static final DynamicFloatProperty MIN_VTR =
-            getInstance().getFloatProperty("pixelle.forecast.min.vtr", 0.0025f);
+            getInstance().getFloatProperty("pixelle.forecast.min.vtr", 0.00125f);
     private static final DynamicFloatProperty AVG_VTR =
-            getInstance().getFloatProperty("pixelle.forecast.min.vtr", 0.0055f);
+            getInstance().getFloatProperty("pixelle.forecast.avg.vtr", 0.0025f);
     private static final DynamicIntProperty MAX_CPV =
             getInstance().getIntProperty("pixelle.forecast.cpv.max", 100);
 
