@@ -12,6 +12,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Ordering;
 import com.google.inject.Inject;
 import com.netflix.config.DynamicBooleanProperty;
+import com.netflix.config.DynamicIntProperty;
 import com.netflix.config.DynamicStringProperty;
 import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.client.Client;
@@ -47,6 +48,8 @@ public class ChannelProcessor extends VideoProcessor {
     private static final DynamicStringProperty listOfValidCategories = getInstance().getStringProperty("pixelle.channel.categories", "");
     private static final DynamicStringProperty listOfValidSortOrders = getInstance().getStringProperty("pixelle.channel.sortorders", "recent,visited,random");
     private static final DynamicBooleanProperty persistChanneltoES = getInstance().getBooleanProperty("pixelle.channel.es.store", false);
+    private static final DynamicIntProperty maxVideosToCache = getInstance().getIntProperty("pixelle.channel" +
+            ".maxVideosToCache", 25);
     private static final Logger logger = getLogger(ChannelProcessor.class);
 
     static {
@@ -151,38 +154,55 @@ public class ChannelProcessor extends VideoProcessor {
                 videos.add(video);
             }
         }
+        if (videos.size() >= maxVideosToCache.get()) {
+            return videos.subList(0,maxVideosToCache.get() - 1);
+        }
         return videos;
     }
 
     private static Boolean filterVideo(ChannelVideo channelVideo) {
         if (!channelVideo.getAllowEmbed()) {
+            logger.info("AllowEmbed blocked: " + channelVideo.toString());
             return true;
         }
-        if (!channelVideo.getGeoBlocking().contains("allow")) {
-            return true;
-        }
+//        According to publisher biz dev team, we should can show geo blocked videos for channels
+//        if (!channelVideo.getGeoBlocking().contains("allow")) {
+//            logger.info("Geo blocked: " + channelVideo.toString());
+//            return true;
+//        }
         if (!isEmptyList(channelVideo.getMediaBlocking())) {
+            logger.info("Media blocked: " + channelVideo.toString());
             return true;
         }
         if (!channelVideo.getAds()) {
+            logger.info("AdVideo blocked: " + channelVideo.toString());
             return true;
         }
-        if (!StringUtils.equalsIgnoreCase(channelVideo.getMode(),"vod")) {
+        if (!StringUtils.equalsIgnoreCase(channelVideo.getMode(), "vod")) {
+            logger.info("Vod blocked: " + channelVideo.toString());
             return true;
         }
         if (channelVideo.getThreeDim()) {
+            logger.info("3Dim blocked: " + channelVideo.toString());
             return true;
         }
         if (channelVideo.getExplicit()) {
+            logger.info("Explicit blocked: " + channelVideo.toString());
             return true;
         }
         if (channelVideo.getDuration() < 30) {
+            logger.info("Less than 30 blocked: " + channelVideo.toString());
             return true;
         }
         if (!StringUtils.equalsIgnoreCase(channelVideo.getStatus(),"published")) {
+            logger.info("Unpublished blocked: " + channelVideo.toString());
             return true;
         }
-        return !listOfValidCategories.get().contains(StringUtils.lowerCase(channelVideo.getChannel()));
+        if (!listOfValidCategories.get().contains(StringUtils.lowerCase(channelVideo.getChannel()))) {
+            logger.info("Unknown category blocked: " + channelVideo.toString());
+            return true;
+        }
+        return false;
     }
 
     private static String listToString(List<String> channels) {
