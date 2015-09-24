@@ -1,5 +1,6 @@
 package com.dailymotion.pixelle.forecast.processor;
 
+import com.dailymotion.pixelle.de.processor.DeHelper;
 import com.dailymotion.pixelle.forecast.model.ForecastRequest;
 import com.dailymotion.pixelle.forecast.model.ForecastResponse;
 import com.dailymotion.pixelle.forecast.model.ForecastViews;
@@ -92,7 +93,7 @@ public class Forecaster {
         // get the min and max cpv given the location(s)
         TermsFilterBuilder fb = null;
 
-        List<String> locations = forecastRequest.getLocations();
+        List<String> locations = DeHelper.toLowerCase(forecastRequest.getLocations());
         if (!isEmptyList(locations)) {
             locations.add("all");
             fb = termsFilter("locations", locations);
@@ -169,7 +170,7 @@ public class Forecaster {
         if (cpv >= maxCpvValue) {
             ratio = 1.0f;
         } else if (cpv <= minCpvValue || diffCpv < 1) { // we don't want num or denominator to be zero
-            ratio = cpv / maxCpvValue;
+            ratio = ((float) cpv) / maxCpvValue;
         } else {
             ratio = ((float) cpv - minCpvValue) / diffCpv;
         }
