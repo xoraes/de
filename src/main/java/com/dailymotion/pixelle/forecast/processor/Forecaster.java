@@ -121,7 +121,10 @@ public class Forecaster {
         if (!valueOf(max.getValue()).isInfinite()) {
             maxCpvValue = valueOf(max.getValue()).intValue();
         }
-        if (maxCpvValue > MAX_CPV.get()) {
+
+        if (maxCpvValue < cpv) {
+            maxCpvValue = cpv;
+        } else if (maxCpvValue > MAX_CPV.get()) {
             maxCpvValue = MAX_CPV.get();
         }
 
@@ -175,10 +178,15 @@ public class Forecaster {
             ratio = ((float) cpv - minCpvValue) / diffCpv;
         }
 
-        float r = totalDailyViewCount * (1 - ratio);
-        Long dailyMaxViews = (long) (totalDailyOppCount * MAX_VTR.get() * ratio - r);
-        Long dailyMinViews = (long) (totalDailyOppCount * MIN_VTR.get() * ratio - r);
-        Long dailyAvgViews = (long) (totalDailyOppCount * AVG_VTR.get() * ratio - r);
+        // higher the cpv, the closer the ratio is to 1. This models the fact that we have potential for more
+        // views if the cpv is closer to maxcpv. For example, if we have mincpv as 6 and maxcpv as 15 and cpv as 5,
+        // then ratio = 5/15 = 1/3. So if cpv ratio is 1/3, logically, we should substract 2/3 the views from
+        // available views.
+        // r  =
+        totalDailyViewCount = totalDailyViewCount * (1.0f - ratio);
+        Long dailyMaxViews = (long) (totalDailyOppCount * MAX_VTR.get() * ratio - totalDailyViewCount);
+        Long dailyMinViews = (long) (totalDailyOppCount * MIN_VTR.get() * ratio - totalDailyViewCount);
+        Long dailyAvgViews = (long) (totalDailyOppCount * AVG_VTR.get() * ratio - totalDailyViewCount);
 
 
         if (dailyMaxViews <= 1) {
