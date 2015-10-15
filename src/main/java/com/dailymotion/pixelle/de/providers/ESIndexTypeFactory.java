@@ -124,12 +124,15 @@ final class ESIndexTypeFactory {
 
         builder.startObject("cpc").field("type", "integer").endObject();
         builder.startObject("cpv").field("type", "integer").endObject();
+        builder.startObject("internal_cpv").field("type", "integer").endObject();
+
 
         builder.startObject("clicks").field("type", "float").endObject();
         builder.startObject("views").field("type", "float").endObject();
         builder.startObject("impressions").field("type", "float").endObject();
         builder.startObject("goal_views").field("type", "float").endObject();
 
+        builder.startObject("currency").field("type", "string").field("index", "no").endObject();
         builder.startObject("tactic").field("type", "string").field("index", "no").endObject();
         builder.startObject("title").field("type", "string").field("index", "no").endObject();
         builder.startObject("description").field("type", "string").field("index", "no").endObject();

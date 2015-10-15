@@ -43,6 +43,10 @@ public class AdUnitResponse extends ItemsResponse {
     private Long cpc;
     @JsonProperty("cpv")
     private Long cpv;
+    @JsonProperty("internal_cpv")
+    private Long internalCpv;
+    @JsonProperty("currency")
+    private String currency;
     @JsonProperty("resizable_thumbnail_url")
     private String resizableThumbnailUrl;
     @JsonProperty("type")

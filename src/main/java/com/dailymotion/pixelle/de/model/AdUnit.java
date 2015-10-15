@@ -70,6 +70,10 @@ public class AdUnit {
     private Long cpc;
     @JsonProperty("cpv")
     private Long cpv;
+    @JsonProperty("internal_cpv")
+    private Long internaCpv;
+    @JsonProperty("currency")
+    private String currency;
     @JsonProperty("schedules")
     private Integer[] schedules;
     @JsonProperty("timetable")

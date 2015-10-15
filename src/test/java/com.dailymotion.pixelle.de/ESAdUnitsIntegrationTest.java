@@ -93,6 +93,8 @@ public class ESAdUnitsIntegrationTest {
         m.put("video_id", "video_id");
         m.put("duration", 123);
         m.put("cpc", 10);
+        m.put("internal_cpv", 10);
+        m.put("currency", "USD");
         m.put("cpv", 10);
         return m;
     }
@@ -176,6 +178,8 @@ public class ESAdUnitsIntegrationTest {
         Assert.assertTrue(adunit.getCustomVideoUrl().equals("custom_video_url"));
         Assert.assertTrue(adunit.getTacticId().equals("1"));
         Assert.assertTrue(adunit.getCpv() == 10);
+        Assert.assertTrue(adunit.getInternalCpv() == 10);
+        Assert.assertTrue(adunit.getCurrency().equals("USD"));
 
         deleteAdUnitsByIds("1");
     }
@@ -399,9 +403,9 @@ public class ESAdUnitsIntegrationTest {
         Map m1 = createAdUnitDataMap("1", "1");
         Map m2 = createAdUnitDataMap("2", "2");
         Map m3 = createAdUnitDataMap("3", "3");
-        m1.put("cpv", 1);
-        m2.put("cpv", 2);
-        m3.put("cpv", 3);
+        m1.put("internal_cpv", 1);
+        m2.put("internal_cpv", 2);
+        m3.put("internal_cpv", 3);
         loadAdUnitMaps(m1, m2, m3);
         SearchQueryRequest sq = new SearchQueryRequest();
         sq.setTime("2014-12-31T15:00:00-0800");
@@ -475,15 +479,15 @@ public class ESAdUnitsIntegrationTest {
         Map m8 = createAdUnitDataMap("8", "8");
         Map m9 = createAdUnitDataMap("9", "9");
 
-        m1.put("cpv", 20);
-        m2.put("cpv", 10);
-        m3.put("cpv", 10);
-        m4.put("cpv", 4);
-        m5.put("cpv", 5);
-        m6.put("cpv", 13);
-        m7.put("cpv", 13);
-        m8.put("cpv", 1);
-        m9.put("cpv", 13);
+        m1.put("internal_cpv", 20);
+        m2.put("internal_cpv", 10);
+        m3.put("internal_cpv", 10);
+        m4.put("internal_cpv", 4);
+        m5.put("internal_cpv", 5);
+        m6.put("internal_cpv", 13);
+        m7.put("internal_cpv", 13);
+        m8.put("internal_cpv", 1);
+        m9.put("internal_cpv", 13);
 
         m1.put("clicks", 40.0);
         m1.put("impressions", 10000.0);

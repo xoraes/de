@@ -10,6 +10,7 @@ import com.netflix.config.DynamicStringProperty;
 import com.netflix.servo.DefaultMonitorRegistry;
 import com.netflix.servo.monitor.BasicCounter;
 import com.netflix.servo.monitor.Counter;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.search.Explanation;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.bulk.BulkItemResponse;
@@ -74,6 +75,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class AdUnitProcessor {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final Integer MAX_YEARS = 100;
+    private static final String DEFAULT_CURRENCY = "USD";
     private static final Integer SIZ_MULTIPLIER = 4;
     private static final Logger logger = getLogger(AdUnitProcessor.class);
     // JMX: com.netflix.servo.COUNTER.TotalAdsRequestsServed
@@ -142,7 +144,7 @@ public class AdUnitProcessor {
             QueryBuilder qb = functionScoreQuery(fb)
                     .add(andFilter(rangeFilter("clicks").from(0), rangeFilter("impressions").from(0)),
                             scriptFunction(ctrScriptFunction.getValue()).lang(ctrScriptLang.getValue()))
-                    .add(fieldValueFactorFunction("cpv").setWeight(2.0f));
+                    .add(fieldValueFactorFunction("internal_cpv").setWeight(2.0f));
 
             List<String> excludedAds = sq.getExcludedVideoIds();
             if (!isEmptyList(excludedAds)) {
@@ -268,6 +270,16 @@ public class AdUnitProcessor {
         if (unit.getCpv() == null || unit.getCpv() == 0) {
             unit.setCpv(0L);
         }
+        // if the internal vpc is not set, set it to the cpv
+        if (unit.getInternaCpv() == null || unit.getCpv() == 0) {
+            unit.setInternaCpv(unit.getCpv());
+        }
+
+        // if the currently not set, set it to dollar
+        if (StringUtils.isBlank(unit.getCurrency())) {
+            unit.setCurrency(DEFAULT_CURRENCY);
+        }
+
         if (isBlank(unit.getStartDate())) {
             unit.setStartDate(timeToISO8601String(currentUTCTime()));
         }
