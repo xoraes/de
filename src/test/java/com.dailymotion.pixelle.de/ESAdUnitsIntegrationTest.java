@@ -65,6 +65,8 @@ public class ESAdUnitsIntegrationTest {
         String timeNow = DeHelper.currentUTCTimeString();
         Map<String, Object> m = new HashMap<String, Object>();
         m.put("_id", id);
+        m.put("clicks", 101);
+        m.put("impressions", 1000);
         m.put("ad", id);
         m.put("tactic", "1");
         m.put("account", "1");
@@ -436,12 +438,12 @@ public class ESAdUnitsIntegrationTest {
         Map m2 = createAdUnitDataMap("2", "2");
         Map m3 = createAdUnitDataMap("3", "3");
 
-        m1.put("clicks", 1.0);
-        m1.put("impressions", 10.0);
-        m2.put("clicks", 2.0);
-        m2.put("impressions", 10.0);
-        m3.put("clicks", 3.0);
-        m3.put("impressions", 10.0);
+        m1.put("clicks", 101.0);
+        m1.put("impressions", 1000.0);
+        m2.put("clicks", 200.0);
+        m2.put("impressions", 1000.0);
+        m3.put("clicks", 300.0);
+        m3.put("impressions", 1000.0);
         loadAdUnitMaps(m1, m2, m3);
 
         SearchQueryRequest sq = new SearchQueryRequest();
@@ -522,32 +524,32 @@ public class ESAdUnitsIntegrationTest {
         m8.put("internal_cpv", 1);
         m9.put("internal_cpv", 13);
 
-        m1.put("clicks", 40.0);
+        m1.put("clicks", 140.0);
         m1.put("impressions", 10000.0);
 
-        m2.put("clicks", 58.0);
+        m2.put("clicks", 158.0);
         m2.put("impressions", 10000.0);
 
-        m3.put("clicks", 48.0);
+        m3.put("clicks", 148.0);
         m3.put("impressions", 10000.0);
 
 
-        m4.put("clicks", 47.0);
+        m4.put("clicks", 147.0);
         m4.put("impressions", 10000.0);
 
-        m5.put("clicks", 58.0);
+        m5.put("clicks", 158.0);
         m5.put("impressions", 10000.0);
 
-        m6.put("clicks", 47.0);
+        m6.put("clicks", 147.0);
         m6.put("impressions", 10000.0);
 
-        m7.put("clicks", 41.0);
+        m7.put("clicks", 141.0);
         m7.put("impressions", 10000.0);
 
-        m8.put("clicks", 105.0);
+        m8.put("clicks", 1005.0);
         m8.put("impressions", 10000.0);
 
-        m9.put("clicks", 55.0);
+        m9.put("clicks", 155.0);
         m9.put("impressions", 10000.0);
 
 
