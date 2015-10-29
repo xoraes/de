@@ -466,6 +466,39 @@ public class ESAdUnitsIntegrationTest {
         Assert.assertEquals("1", r3.getCampaignId());
         deleteAdUnitsByIds("1", "2", "3");
     }
+    @Test
+    public void testExploration() throws Exception {
+        Map m1 = createAdUnitDataMap("1", "1");
+        Map m2 = createAdUnitDataMap("2", "2");
+
+
+        m1.put("clicks", 101.0);
+        m1.put("impressions", 1000000.0);
+        m2.put("clicks", 0.0);
+        m2.put("impressions", 0.0);
+        loadAdUnitMaps(m1, m2);
+
+        SearchQueryRequest sq = new SearchQueryRequest();
+        sq.setTime("2015-10-29T01:00:00Z");
+        sq.setCategories(new ArrayList(Arrays.asList("cat1")));
+        sq.setDevice("dev1");
+        sq.setFormat(DeHelper.FORMAT.INFEED.toString());
+        sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
+        sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
+        sq.setDebugEnabled(true);
+
+        System.out.println("Search Query ====>" + sq.toString());
+        ItemsResponse i = new QueryCommand(sq, 2, null).execute();
+        System.out.println("Response ====>:" + i.toString());
+        Assert.assertNotNull(i);
+        Assert.assertEquals(2, i.getResponse().size());
+        AdUnitResponse r1 = (AdUnitResponse) i.getResponse().get(0);
+        AdUnitResponse r2 = (AdUnitResponse) i.getResponse().get(1);
+        Assert.assertEquals("2", r1.getCampaignId());
+        Assert.assertEquals("1", r2.getCampaignId());
+        deleteAdUnitsByIds("1", "2");
+    }
+
 
     @Test
     public void testCpvAndCtrCombinedBoosting() throws Exception {

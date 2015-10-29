@@ -22,6 +22,7 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.BoolFilterBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
@@ -76,6 +77,11 @@ public class AdUnitProcessor {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final Integer MAX_YEARS = 100;
     private static final String DEFAULT_CURRENCY = "USD";
+    private static final float MIN_CTR_BOOST = 3.583519f;
+    private static final int MIN_CLICKS_FOR_CTR_BOOST = 100;
+    private static final int MIN_IMP_FOR_CTR_BOOST = 100;
+    private static final float CPV_WEIGHT = 2.0f;
+
     private static final Integer SIZ_MULTIPLIER = 4;
     private static final Logger logger = getLogger(AdUnitProcessor.class);
     // JMX: com.netflix.servo.COUNTER.TotalAdsRequestsServed
@@ -142,9 +148,18 @@ public class AdUnitProcessor {
                     scriptFilter("doc['views'].value < doc['goal_views'].value").lang("expression")));
 
             QueryBuilder qb = functionScoreQuery(fb)
-                    .add(andFilter(rangeFilter("clicks").from(0), rangeFilter("impressions").from(0)),
+                    //use a default boost equivalent to 100% ctr if clicks or imp do not exist or click/imp lte 100
+                    .add(orFilter(orFilter(missingFilter("clicks"), missingFilter("impressions")),
+                                    andFilter(
+                                            rangeFilter("clicks").lte(MIN_CLICKS_FOR_CTR_BOOST),
+                                            rangeFilter("impressions").lte(MIN_IMP_FOR_CTR_BOOST))),
+                            ScoreFunctionBuilders.weightFactorFunction(MIN_CTR_BOOST))
+                            //use ctr function boost only if clicks AND imp exist are greater than 100
+                    .add(andFilter(rangeFilter("clicks").gt(MIN_CLICKS_FOR_CTR_BOOST), rangeFilter("impressions")
+                                    .gt(MIN_IMP_FOR_CTR_BOOST)),
                             scriptFunction(ctrScriptFunction.getValue()).lang(ctrScriptLang.getValue()))
-                    .add(fieldValueFactorFunction("internal_cpv").setWeight(2.0f));
+
+                    .add(fieldValueFactorFunction("internal_cpv").setWeight(CPV_WEIGHT));
 
             List<String> excludedAds = sq.getExcludedVideoIds();
             if (!isEmptyList(excludedAds)) {
