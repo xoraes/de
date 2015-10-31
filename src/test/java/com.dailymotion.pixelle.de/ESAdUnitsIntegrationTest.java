@@ -473,11 +473,8 @@ public class ESAdUnitsIntegrationTest {
         Map m1 = createAdUnitDataMap("1", "1");
         Map m2 = createAdUnitDataMap("2", "2");
 
-
-        m1.put("clicks", 101.0);
-        m1.put("impressions", 1000000.0);
-        m2.put("clicks", 0.0);
-        m2.put("impressions", 0.0);
+        m1.put("_created", DeHelper.currentUTCTimeString());
+        m2.put("_created", "2014-10-31T00:00:00Z");
         loadAdUnitMaps(m1, m2);
 
         SearchQueryRequest sq = new SearchQueryRequest();
@@ -496,8 +493,8 @@ public class ESAdUnitsIntegrationTest {
         Assert.assertEquals(2, i.getResponse().size());
         AdUnitResponse r1 = (AdUnitResponse) i.getResponse().get(0);
         AdUnitResponse r2 = (AdUnitResponse) i.getResponse().get(1);
-        Assert.assertEquals("2", r1.getCampaignId());
-        Assert.assertEquals("1", r2.getCampaignId());
+        Assert.assertEquals("1", r1.getCampaignId());
+        Assert.assertEquals("2", r2.getCampaignId());
         deleteAdUnitsByIds("1", "2");
     }
 
@@ -619,5 +616,45 @@ public class ESAdUnitsIntegrationTest {
 
         deleteAdUnitsByIds("1", "2");
     }
+    @Test
+    public void testImpressionHistoryFallback() throws Exception {
+        Map m1 = createAdUnitDataMap("1", "1");
+     //   Map m2 = createAdUnitDataMap("2", "2");
+        m1.put("video_id", "1");
+       // m2.put("video_id", "2");
+        loadAdUnitMaps(m1);
 
+        SearchQueryRequest sq = new SearchQueryRequest();
+        sq.setTime("2014-12-31T15:00:00-0800");
+        sq.setCategories(new ArrayList(Arrays.asList("cat1")));
+        sq.setDevice("dev1");
+        sq.setFormat(DeHelper.FORMAT.INFEED.toString());
+        sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
+        sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
+        sq.setDebugEnabled(true);
+
+
+        System.out.println("Search Query ====>" + sq.toString());
+        ItemsResponse i = new QueryCommand(sq, 1, null).execute();
+        System.out.println("Response ====>:" + i.toString());
+        Assert.assertNotNull(i);
+        Assert.assertEquals(1, i.getResponse().size());
+        AdUnitResponse r1 = (AdUnitResponse) i.getResponse().get(0);
+        Assert.assertEquals("1", r1.getCampaignId());
+
+        Map<String, Integer> m = new HashMap<>();
+        m.put("1", 11);
+
+        sq.setImpressionHistory(m);
+
+        System.out.println("Search Query ====>" + sq.toString());
+        i = new QueryCommand(sq, 1, null).execute();
+        System.out.println("Response ====>:" + i.toString());
+        Assert.assertNotNull(i);
+        Assert.assertEquals(1, i.getResponse().size());
+        r1 = (AdUnitResponse) i.getResponse().get(0);
+        Assert.assertEquals("1", r1.getCampaignId());
+
+        deleteAdUnitsByIds("1");
+    }
 }
