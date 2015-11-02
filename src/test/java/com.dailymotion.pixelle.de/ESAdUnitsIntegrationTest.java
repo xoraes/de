@@ -71,8 +71,8 @@ public class ESAdUnitsIntegrationTest {
         m.put("tactic", "1");
         m.put("account", "1");
         m.put("campaign", cid);
-        m.put("_updated", timeNow);
-        m.put("_created", timeNow);
+        m.put("_updated", "2014-11-01T00:00:00Z");
+        m.put("_created", "2014-11-01T00:00:00Z");
         m.put("categories", new ArrayList<String>(Arrays.asList("cat1", "cat2")));
         m.put("devices", new ArrayList<String>(Arrays.asList("dev1", "dev2")));
         m.put("formats", new ArrayList<String>(Arrays.asList(DeHelper.FORMAT.INWIDGET.toString(), DeHelper.FORMAT.INFEED.toString())));
