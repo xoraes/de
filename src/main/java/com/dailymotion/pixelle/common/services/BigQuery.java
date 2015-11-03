@@ -109,12 +109,7 @@ public class BigQuery {
     }
 
     /**
-     * Creates an authorized BigQuery client service using the OAuth 2.0 protocol
-     * <p>
-     * This method first creates a BigQuery authorization URL, then prompts the
-     * user to visit this URL in a web browser to authorize access. The
-     * application will wait for the user to paste the resulting authorization
-     * code at the command line prompt.
+     * Creates an authorized BigQuery client service using the OAuth 2.0 protocol.
      *
      * @return an authorized BigQuery client
      * @throws IOException
