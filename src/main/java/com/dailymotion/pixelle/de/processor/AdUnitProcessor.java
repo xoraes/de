@@ -146,13 +146,15 @@ public class AdUnitProcessor {
                     scriptFilter("doc['views'].value < doc['goal_views'].value").lang("expression")));
 
             QueryBuilder qb = functionScoreQuery(fb)
-                    //use a default boost equivalent to 100% ctr if adunit was created less than a day from now
-                    .add(orFilter(missingFilter("clicks"), missingFilter("impressions"),
-                            rangeFilter("_created").gt("now-1d")),
-                            ScoreFunctionBuilders.weightFactorFunction(MIN_CTR_BOOST))
-                            //use ctr function boost only if adunit was created more than a day ago
-                    .add(rangeFilter("_created").lte("now-1d"),
+                    .add(andFilter(rangeFilter("clicks").from(0), rangeFilter("impressions").from(0)),
                             scriptFunction(ctrScriptFunction.getValue()).lang(ctrScriptLang.getValue()))
+                            //use a default boost equivalent to 100% ctr if adunit was created less than a day from now
+//                    .add(orFilter(missingFilter("clicks"), missingFilter("impressions"),
+//                            rangeFilter("_created").gt("now-1d")),
+//                            ScoreFunctionBuilders.weightFactorFunction(MIN_CTR_BOOST))
+//                            //use ctr function boost only if adunit was created more than a day ago
+//                    .add(rangeFilter("_created").lte("now-1d"),
+//                            scriptFunction(ctrScriptFunction.getValue()).lang(ctrScriptLang.getValue()))
                     .add(fieldValueFactorFunction("internal_cpv").setWeight(CPV_WEIGHT));
 
             List<String> excludedAds = sq.getExcludedVideoIds();
