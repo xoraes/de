@@ -162,6 +162,9 @@ public class DEProcessor {
                     }
                     logger.error("DE error while querying DM API");
                     throw new DeException(e, INTERNAL_SERVER_ERROR_500);
+                } catch (Exception e) {
+                    // this should never happen
+                    throw new DeException(e, INTERNAL_SERVER_ERROR_500);
                 }
 
                 //if we have enough ads and videos, merge and send

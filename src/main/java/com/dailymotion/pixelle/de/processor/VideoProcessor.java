@@ -11,6 +11,7 @@ import com.netflix.config.DynamicDoubleProperty;
 import com.netflix.config.DynamicFloatProperty;
 import com.netflix.config.DynamicStringProperty;
 import org.apache.lucene.search.Explanation;
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.get.GetResponse;
@@ -272,8 +273,12 @@ public class VideoProcessor {
             srb1.setExplain(true);
         }
         logger.info(srb1.toString());
-
-        SearchResponse searchResponse = srb1.execute().actionGet();
+        SearchResponse searchResponse = null;
+        try {
+            searchResponse = srb1.execute().actionGet();
+        } catch (ElasticsearchException e) {
+            throw new DeException(e, INTERNAL_SERVER_ERROR_500);
+        }
         videoResponses = new ArrayList<VideoResponse>();
 
         for (SearchHit hit : searchResponse.getHits().getHits()) {

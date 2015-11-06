@@ -173,9 +173,12 @@ public class AdUnitProcessor {
             }
 
             logger.info(srb1.toString());
-
-
-            SearchResponse searchResponse = srb1.execute().actionGet();
+            SearchResponse searchResponse;
+            try {
+                searchResponse = srb1.execute().actionGet();
+            } catch (ElasticsearchException e) {
+                throw new DeException(e, INTERNAL_SERVER_ERROR_500);
+            }
             adUnitResponses = new ArrayList<AdUnitResponse>();
 
             for (SearchHit hit : searchResponse.getHits().getHits()) {
