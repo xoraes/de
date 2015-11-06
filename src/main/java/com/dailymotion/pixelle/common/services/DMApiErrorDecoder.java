@@ -4,17 +4,32 @@ import com.dailymotion.pixelle.de.processor.DeException;
 import feign.Response;
 import feign.codec.ErrorDecoder;
 import org.eclipse.jetty.http.HttpStatus;
+import org.slf4j.Logger;
+
+import static org.slf4j.LoggerFactory.getLogger;
+import java.util.Collection;
+import java.util.Map;
 
 /**
  * Created by n.dhupia on 5/13/15.
  */
 public class DMApiErrorDecoder implements ErrorDecoder {
-
+    private static final Logger logger = getLogger(DMApiErrorDecoder.class);
     @Override
     public Exception decode(String methodKey, Response response) {
-        if (HttpStatus.isClientError(response.status())) {
-            return new DeException(response.status(), response.reason());
-        }
+        logErrorResponse(response);
         return new DeException(response.status(), response.reason());
+    }
+
+    private void logErrorResponse(Response response) {
+        Map<String, Collection<String>> headers = response.headers();
+        for (String key : headers.keySet()) {
+            Collection<String> values = headers.get(key);
+            StringBuilder sb = new StringBuilder();
+            while (values.iterator().hasNext()) {
+                sb.append(values.iterator().next());
+            }
+            logger.error(key + " : " + sb.toString());
+        }
     }
 }

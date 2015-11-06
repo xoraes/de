@@ -28,6 +28,6 @@ public class DeException extends Exception {
         super(throwable);
         this.msg = throwable.getMessage();
         this.status = status;
-        logger.error(throwable.getMessage());
+        logger.error("Status: " + status + " | Error : " + msg, throwable);
     }
 }
