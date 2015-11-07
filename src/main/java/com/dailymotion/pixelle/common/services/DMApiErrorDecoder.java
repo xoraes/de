@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 
 import static org.slf4j.LoggerFactory.getLogger;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -24,10 +25,11 @@ public class DMApiErrorDecoder implements ErrorDecoder {
     private void logErrorResponse(Response response) {
         Map<String, Collection<String>> headers = response.headers();
         for (String key : headers.keySet()) {
-            Collection<String> values = headers.get(key);
             StringBuilder sb = new StringBuilder();
-            while (values.iterator().hasNext()) {
-                sb.append(values.iterator().next());
+            Collection<String> values = headers.get(key);
+            Iterator<String> valuesIt = values.iterator();
+            while (valuesIt.hasNext()) {
+                sb.append(valuesIt.next());
             }
             logger.error(key + " : " + sb.toString());
         }
