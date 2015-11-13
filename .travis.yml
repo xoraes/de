@@ -67,17 +67,6 @@ deploy:
     zip_file: eb.zip
     on:
       branch: master
-  - provider: s3
-    access_key_id: AKIAIJN4I4KQTPPM45WQ
-    secret_access_key:
-      secure: "EHhn+ofjECPX2R2V1kqCP9PzhzUzreomNPRZlbpbpLBbg8G/0eCEI3qocwmqyIyE9MQXT69h3lFNV4A07LMFFnjNFwMgrelyKHbitMkofLdxNQQFq7DwBQsp+Vjsszg73VycStR4ayanN9C9PDKhUocB5ocOSGpp/XOS5mMj3M0="
-    bucket: pixelle-salt/s3/pixelle-de/dev
-    acl: private
-    skip_cleanup: true
-    local-dir: ./build/distributions/
-    on:
-      repo: dailymotion/pixelle-de
-      branch: master
 
   - provider: s3
     access_key_id: AKIAIJN4I4KQTPPM45WQ
