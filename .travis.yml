@@ -10,16 +10,11 @@ env:
     - "DOCKER_EMAIL=team.pixelle@gmail.com"
     - "DOCKER_USER=pxlsalt"
     - secure: "kZe+NBZWIEIa8lhWjDCxko1fpdd+CkFdYnd6Zoem/x3n58tcGYD96+MQtmEiGQLcsvE4b1WBux8xQsgy0zOKE93J4zuq59Pz2Loa0d9WP6vhkL8VdGyaY1f5T2BLp8WdNdDSFfpYSjwdiC59r8SXs6Fn5yTt4JjboLZYJt8gZT4="
-    - secure: "0gGvHvsPdeXLlJRPCqczpgHjOmZIlgmaOcy0k9h58L5yFbxzLR12/GsnDrMeNwbdx6fCuN8dEGycu7f5gvQBj3PHx1/hNL2GOpTW9J8bkoNUjbUEtiny1BzH4Oak96IgKiMLLyCzbmCD5kwW/HEByka+lc+q6PEUVttKu/Xtaow=" #PIXELLE_CI_PASSWORD
-    - ELASTIC_BEANSTALK_DESCRIPTION="Travis build $TRAVIS_BUILD_NUMBER with pixelle-de $COMMIT"
     
 language: java
 
 jdk:
   - oraclejdk8
-
-before_install:
-  - echo -e "machine github.com\n  login pixelle-ci\n  password $PIXELLE_CI_PASSWORD" >> ~/.netrc
 
 script:
   - ./gradlew -q check jar de distZip
@@ -42,35 +37,11 @@ after_success:
   - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
   - docker push $REPO
   
-before_deploy:
-  - git config --global user.name "Pixelle CI"
-  - git config --global user.email team.pixelle@gmail.com
-  - git clone https://github.com/dailymotion/eb-pixelle-de.git eb-pixelle-de
-  - cd eb-pixelle-de
-  - ./scripts/update_version pixelle/pxldesrv $COMMIT
-  - git commit -a -m "$ELASTIC_BEANSTALK_DESCRIPTION"
-  - git push origin master:master
-  - ./scripts/gen_zipfile eb
-  - mv eb.zip ~/
-  - export ELASTIC_BEANSTALK_LABEL="travis-$TRAVIS_BUILD_NUMBER-$COMMIT-`git rev-parse --short=8 HEAD`"
-  - cd ~/
-
 deploy:
-  - provider: elasticbeanstalk
-    access_key_id: AKIAIJN4I4KQTPPM45WQ
-    secret_access_key:
-      secure: "EHhn+ofjECPX2R2V1kqCP9PzhzUzreomNPRZlbpbpLBbg8G/0eCEI3qocwmqyIyE9MQXT69h3lFNV4A07LMFFnjNFwMgrelyKHbitMkofLdxNQQFq7DwBQsp+Vjsszg73VycStR4ayanN9C9PDKhUocB5ocOSGpp/XOS5mMj3M0="
-    region: us-west-1
-    app: pxldesrv
-    env: pxldesrv-dev
-    bucket_name: elasticbeanstalk-us-west-1-469566095697
-    zip_file: eb.zip
-    on:
-      branch: master
   - provider: s3
-    access_key_id: AKIAIJN4I4KQTPPM45WQ
+    access_key_id: AKIAIEGAQ4U2PGZGBKEQ
     secret_access_key:
-      secure: "EHhn+ofjECPX2R2V1kqCP9PzhzUzreomNPRZlbpbpLBbg8G/0eCEI3qocwmqyIyE9MQXT69h3lFNV4A07LMFFnjNFwMgrelyKHbitMkofLdxNQQFq7DwBQsp+Vjsszg73VycStR4ayanN9C9PDKhUocB5ocOSGpp/XOS5mMj3M0="
+      secure: x9vI4iSwXLgYH02uoJnXZEJqgvDqXq/ZvlIA+aaVheNr33YbqLv5bKhmw2BOHgVWLUiwL53QgQI3jkfXJ6vMmZka7fwqkEd8s2iea4RYzpfi1J0EVs7LdyzKJdKkZbnuYzghApvk8/0gtvB7ymfFMm3LXCWD2TIyHJjSyKNNgwI=
     bucket: pixelle-salt/s3/pixelle-de/dev
     acl: private
     skip_cleanup: true
@@ -80,9 +51,9 @@ deploy:
       branch: master
 
   - provider: s3
-    access_key_id: AKIAIJN4I4KQTPPM45WQ
+    access_key_id: AKIAIEGAQ4U2PGZGBKEQ
     secret_access_key:
-      secure: "EHhn+ofjECPX2R2V1kqCP9PzhzUzreomNPRZlbpbpLBbg8G/0eCEI3qocwmqyIyE9MQXT69h3lFNV4A07LMFFnjNFwMgrelyKHbitMkofLdxNQQFq7DwBQsp+Vjsszg73VycStR4ayanN9C9PDKhUocB5ocOSGpp/XOS5mMj3M0="
+      secure: x9vI4iSwXLgYH02uoJnXZEJqgvDqXq/ZvlIA+aaVheNr33YbqLv5bKhmw2BOHgVWLUiwL53QgQI3jkfXJ6vMmZka7fwqkEd8s2iea4RYzpfi1J0EVs7LdyzKJdKkZbnuYzghApvk8/0gtvB7ymfFMm3LXCWD2TIyHJjSyKNNgwI=
     bucket: pixelle-salt/s3/pixelle-de/prod
     acl: private
     skip_cleanup: true
