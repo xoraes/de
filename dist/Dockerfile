@@ -7,13 +7,12 @@ COPY dist/de.conf.tmpl /etc/de.conf.tmpl
 
 RUN mkdir -p /var/log/elasticsearch
 
+
 RUN mkdir /data
 
 ADD build/distributions/de.zip /
 RUN unzip -d / /de.zip &&  rm /de.zip
 
 VOLUME ["/data"]
-
-EXPOSE 7001
 
 ENTRYPOINT ["/dockerize", "-template=/etc/de.conf.tmpl:/etc/de.conf", "/de/bin/de"]
