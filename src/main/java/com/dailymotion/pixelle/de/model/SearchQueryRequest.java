@@ -22,6 +22,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 @EqualsAndHashCode(of = {"categories", "languages"})
 public class SearchQueryRequest {
     private static Logger logger = getLogger(SearchQueryRequest.class);
+    @JsonProperty("pattern")
+    public String pattern;
     @JsonProperty("languages")
     private List<String> languages;
     @JsonProperty("locations")
@@ -42,8 +44,6 @@ public class SearchQueryRequest {
     private List<String> channels;
     @JsonProperty("sort")
     private String sortOrder;
-    @JsonProperty("pattern")
-    public String pattern;
     @JsonProperty("impression_history")
     private Map<String, Integer> impressionHistory;
     @JsonIgnore

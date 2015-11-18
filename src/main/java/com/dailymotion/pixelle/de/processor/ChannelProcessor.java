@@ -6,7 +6,6 @@ import com.dailymotion.pixelle.de.model.Video;
 import com.dailymotion.pixelle.de.model.VideoResponse;
 import com.dailymotion.pixelle.de.processor.hystrix.ChannelVideoBulkInsertCommand;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Ordering;
 import com.google.inject.Inject;
 import com.netflix.config.DynamicBooleanProperty;
 import com.netflix.config.DynamicIntProperty;
@@ -25,12 +24,8 @@ import static com.dailymotion.pixelle.de.processor.DeHelper.domain;
 import static com.dailymotion.pixelle.de.processor.DeHelper.getDateTimeFormatString;
 import static com.dailymotion.pixelle.de.processor.DeHelper.isEmptyList;
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
-import static com.google.common.collect.Ordering.from;
 import static com.netflix.config.DynamicPropertyFactory.getInstance;
-import static java.lang.String.CASE_INSENSITIVE_ORDER;
-import static java.util.Collections.sort;
 import static org.apache.commons.lang3.StringUtils.isBlank;
-import static org.apache.commons.lang3.StringUtils.join;
 import static org.apache.commons.lang3.StringUtils.lowerCase;
 import static org.joda.time.format.DateTimeFormat.forPattern;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -71,7 +66,7 @@ public class ChannelProcessor extends VideoProcessor {
          */
         logger.info("getting videos from cache");
 
-        List<VideoResponse> videos = CacheService.getVideos(sq,sortOrder);
+        List<VideoResponse> videos = CacheService.getVideos(sq, sortOrder);
         if (videos != null && videos.size() > positions) {
             videos = videos.subList(0, positions);
         }
@@ -121,7 +116,7 @@ public class ChannelProcessor extends VideoProcessor {
             }
         }
         if (videos.size() >= maxVideosToCache.get()) {
-            return videos.subList(0,maxVideosToCache.get() - 1);
+            return videos.subList(0, maxVideosToCache.get() - 1);
         }
         return videos;
     }

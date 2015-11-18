@@ -27,7 +27,7 @@ public class Video {
     private String channel;
     @JsonProperty("languages")
     private List<String> languages;
-     @JsonProperty("categories")
+    @JsonProperty("categories")
     private List<String> categories;
     @JsonProperty("publication_date")
     private String publicationDate;

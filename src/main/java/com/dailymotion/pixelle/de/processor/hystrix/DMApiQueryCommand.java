@@ -52,7 +52,6 @@ public class DMApiQueryCommand extends HystrixCommand<List<Video>> {
     private String sortOrder;
 
 
-
     public DMApiQueryCommand(String channels, String playlist, String sortOrder) {
         super(withGroupKey(asKey("DecisioningEngine"))
                 .andCommandKey(Factory.asKey("DMChannelQuery"))

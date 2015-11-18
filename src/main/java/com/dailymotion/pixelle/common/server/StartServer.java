@@ -34,12 +34,12 @@ import javax.servlet.DispatcherType;
 import java.io.IOException;
 import java.util.concurrent.ScheduledExecutorService;
 
-import static com.dailymotion.pixelle.common.services.CacheService.getGroupVideosCache;
 import static com.dailymotion.pixelle.common.services.CacheService.getCountryCategoryCountCache;
 import static com.dailymotion.pixelle.common.services.CacheService.getCountryDeviceCountCache;
 import static com.dailymotion.pixelle.common.services.CacheService.getCountryEventCountCache;
 import static com.dailymotion.pixelle.common.services.CacheService.getCountryFormatCountCache;
 import static com.dailymotion.pixelle.common.services.CacheService.getCountryLangCountCache;
+import static com.dailymotion.pixelle.common.services.CacheService.getGroupVideosCache;
 import static com.dailymotion.pixelle.common.services.CacheService.getOrganicVideosCache;
 import static com.dailymotion.pixelle.common.services.CacheService.getPerCountryCountCache;
 import static com.dailymotion.pixelle.de.processor.DeHelper.dePort;

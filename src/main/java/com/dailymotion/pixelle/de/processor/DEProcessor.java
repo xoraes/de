@@ -95,7 +95,7 @@ public class DEProcessor {
         String[] at = split(allowedTypes, ",", 2);
         sq = modifySearchQueryReq(sq);
         String pattern = sq.getPattern();
-        if (StringUtils.isBlank(pattern) || !StringUtils.containsOnly(pattern,'p','o','P','O')) {
+        if (StringUtils.isBlank(pattern) || !StringUtils.containsOnly(pattern, 'p', 'o', 'P', 'O')) {
             pattern = widgetPattern.get();
         }
 

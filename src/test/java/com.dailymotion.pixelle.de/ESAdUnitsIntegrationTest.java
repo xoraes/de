@@ -468,6 +468,7 @@ public class ESAdUnitsIntegrationTest {
         Assert.assertEquals("1", r3.getCampaignId());
         deleteAdUnitsByIds("1", "2", "3");
     }
+
     @Test
     public void testExploration() throws Exception {
         Map m1 = createAdUnitDataMap("1", "1");
@@ -616,12 +617,13 @@ public class ESAdUnitsIntegrationTest {
 
         deleteAdUnitsByIds("1", "2");
     }
+
     @Test
     public void testImpressionHistoryFallback() throws Exception {
         Map m1 = createAdUnitDataMap("1", "1");
-     //   Map m2 = createAdUnitDataMap("2", "2");
+        //   Map m2 = createAdUnitDataMap("2", "2");
         m1.put("video_id", "1");
-       // m2.put("video_id", "2");
+        // m2.put("video_id", "2");
         loadAdUnitMaps(m1);
 
         SearchQueryRequest sq = new SearchQueryRequest();

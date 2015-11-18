@@ -1,12 +1,9 @@
 package com.dailymotion.pixelle.common.services;
 
 import com.dailymotion.pixelle.de.model.DMApiResponse;
-import com.dailymotion.pixelle.de.model.Video;
 import com.dailymotion.pixelle.de.processor.DeException;
 import feign.Param;
 import feign.RequestLine;
-
-import java.util.List;
 
 /**
  * Created by n.dhupia on 3/13/15.

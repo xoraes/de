@@ -10,6 +10,7 @@ public class VideoGroupKey {
     private String channels;
     private String sortOrder = "recent";
     private String playlist;
+
     public VideoGroupKey(String channels, String playlist, String sortOrder) {
         this.channels = channels;
         this.playlist = playlist;

@@ -22,7 +22,6 @@ import org.slf4j.Logger;
 import java.util.ArrayList;
 import java.util.Map;
 
-import static com.dailymotion.pixelle.common.services.CacheService.getGroupVideosCache;
 import static com.dailymotion.pixelle.de.ESAdUnitsIntegrationTest.createAdUnitDataMap;
 import static com.dailymotion.pixelle.de.ESAdUnitsIntegrationTest.deleteAdUnitsByIds;
 import static com.dailymotion.pixelle.de.ESAdUnitsIntegrationTest.loadAdUnitMaps;
