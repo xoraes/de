@@ -17,6 +17,7 @@ jdk:
   - oraclejdk8
 
 script:
+  - rvm get stable --auto-dotfiles
   - ./gradlew -q check jar de distZip
 
 after_script:
