@@ -1,11 +1,11 @@
 package com.dailymotion.pixelle.common.services;
 
-import com.dailymotion.pixelle.de.model.ChannelVideos;
-import com.dailymotion.pixelle.de.model.Channels;
 import com.dailymotion.pixelle.de.model.SearchQueryRequest;
 import com.dailymotion.pixelle.de.model.Video;
+import com.dailymotion.pixelle.de.model.VideoGroupKey;
 import com.dailymotion.pixelle.de.model.VideoResponse;
 import com.dailymotion.pixelle.de.processor.DeException;
+import com.dailymotion.pixelle.de.processor.DeHelper;
 import com.dailymotion.pixelle.de.processor.hystrix.DMApiQueryCommand;
 import com.dailymotion.pixelle.forecast.processor.ForecastException;
 import com.google.common.cache.CacheLoader;
@@ -74,15 +74,17 @@ public class CacheService {
                         }
                     });
 
-    private static final LoadingCache<Channels, List<Video>> channelVideosCache = newBuilder()
+    private static final LoadingCache<VideoGroupKey, List<VideoResponse>> groupVideosCache = newBuilder()
             .recordStats()
             .maximumSize(channelLruSize.get()).refreshAfterWrite(chanRefreshAfterWriteMins.get(), MINUTES)
             .build(
-                    new CacheLoader<Channels, List<Video>>() {
+                    new CacheLoader<VideoGroupKey, List<VideoResponse>>() {
                         @Override
-                        public List<Video> load(Channels channels) throws DeException {
+                        public List<VideoResponse> load(VideoGroupKey key) throws DeException {
                             logger.info("Caching and indexing channel video..");
-                            ChannelVideos cVideos = new DMApiQueryCommand(channels).execute();
+                            List<Video> cVideos = new DMApiQueryCommand(key.getChannels(), key.getPlaylist(), key
+                                    .getSortOrder())
+                                    .execute();
                             if (cVideos != null) {
                                 return getFilteredVideos(cVideos);
                             }
@@ -90,10 +92,13 @@ public class CacheService {
                         }
 
                         @Override
-                        public ListenableFuture<List<Video>> reload(final Channels channels, List<Video> oldValue) throws DeException {
-                            logger.info("Reloading cache for key " + channels.getChannels());
-                            ListenableFuture<List<Video>> listenableFuture = cacheMaintainer.submit(() -> {
-                                ChannelVideos cVideos = new DMApiQueryCommand(channels).execute();
+                        public ListenableFuture<List<VideoResponse>> reload(final VideoGroupKey key, List<VideoResponse>
+                                oldValue) throws DeException {
+                            logger.info("Reloading cache for key " + key.getChannels());
+                            ListenableFuture<List<VideoResponse>> listenableFuture = cacheMaintainer.submit(() -> {
+                                List<Video> cVideos = new DMApiQueryCommand(key.getChannels(), key.getPlaylist(), key
+                                        .getSortOrder())
+                                        .execute();
                                 if (cVideos != null) {
                                     return getFilteredVideos(cVideos);
                                 }
@@ -131,8 +136,8 @@ public class CacheService {
                     });
 
 
-    public static final LoadingCache<Channels, List<Video>> getChannelVideosCache() {
-        return channelVideosCache;
+    public static final LoadingCache<VideoGroupKey, List<VideoResponse>> getGroupVideosCache() {
+        return groupVideosCache;
     }
 
     public static final LoadingCache<SearchQueryRequest, List<VideoResponse>> getOrganicVideosCache() {
@@ -184,4 +189,18 @@ public class CacheService {
         }
     }
 
+    public static List<VideoResponse> getVideos(SearchQueryRequest sq, String sortOrder)
+            throws DeException {
+
+        String channels = DeHelper.listToString(sq.getChannels());
+        String playlist = sq.getPlaylist();
+
+        List<VideoResponse> videoResponses = null;
+        try {
+            videoResponses = groupVideosCache.get(new VideoGroupKey(channels, playlist, sortOrder));
+        } catch (ExecutionException e) {
+            throw new DeException(e, INTERNAL_SERVER_ERROR_500);
+        }
+        return videoResponses;
+    }
 }

@@ -36,8 +36,8 @@ public class SearchQueryRequest {
     private String time;
     @JsonProperty("browser")
     private String browser;
-    @JsonProperty("channel")
-    private String channel; // for backward compatibility
+    @JsonProperty("playlist")
+    private String playlist;
     @JsonProperty("channels")
     private List<String> channels;
     @JsonProperty("sort")

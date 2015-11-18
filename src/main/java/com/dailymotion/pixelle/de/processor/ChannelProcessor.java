@@ -1,14 +1,11 @@
 package com.dailymotion.pixelle.de.processor;
 
-import com.dailymotion.pixelle.de.model.ChannelVideo;
-import com.dailymotion.pixelle.de.model.ChannelVideos;
-import com.dailymotion.pixelle.de.model.Channels;
+import com.dailymotion.pixelle.common.services.CacheService;
 import com.dailymotion.pixelle.de.model.SearchQueryRequest;
 import com.dailymotion.pixelle.de.model.Video;
 import com.dailymotion.pixelle.de.model.VideoResponse;
 import com.dailymotion.pixelle.de.processor.hystrix.ChannelVideoBulkInsertCommand;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Ordering;
 import com.google.inject.Inject;
 import com.netflix.config.DynamicBooleanProperty;
@@ -24,7 +21,6 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.dailymotion.pixelle.common.services.CacheService.getChannelVideosCache;
 import static com.dailymotion.pixelle.de.processor.DeHelper.domain;
 import static com.dailymotion.pixelle.de.processor.DeHelper.getDateTimeFormatString;
 import static com.dailymotion.pixelle.de.processor.DeHelper.isEmptyList;
@@ -32,7 +28,6 @@ import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKN
 import static com.google.common.collect.Ordering.from;
 import static com.netflix.config.DynamicPropertyFactory.getInstance;
 import static java.lang.String.CASE_INSENSITIVE_ORDER;
-import static java.util.Arrays.asList;
 import static java.util.Collections.sort;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.join;
@@ -68,47 +63,21 @@ public class ChannelProcessor extends VideoProcessor {
             sq.setSortOrder("recent"); //default to recent when provided invalid sort order
             logger.info("Invalid sort order provided, defaulting to 'recent' sort order: ", sq.toString());
         }
-        List<VideoResponse> videoResponses = new ArrayList<>();
         /*
          * If videoCache is empty, it is loaded with data from DM - this happens during cold start.
          * If videoCache has non-stale data, it is returned.
          * If videoCache has stale data (6 min since last write), then stale data is returned
          * and fresh data is replaced into the cache asynchronously from DM
          */
-        List<Video> videos = null;
         logger.info("getting videos from cache");
-        LoadingCache<Channels, List<Video>> cache = getChannelVideosCache();
-        if (cache != null) {
-            Channels channels;
-            // DeProcessor checks to ensure channel or channels is sent and is never empty.
-            if (!isEmptyList(sq.getChannels())) {
-                channels = new Channels(listToString(sq.getChannels()), sortOrder);
-            } else {
-                channels = new Channels(sq.getChannel(), sortOrder);
-            }
-            videos = cache.get(channels);
-        }
-        if (videos != null) {
-            int numVideos = videos.size();
-            if (numVideos > positions) {
-                numVideos = positions;
-            }
-            for (int i = 0; i < numVideos; i++) {
-                VideoResponse videoResponse = new VideoResponse();
-                videoResponse.setChannel(videos.get(i).getChannel());
-                videoResponse.setChannelId(videos.get(i).getChannelId());
-                videoResponse.setChannelName(videos.get(i).getChannelName());
-                videoResponse.setDescription(videos.get(i).getDescription());
-                videoResponse.setTitle(videos.get(i).getTitle());
-                videoResponse.setResizableThumbnailUrl(videos.get(i).getResizableThumbnailUrl());
-                videoResponse.setDuration(videos.get(i).getDuration());
-                videoResponse.setVideoId(videos.get(i).getVideoId());
-                videoResponses.add(videoResponse);
-            }
+
+        List<VideoResponse> videos = CacheService.getVideos(sq,sortOrder);
+        if (videos != null && videos.size() > positions) {
+            videos = videos.subList(0, positions);
         }
 
-        logger.info("Num video responses:" + videoResponses.size());
-        return videoResponses;
+        logger.info("Num video responses:" + videos.size());
+        return videos;
     }
 
     @Nullable
@@ -131,26 +100,23 @@ public class ChannelProcessor extends VideoProcessor {
         }
     }
 
-    public static List<Video> getFilteredVideos(ChannelVideos channelVideos) {
-        List<Video> videos = new ArrayList<>();
-        for (ChannelVideo channelVideo : channelVideos.getList()) {
+    public static List<VideoResponse> getFilteredVideos(List<Video> channelVideos) {
+        List<VideoResponse> videos = new ArrayList<>();
+        for (Video channelVideo : channelVideos) {
             if (!filterVideo(channelVideo)) {
-                Video video = new Video();
-                video.setLanguages(asList(channelVideo.getLanguage()));
+                VideoResponse video = new VideoResponse();
+
                 video.setResizableThumbnailUrl(getResizableThumbnailUrl(channelVideo.getThumbnailUrl()));
                 video.setTitle(channelVideo.getTitle());
                 video.setDescription(channelVideo.getDescription());
                 video.setDuration(channelVideo.getDuration());
                 DateTimeFormatter df = forPattern(getDateTimeFormatString());
                 DateTime dt = new DateTime(channelVideo.getCreatedTime());
-                video.setPublicationDate(dt.toString(df));
+
                 video.setChannel(channelVideo.getOwnerUsername());
                 video.setChannelId(channelVideo.getOwnerId());
                 video.setChannelName(channelVideo.getOwnerScreenName());
-                video.setCategories(asList(channelVideo.getChannel()));
-                video.setTags(channelVideo.getTags());
-                video.setId(channelVideo.getVideoId());
-                video.setVideoId(channelVideo.getVideoId());
+                video.setVideoId(channelVideo.getVideoIdFromDM());
                 videos.add(video);
             }
         }
@@ -160,7 +126,7 @@ public class ChannelProcessor extends VideoProcessor {
         return videos;
     }
 
-    private static Boolean filterVideo(ChannelVideo channelVideo) {
+    private static Boolean filterVideo(Video channelVideo) {
         if (!channelVideo.getAllowEmbed()) {
             logger.info("AllowEmbed blocked: " + channelVideo.toString());
             return true;
@@ -194,21 +160,11 @@ public class ChannelProcessor extends VideoProcessor {
             logger.info("Less than 30 blocked: " + channelVideo.toString());
             return true;
         }
-        if (!StringUtils.equalsIgnoreCase(channelVideo.getStatus(),"published")) {
+        if (!StringUtils.equalsIgnoreCase(channelVideo.getStatus(), "published")) {
             logger.info("Unpublished blocked: " + channelVideo.toString());
             return true;
         }
-        if (!listOfValidCategories.get().contains(StringUtils.lowerCase(channelVideo.getChannel()))) {
-            logger.info("Unknown category blocked: " + channelVideo.toString());
-            return true;
-        }
         return false;
-    }
-
-    private static String listToString(List<String> channels) {
-        Ordering<String> ordering = from(CASE_INSENSITIVE_ORDER).nullsFirst();
-        sort(channels, ordering);
-        return join(channels, ',');
     }
 }
 

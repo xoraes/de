@@ -22,7 +22,7 @@ import org.slf4j.Logger;
 import java.util.ArrayList;
 import java.util.Map;
 
-import static com.dailymotion.pixelle.common.services.CacheService.getChannelVideosCache;
+import static com.dailymotion.pixelle.common.services.CacheService.getGroupVideosCache;
 import static com.dailymotion.pixelle.de.ESAdUnitsIntegrationTest.createAdUnitDataMap;
 import static com.dailymotion.pixelle.de.ESAdUnitsIntegrationTest.deleteAdUnitsByIds;
 import static com.dailymotion.pixelle.de.ESAdUnitsIntegrationTest.loadAdUnitMaps;
@@ -75,7 +75,7 @@ public class ESChannelVideoIntegrationTest {
     }
 
     @Test
-    public void testDmApiCall() throws Exception {
+    public void testDmApiCallWithChannel() throws Exception {
 
         SearchQueryRequest sq = new SearchQueryRequest();
         sq.setChannels(asList("buzzfeedvideo", "spi0n"));
@@ -101,26 +101,34 @@ public class ESChannelVideoIntegrationTest {
 
         Map m4 = createAdUnitDataMap("1", "1");
         loadAdUnitMaps(m4);
+    }
 
-        sq = new SearchQueryRequest();
+    @Test
+    public void testDmApiCallWithPlaylist() throws Exception {
+
+
+        Map m4 = createAdUnitDataMap("1", "1");
+        loadAdUnitMaps(m4);
+
+        SearchQueryRequest sq = new SearchQueryRequest();
         sq.setTime("2014-12-31T15:00:00-0800");
         sq.setCategories(new ArrayList(asList("cat1")));
         sq.setDevice("dev1");
         sq.setFormat(INWIDGET.toString());
         sq.setLanguages(new ArrayList<String>(asList("en")));
         sq.setLocations(new ArrayList<String>(asList("us")));
-        sq.setChannels(asList("buzzfeedvideo", "spi0n"));
+        sq.setChannels(null);
+        sq.setPlaylist("x3zgwu");
         sq.setSortOrder("recent");
 
         out.println("Search Query ====>" + sq.toString());
-        i = new QueryCommand(sq, 3, "promoted,channel").execute();
+        ItemsResponse i = new QueryCommand(sq, 3, "promoted,playlist").execute();
         out.println("Response ====>:" + i.toString());
         assertNotNull(i);
         assertEquals(3, i.getResponse().size());
         assertTrue(i.getResponse().get(2).getClass().getCanonicalName().contains("AdUnit"));
-        assertEquals(1, getChannelVideosCache().size());
-        assertEquals(1, getChannelVideosCache().stats().hitCount());
 
+        // now test if cache works
         sq = new SearchQueryRequest();
         sq.setTime("2014-12-31T15:00:00-0800");
         sq.setCategories(new ArrayList(asList("cat1")));
@@ -128,16 +136,14 @@ public class ESChannelVideoIntegrationTest {
         sq.setFormat(INWIDGET.toString());
         sq.setLanguages(new ArrayList<String>(asList("en")));
         sq.setLocations(new ArrayList<String>(asList("us")));
-        sq.setChannel("buzzfeedvideo");
-
-
+        sq.setChannels(null);
+        sq.setPlaylist("x3zgwu");
+        sq.setSortOrder("recent");
         out.println("Search Query ====>" + sq.toString());
-        i = new QueryCommand(sq, 1, "promoted,channel").execute();
+        i = new QueryCommand(sq, 1, "promoted,playlist").execute();
         out.println("Response ====>:" + i.toString());
         assertNotNull(i);
         assertEquals(1, i.getResponse().size());
-        assertEquals(2, getChannelVideosCache().size());
-        assertEquals(1, getChannelVideosCache().stats().hitCount());
 
         deleteAdUnitsByIds("1");
     }

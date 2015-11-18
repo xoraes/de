@@ -34,7 +34,7 @@ import javax.servlet.DispatcherType;
 import java.io.IOException;
 import java.util.concurrent.ScheduledExecutorService;
 
-import static com.dailymotion.pixelle.common.services.CacheService.getChannelVideosCache;
+import static com.dailymotion.pixelle.common.services.CacheService.getGroupVideosCache;
 import static com.dailymotion.pixelle.common.services.CacheService.getCountryCategoryCountCache;
 import static com.dailymotion.pixelle.common.services.CacheService.getCountryDeviceCountCache;
 import static com.dailymotion.pixelle.common.services.CacheService.getCountryEventCountCache;
@@ -131,16 +131,16 @@ final class StartServer {
 
 
         scheduledExecutorService.schedule(() -> {
-            channelCacheHitRate.set(getChannelVideosCache().stats().hitRate());
+            channelCacheHitRate.set(getGroupVideosCache().stats().hitRate());
             videoCacheHitRate.set(getOrganicVideosCache().stats().hitRate());
             countryCountCacheHitRate.set(getPerCountryCountCache().stats().hitRate());
 
-            channelCacheLoadExceptionRate.set(getChannelVideosCache().stats().loadExceptionRate());
+            channelCacheLoadExceptionRate.set(getGroupVideosCache().stats().loadExceptionRate());
             videoCacheLoadExceptionRate.set(getOrganicVideosCache().stats().loadExceptionRate());
             countryCountCacheLoadExceptionRate.set(getPerCountryCountCache().stats().loadExceptionRate());
 
             videoCacheEvictionCount.set(getOrganicVideosCache().stats().evictionCount());
-            channelCacheEvictionCount.set(getChannelVideosCache().stats().evictionCount());
+            channelCacheEvictionCount.set(getGroupVideosCache().stats().evictionCount());
             countryCountCacheEvictionCount.set(getPerCountryCountCache().stats().evictionCount());
 
         }, 30, SECONDS);

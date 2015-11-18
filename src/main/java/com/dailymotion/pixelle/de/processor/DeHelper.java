@@ -1,5 +1,6 @@
 package com.dailymotion.pixelle.de.processor;
 
+import com.google.common.collect.Ordering;
 import com.netflix.config.DynamicIntProperty;
 import com.netflix.config.DynamicStringProperty;
 import org.joda.time.DateTime;
@@ -7,7 +8,11 @@ import org.slf4j.Logger;
 
 import java.util.List;
 
+import static com.google.common.collect.Ordering.from;
 import static com.netflix.config.DynamicPropertyFactory.getInstance;
+import static java.lang.String.CASE_INSENSITIVE_ORDER;
+import static java.util.Collections.sort;
+import static org.apache.commons.lang3.StringUtils.join;
 import static org.joda.time.DateTime.now;
 import static org.joda.time.DateTimeZone.UTC;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -108,5 +113,13 @@ public final class DeHelper {
         public String toString() {
             return text;
         }
+    }
+    public static String listToString(List<String> channels) {
+        if (DeHelper.isEmptyList(channels)) {
+            return null;
+        }
+        Ordering<String> ordering = from(CASE_INSENSITIVE_ORDER).nullsFirst();
+        sort(channels, ordering);
+        return join(channels, ',');
     }
 }

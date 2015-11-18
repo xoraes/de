@@ -139,9 +139,9 @@ public class DEProcessor {
             }
         } else if (at.length == 2
                 && containsIgnoreCase(allowedTypes, "promoted")
-                && containsIgnoreCase(allowedTypes, "channel")) {
-            if (isEmptyList(sq.getChannels()) && isBlank(sq.getChannel())) {
-                throw new DeException(BAD_REQUEST_400, "No channels specified");
+                && (containsIgnoreCase(allowedTypes, "channel") || containsIgnoreCase(allowedTypes, "playlist"))) {
+            if (isEmptyList(sq.getChannels()) && isBlank(sq.getPlaylist())) {
+                throw new DeException(BAD_REQUEST_400, "No channels or playlist specified");
             }
             if (!isEmptyList(sq.getChannels()) && sq.getChannels().size() > MAX_CHANNELS.get()) {
                 throw new DeException(BAD_REQUEST_400, "Too many channels specified");
@@ -158,7 +158,7 @@ public class DEProcessor {
                     throw new DeException(e, INTERNAL_SERVER_ERROR_500);
                 } catch (ExecutionException e) {
                     if (e.getCause() instanceof HystrixBadRequestException) {
-                        throw new DeException(e.getCause(), BAD_REQUEST_400);
+                        throw new DeException(e, BAD_REQUEST_400);
                     }
                     logger.error("DE error while querying DM API");
                     throw new DeException(e, INTERNAL_SERVER_ERROR_500);
