@@ -3,19 +3,20 @@ package com.dailymotion.pixelle.common.services;
 import com.dailymotion.pixelle.de.processor.DeException;
 import feign.Response;
 import feign.codec.ErrorDecoder;
-import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 
-import static org.slf4j.LoggerFactory.getLogger;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Created by n.dhupia on 5/13/15.
  */
 public class DMApiErrorDecoder implements ErrorDecoder {
     private static final Logger logger = getLogger(DMApiErrorDecoder.class);
+
     @Override
     public Exception decode(String methodKey, Response response) {
         logErrorResponse(response);

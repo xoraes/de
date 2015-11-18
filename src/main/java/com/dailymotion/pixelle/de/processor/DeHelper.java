@@ -90,6 +90,15 @@ public final class DeHelper {
         return list;
     }
 
+    public static String listToString(List<String> channels) {
+        if (DeHelper.isEmptyList(channels)) {
+            return null;
+        }
+        Ordering<String> ordering = from(CASE_INSENSITIVE_ORDER).nullsFirst();
+        sort(channels, ordering);
+        return join(channels, ',');
+    }
+
     public enum FORMAT {
         INWIDGET("in-widget"),
         INRELATED("in-related"),
@@ -113,13 +122,5 @@ public final class DeHelper {
         public String toString() {
             return text;
         }
-    }
-    public static String listToString(List<String> channels) {
-        if (DeHelper.isEmptyList(channels)) {
-            return null;
-        }
-        Ordering<String> ordering = from(CASE_INSENSITIVE_ORDER).nullsFirst();
-        sort(channels, ordering);
-        return join(channels, ',');
     }
 }
