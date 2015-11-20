@@ -94,7 +94,7 @@ public class CacheService {
                         @Override
                         public ListenableFuture<List<VideoResponse>> reload(final VideoGroupKey key, List<VideoResponse>
                                 oldValue) throws DeException {
-                            logger.info("Reloading cache for key " + key.getChannels());
+                            logger.info("Reloading cache for key " + key.toString());
                             ListenableFuture<List<VideoResponse>> listenableFuture = cacheMaintainer.submit(() -> {
                                 List<Video> cVideos = new DMApiQueryCommand(key.getChannels(), key.getPlaylist(), key
                                         .getSortOrder())
