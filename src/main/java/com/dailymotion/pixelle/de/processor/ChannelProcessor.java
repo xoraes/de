@@ -36,7 +36,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class ChannelProcessor extends VideoProcessor {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final DynamicStringProperty listOfValidCategories = getInstance().getStringProperty("pixelle.channel.categories", "");
-    private static final DynamicStringProperty listOfValidSortOrders = getInstance().getStringProperty("pixelle.channel.sortorders", "recent,visited,random");
+    private static final DynamicStringProperty listOfValidSortOrders = getInstance().getStringProperty("pixelle" +
+            ".channel.sortorders", "recent,visited,random,trending");
     private static final DynamicBooleanProperty persistChanneltoES = getInstance().getBooleanProperty("pixelle.channel.es.store", false);
     private static final DynamicIntProperty maxVideosToCache = getInstance().getIntProperty("pixelle.channel" +
             ".maxVideosToCache", 25);
