@@ -22,6 +22,7 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.BoolFilterBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
@@ -148,12 +149,11 @@ public class AdUnitProcessor {
                     .add(andFilter(rangeFilter("clicks").from(0), rangeFilter("impressions").from(0)),
                             scriptFunction(ctrScriptFunction.getValue()).lang(ctrScriptLang.getValue()))
                             //use a default boost equivalent to 100% ctr if adunit was created less than a day from now
-//                    .add(orFilter(missingFilter("clicks"), missingFilter("impressions"),
-//                            rangeFilter("_created").gt("now-1d")),
-//                            ScoreFunctionBuilders.weightFactorFunction(MIN_CTR_BOOST))
-//                            //use ctr function boost only if adunit was created more than a day ago
-//                    .add(rangeFilter("_created").lte("now-1d"),
-//                            scriptFunction(ctrScriptFunction.getValue()).lang(ctrScriptLang.getValue()))
+                    .add(orFilter(missingFilter("clicks"), missingFilter("views"), missingFilter("impressions"),
+                                    rangeFilter("clicks").lt(1000),
+                                    rangeFilter("views").lt(500),
+                                    rangeFilter("impressions").lt(10000)),
+                            ScoreFunctionBuilders.weightFactorFunction(MIN_CTR_BOOST))
                     .add(fieldValueFactorFunction("internal_cpv").setWeight(CPV_WEIGHT));
 
             List<String> excludedAds = sq.getExcludedVideoIds();
@@ -198,6 +198,7 @@ public class AdUnitProcessor {
                     throw new DeException(e, INTERNAL_SERVER_ERROR_500);
                 }
             }
+            //Remove duplicate campaigns
             adUnitResponses = removeDuplicateCampaigns(positions, adUnitResponses);
             logger.info("Num responses:" + adUnitResponses.size());
 
