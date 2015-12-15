@@ -1,11 +1,15 @@
 package com.dailymotion.pixelle.de.processor;
 
+import com.dailymotion.pixelle.de.model.AdUnitResponse;
+import com.dailymotion.pixelle.de.model.ItemsResponse;
+import com.dailymotion.pixelle.de.model.VideoResponse;
 import com.google.common.collect.Ordering;
 import com.netflix.config.DynamicIntProperty;
 import com.netflix.config.DynamicStringProperty;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 
+import java.util.Iterator;
 import java.util.List;
 
 import static com.google.common.collect.Ordering.from;
@@ -97,6 +101,54 @@ public final class DeHelper {
         Ordering<String> ordering = from(CASE_INSENSITIVE_ORDER).nullsFirst();
         sort(channels, ordering);
         return join(channels, ',');
+    }
+
+    public static String itemsToHtmlConv(ItemsResponse i) {
+        StringBuilder stb = new StringBuilder();
+        stb.append("<html><body><table  border=\"0\" style=\"width:60%\">");
+        Iterator<?> iterator = i.getResponse().iterator();
+        int count = 0;
+        while (iterator.hasNext()) {
+            count++;
+            Object o = iterator.next();
+
+            if (o instanceof VideoResponse && count == 1) {
+                VideoResponse v = (VideoResponse) o;
+
+                stb.append("<tr><td colspan=\"4\">" +
+                        "<iframe frameborder=\"0\" allowfullscreen=\"true\" width=\"1000\" height=\"600\" " +
+                        "src=\"http://www.dailymotion.com/embed/video/" + v.getVideoId()
+                        + "?api=postMessage&id=player&&autoplay=0&mute=0"
+                        + "&info=1&logo=1&related=1&social=1&controls=1&start=0&html=0&chromeless=0&highlight=FFCC33" +
+                        "\"></iframe>"
+                        + "</td></tr><tr>");
+                //stb.append("</td><td><b>"+v.getTitle()+"</b></td></tr>");
+            } else if (o instanceof VideoResponse) {
+                VideoResponse v = (VideoResponse) o;
+
+                stb.append("<td colspan=\"1\">" +
+                        "<iframe frameborder=\"0\" allowfullscreen=\"true\" " +
+                        "src=\"http://www.dailymotion.com/embed/video/" + v.getVideoId()
+                        + "?api=postMessage&id=player&&autoplay=0&mute=0"
+                        + "&info=1&logo=1&related=1&social=1&controls=1&start=0&html=0&chromeless=0&highlight=FFCC33" +
+                        "\"></iframe>"
+                        + "</td>");
+                // stb.append("</td><td><b>"+v.getTitle()+"</b></td>");
+            } else if (o instanceof AdUnitResponse) {
+                AdUnitResponse v = (AdUnitResponse) o;
+
+                stb.append("<td colspan=\"1\">" + "<p style=\"color:orange\">Promoted</p><img style=\"width:100%\" " +
+                        "<iframe frameborder=\"0\" allowfullscreen=\"true\" " +
+                        "src=\"http://www.dailymotion.com/embed/video/" + v.getVideoId()
+                        + "?api=postMessage&id=player&&autoplay=0&mute=0"
+                        + "&info=1&logo=1&related=1&social=1&controls=1&start=0&html=0&chromeless=0&highlight=FFCC33" +
+                        "\"></iframe>"
+                        + "</td>");
+                //   stb.append("</td><td><b>"+v.getTitle()+"</b></td>");
+            }
+        }
+        stb.append("</tr></table></body></html>");
+        return stb.toString();
     }
 
     public enum FORMAT {

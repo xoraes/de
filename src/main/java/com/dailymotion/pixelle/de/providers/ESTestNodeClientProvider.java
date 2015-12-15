@@ -39,7 +39,14 @@ public final class ESTestNodeClientProvider implements Provider<Client> {
                 .put("index.store.type", "memory")
                 .put("index.number_of_shards", 1)
                 .put("index.number_of_replicas", 0)
-                .put("index.refresh_interval", "1s");
+                .put("index.refresh_interval", "1s")
+                .put("analysis.filter.my_shingles_filter.type", "shingle")
+                .put("analysis.filter.my_shingles_filter.min_shingle_size", 2)
+                .put("analysis.filter.my_shingles_filter.max_shingle_size", 2)
+                .put("analysis.filter.my_shingles_filter.output_unigrams", false)
+                .put("analysis.analyzer.my_shingles_analyzer.type", "custom")
+                .put("analysis.analyzer.my_shingles_analyzer.tokenizer", "standard")
+                .put("analysis.analyzer.my_shingles_analyzer.filter", "lowercase,my_shingles_filter");
 
 
         Client client = nodeBuilder()

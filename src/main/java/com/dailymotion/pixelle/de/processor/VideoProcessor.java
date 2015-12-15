@@ -19,7 +19,9 @@ import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.BoolFilterBuilder;
+import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.slf4j.Logger;
@@ -29,6 +31,7 @@ import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import static com.dailymotion.pixelle.common.services.CacheService.getOrganicVideosCache;
@@ -51,6 +54,7 @@ import static org.elasticsearch.index.query.FilterBuilders.rangeFilter;
 import static org.elasticsearch.index.query.FilterBuilders.termFilter;
 import static org.elasticsearch.index.query.FilterBuilders.termsFilter;
 import static org.elasticsearch.index.query.QueryBuilders.functionScoreQuery;
+import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
 import static org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders.gaussDecayFunction;
 import static org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders.scriptFunction;
 import static org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders.weightFactorFunction;
@@ -246,11 +250,24 @@ public class VideoProcessor {
             }
         }
 
+        BoolQueryBuilder mq = QueryBuilders.boolQuery();
+
+        if (sq.getKeywords() != null && sq.getKeywords().size() > 0) {
+            for (Map.Entry<String, Float> entry : sq.getKeywords().entrySet()) {
+                Float score = (entry.getValue() == null) ? 1.0f : 1.0f + entry.getValue();
+                mq.should(matchQuery("description", entry.getKey()).boost(score));
+                mq.should(matchQuery("description.shingles", entry.getKey()).boost(score));
+                mq.should(matchQuery("title", entry.getKey()).boost(score));
+                mq.should(matchQuery("title.shingles", entry.getKey()).boost(score));
+            }
+        }
+
         // origin is current date by default
         ScoreFunctionBuilder pubDateScoreBuilder =
                 gaussDecayFunction("publication_date", pubDateScale.getValue())
                         .setDecay(pubDateDecay.getValue())
                         .setOffset(pubDateOffset.getValue());
+
 
         QueryBuilder qb = functionScoreQuery(fb)
                 .add(pubDateScoreBuilder)
@@ -263,8 +280,9 @@ public class VideoProcessor {
                 .maxBoost(maxBoost.getValue())
                 .scoreMode(scoreMode.getValue());
 
+        mq.must(qb);
         SearchRequestBuilder srb1 = client.prepareSearch(organicIndex.get())
-                .setQuery(qb)
+                .setQuery(mq)
                 .setTypes(videosType.get())
                 .setSearchType(QUERY_THEN_FETCH)
                 .setSize(positions);

@@ -90,7 +90,6 @@ public class ESChannelVideoIntegrationTest {
         out.println(video.toString());
         assertNotNull(video.getVideoId());
         assertNotNull(video.getChannel());
-        assertNotNull(video.getChannelId());
         assertNotNull(video.getChannelName());
         assertNotNull(video.getContentType());
         assertNotNull(video.getDescription());

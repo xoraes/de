@@ -19,7 +19,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY) //this will ensure only non-null values are included in the serialized json
 @Data
-@EqualsAndHashCode(of = {"categories", "languages"})
+@EqualsAndHashCode(of = {"categories", "languages", "keywords"})
 public class SearchQueryRequest {
     private static Logger logger = getLogger(SearchQueryRequest.class);
     @JsonProperty("pattern")
@@ -40,12 +40,16 @@ public class SearchQueryRequest {
     private String browser;
     @JsonProperty("playlist")
     private String playlist;
+    @JsonProperty("keywords")
+    private Map<String, Float> keywords;
     @JsonProperty("channels")
     private List<String> channels;
     @JsonProperty("sort")
     private String sortOrder;
     @JsonProperty("impression_history")
     private Map<String, Integer> impressionHistory;
+    @JsonProperty("output")
+    private String output;
     @JsonIgnore
     private String timeTable;
     @JsonIgnore

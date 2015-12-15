@@ -175,13 +175,26 @@ final class ESIndexTypeFactory {
         builder.startObject("tags").field("type", "string").field("index", "not_analyzed").endObject();
         builder.startObject("channel_tier").field("type", "string").field("index", "not_analyzed").endObject();
 
+        //IMPORTANT: this causes titles and description to be indexed and analyzed. Field norm is disabled
+        // because we should not prioritize fields with shorter length. Disabling norms can save a significant amount of memory.
+        //Used the more modern BM25 similar algorithm than the default IF/TDF
+        //https://www.elastic.co/guide/en/elasticsearch/guide/current/pluggable-similarites.html
+        builder.startObject("title").field("type", "string")
+                .startObject("fields").startObject("shingles").field("type", "string").field("analyzer",
+                "my_shingles_analyzer").endObject().endObject()
+                .field("similarity", "BM25")
+                .startObject("norms").field("enabled", "false").endObject().endObject();
+        builder.startObject("description").field("type", "string")
+                .startObject("fields").startObject("shingles").field("type", "string").field("analyzer",
+                "my_shingles_analyzer").endObject().endObject()
+                .field("similarity", "BM25")
+                .startObject("norms").field("enabled", "false").endObject().endObject();
+
         builder.startObject("clicks").field("type", "float").endObject();
         builder.startObject("views").field("type", "float").endObject();
         builder.startObject("impressions").field("type", "float").endObject();
 
         builder.startObject("status").field("type", "string").field("index", "not_analyzed").endObject();
-        builder.startObject("title").field("type", "string").field("index", "no").endObject();
-        builder.startObject("description").field("type", "string").field("index", "no").endObject();
         builder.startObject("thumbnail_url").field("type", "string").field("index", "no").endObject();
         builder.startObject("resizable_thumbnail_url").field("type", "string").field("index", "no").endObject();
         builder.startObject("channel").field("type", "string").field("index", "not_analyzed").endObject();

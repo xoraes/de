@@ -30,8 +30,6 @@ public class AdUnit {
     private String channel;
     @JsonProperty("channel_name")
     private String channelName;
-    @JsonProperty("channel_id")
-    private String channelId;
     @JsonProperty("account")
     private String accountId;
     @JsonProperty("languages")

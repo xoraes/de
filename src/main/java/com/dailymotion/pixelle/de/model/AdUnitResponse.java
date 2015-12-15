@@ -27,8 +27,6 @@ public class AdUnitResponse extends ItemsResponse {
     private String channel;
     @JsonProperty("channel_name")
     private String channelName;
-    @JsonProperty("channel_id")
-    private String channelId;
     @JsonProperty("account")
     private String accountId;
     @JsonProperty("video_id")

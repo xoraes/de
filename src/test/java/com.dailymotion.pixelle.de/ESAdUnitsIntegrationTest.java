@@ -166,7 +166,6 @@ public class ESAdUnitsIntegrationTest {
         AdUnitResponse adunit = (AdUnitResponse) i.getResponse().get(0);
         Assert.assertTrue(adunit.getAd().equals("1"));
         Assert.assertTrue(adunit.getChannel().equals("channel"));
-        Assert.assertTrue(adunit.getChannelId().equals("channel_id"));
         Assert.assertTrue(adunit.getChannelName().equals("channel_name"));
         Assert.assertTrue(adunit.getAccountId().equals("1"));
         Assert.assertTrue(adunit.getVideoId().equals("video_id"));

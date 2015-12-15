@@ -17,6 +17,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import org.elasticsearch.client.Client;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -287,7 +288,6 @@ public class ESVideoIntegrationTest {
         assertEquals("1", video.getVideoId());
         assertEquals("channel_tier", video.getChannelTier());
         assertEquals("channel", video.getChannel());
-        assertEquals("channel_id", video.getChannelId());
         assertEquals("channel_name", video.getChannelName());
         assertEquals("organic", video.getContentType());
         assertEquals("description", video.getDescription());
@@ -337,6 +337,112 @@ public class ESVideoIntegrationTest {
         if (i.getResponse().size() > 0) {
             deleteVideosByIds("1");
         }
+    }
+
+    @Test
+    public void testKeywordsSearchWithShingles() throws Exception {
+        Map m1 = createVideoDataMap("1");
+        Map m2 = createVideoDataMap("2");
+        Map m3 = createVideoDataMap("3");
+        m3.put("title", "ONE TWO THREE");
+        m2.put("title", "TWO FOUR ONE");
+        m1.put("title", "THREE TWO");
+
+
+        loadVideoMaps(m1, m2, m3);
+        SearchQueryRequest sq = new SearchQueryRequest();
+        sq.setTime("2014-12-31T15:00:00-0800");
+        sq.setCategories(new ArrayList(asList("cat1")));
+        sq.setDevice("dev1");
+        sq.setLanguages(new ArrayList<String>(asList("en")));
+        sq.setLocations(new ArrayList<String>(asList("us")));
+        sq.setDebugEnabled(true);
+        Map<String, Float> m = new HashMap<>();
+        m.put("one two", null);
+        sq.setKeywords(m);
+
+        out.println("Search Query ====>" + sq.toString());
+        ItemsResponse i = new QueryCommand(sq, 3, "organic").execute();
+        out.println("Response ====>:" + i.toString());
+        assertNotNull(i);
+        assertTrue(i.getResponse().size() == 3);
+        VideoResponse r1 = (VideoResponse) i.getResponse().get(0);
+        VideoResponse r2 = (VideoResponse) i.getResponse().get(1);
+        VideoResponse r3 = (VideoResponse) i.getResponse().get(2);
+        Assert.assertEquals("3", r1.getVideoId());
+        Assert.assertEquals("2", r2.getVideoId());
+        Assert.assertEquals("1", r3.getVideoId());
+        deleteVideosByIds("1", "2", "3");
+    }
+
+    @Test
+    public void testKeywordsSearchWithScore() throws Exception {
+        Map m1 = createVideoDataMap("1");
+        Map m2 = createVideoDataMap("2");
+        Map m3 = createVideoDataMap("3");
+        m1.put("title", "lala");
+        m1.put("description", "lala");
+        m3.put("title", "mankind longggggggggg field");
+        m2.put("title", "nokey");
+        m3.put("description", "mankind longggggggggg field");
+        m2.put("description", "nokey");
+
+
+        loadVideoMaps(m1, m2, m3);
+        SearchQueryRequest sq = new SearchQueryRequest();
+        sq.setTime("2014-12-31T15:00:00-0800");
+        sq.setCategories(new ArrayList(asList("cat1")));
+        sq.setDevice("dev1");
+        sq.setLanguages(new ArrayList<String>(asList("en")));
+        sq.setLocations(new ArrayList<String>(asList("us")));
+        sq.setDebugEnabled(true);
+        Map<String, Float> m = new HashMap<>();
+        m.put("mankind", 0.3f);
+        m.put("nokey", 0.2f);
+        m.put("lala", 0.1f);
+        sq.setKeywords(m);
+
+        out.println("Search Query ====>" + sq.toString());
+        ItemsResponse i = new QueryCommand(sq, 3, "organic").execute();
+        out.println("Response ====>:" + i.toString());
+        assertNotNull(i);
+        assertTrue(i.getResponse().size() == 3);
+        VideoResponse r1 = (VideoResponse) i.getResponse().get(0);
+        VideoResponse r2 = (VideoResponse) i.getResponse().get(1);
+        VideoResponse r3 = (VideoResponse) i.getResponse().get(2);
+        Assert.assertEquals("3", r1.getVideoId());
+        Assert.assertEquals("2", r2.getVideoId());
+        Assert.assertEquals("1", r3.getVideoId());
+        deleteVideosByIds("1", "2", "3");
+    }
+
+    @Test
+    public void testKeywordsSearchWithNullScore() throws Exception {
+        Map m1 = createVideoDataMap("1");
+        Map m2 = createVideoDataMap("2");
+        Map m3 = createVideoDataMap("3");
+
+        m3.put("title", "grapeshot");
+        loadVideoMaps(m1, m2, m3);
+        SearchQueryRequest sq = new SearchQueryRequest();
+        sq.setTime("2014-12-31T15:00:00-0800");
+        sq.setCategories(new ArrayList(asList("cat1")));
+        sq.setDevice("dev1");
+        sq.setFormat(INWIDGET.toString());
+        sq.setLanguages(new ArrayList<String>(asList("en")));
+        sq.setLocations(new ArrayList<String>(asList("us")));
+        Map<String, Float> m = new HashMap<>();
+        m.put("grapeshot", null);
+        sq.setKeywords(m);
+
+        out.println("Search Query ====>" + sq.toString());
+        ItemsResponse i = new QueryCommand(sq, 1, "organic").execute();
+        out.println("Response ====>:" + i.toString());
+        assertNotNull(i);
+        assertTrue(i.getResponse().size() == 1);
+        VideoResponse r1 = (VideoResponse) i.getResponse().get(0);
+        Assert.assertEquals("3", r1.getVideoId());
+        deleteVideosByIds("1", "2", "3");
     }
 
     @Test

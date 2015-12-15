@@ -8,6 +8,7 @@ import com.dailymotion.pixelle.de.model.SearchQueryRequest;
 import com.dailymotion.pixelle.de.model.Video;
 import com.dailymotion.pixelle.de.processor.DEProcessor;
 import com.dailymotion.pixelle.de.processor.DeException;
+import com.dailymotion.pixelle.de.processor.DeHelper;
 import com.dailymotion.pixelle.de.processor.hystrix.AdInsertCommand;
 import com.dailymotion.pixelle.de.processor.hystrix.AdUnitBulkInsertCommand;
 import com.dailymotion.pixelle.de.processor.hystrix.AdUpdateCommand;
@@ -18,6 +19,7 @@ import com.dailymotion.pixelle.forecast.model.ForecastResponse;
 import com.dailymotion.pixelle.forecast.processor.ForecastException;
 import com.dailymotion.pixelle.forecast.processor.Forecaster;
 import com.netflix.hystrix.exception.HystrixBadRequestException;
+import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.server.ManagedAsync;
 import org.slf4j.Logger;
 
@@ -166,6 +168,9 @@ public class AppServlet {
             i = new QueryCommand(sq, pos, allowedTypes).execute();
         } catch (HystrixBadRequestException e) {
             throw new DeException(BAD_REQUEST_400, "Bad Request");
+        }
+        if (StringUtils.equalsIgnoreCase(sq.getOutput(), "html")) {
+            return ok(DeHelper.itemsToHtmlConv(i)).build();
         }
         return ok(i).build();
     }
