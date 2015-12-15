@@ -165,7 +165,7 @@ public class AppServlet {
             pos = sq.getPositions();
         }
         if (allowedTypes == null) {
-            allowedTypes = sq.getAllowTypes();
+            allowedTypes = sq.getAllowedTypes();
 
         }
         try {
