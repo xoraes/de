@@ -158,12 +158,16 @@ public class AppServlet {
     public Response query(SearchQueryRequest sq,
                           @QueryParam("positions") Integer pos,
                           @QueryParam("type") String allowedTypes,
-                          @QueryParam("debug") boolean isDebugEnabled) throws DeException {
-        if (isDebugEnabled) {
-            sq.setDebugEnabled(true);
-        }
+                          @QueryParam("debug") Boolean isDebugEnabled) throws DeException {
         ItemsResponse i = null;
 
+        if (pos == null) {
+            pos = sq.getPositions();
+        }
+        if (allowedTypes == null) {
+            allowedTypes = sq.getAllowTypes();
+
+        }
         try {
             i = new QueryCommand(sq, pos, allowedTypes).execute();
         } catch (HystrixBadRequestException e) {

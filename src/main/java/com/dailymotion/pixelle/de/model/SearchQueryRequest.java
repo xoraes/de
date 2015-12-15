@@ -22,8 +22,14 @@ import static org.slf4j.LoggerFactory.getLogger;
 @EqualsAndHashCode(of = {"categories", "languages", "keywords"})
 public class SearchQueryRequest {
     private static Logger logger = getLogger(SearchQueryRequest.class);
+    @JsonProperty
+    private boolean debugEnabled = false;
+    @JsonProperty("positions")
+    private Integer positions;
+    @JsonProperty("type")
+    private String allowedTypes;
     @JsonProperty("pattern")
-    public String pattern;
+    private String pattern;
     @JsonProperty("languages")
     private List<String> languages;
     @JsonProperty("locations")
@@ -52,8 +58,6 @@ public class SearchQueryRequest {
     private String output;
     @JsonIgnore
     private String timeTable;
-    @JsonIgnore
-    private boolean debugEnabled;
     @JsonIgnore
     private List<String> excludedVideoIds;
 }
