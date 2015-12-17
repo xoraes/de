@@ -286,7 +286,7 @@ public class AdUnitProcessor {
         }
         // if the internal vpc is not set, set it to the cpv
         if (unit.getInternaCpv() == null || unit.getCpv() == 0) {
-            unit.setInternaCpv(unit.getCpv());
+            unit.setInternaCpv(0L);
         }
 
         // if the currently not set, set it to dollar
