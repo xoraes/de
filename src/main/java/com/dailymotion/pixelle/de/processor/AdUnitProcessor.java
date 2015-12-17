@@ -57,6 +57,7 @@ import static org.elasticsearch.action.search.SearchType.QUERY_AND_FETCH;
 import static org.elasticsearch.index.query.FilterBuilders.andFilter;
 import static org.elasticsearch.index.query.FilterBuilders.boolFilter;
 import static org.elasticsearch.index.query.FilterBuilders.missingFilter;
+import static org.elasticsearch.index.query.FilterBuilders.notFilter;
 import static org.elasticsearch.index.query.FilterBuilders.orFilter;
 import static org.elasticsearch.index.query.FilterBuilders.rangeFilter;
 import static org.elasticsearch.index.query.FilterBuilders.scriptFilter;
@@ -154,7 +155,8 @@ public class AdUnitProcessor {
                                     rangeFilter("views").lt(500),
                                     rangeFilter("impressions").lt(10000)),
                             ScoreFunctionBuilders.weightFactorFunction(MIN_CTR_BOOST))
-                    .add(fieldValueFactorFunction("internal_cpv").setWeight(CPV_WEIGHT));
+                    .add(notFilter(missingFilter("internal_cpv")),fieldValueFactorFunction("internal_cpv").setWeight
+                            (CPV_WEIGHT));
 
             List<String> excludedAds = sq.getExcludedVideoIds();
             if (!isEmptyList(excludedAds)) {
@@ -281,14 +283,6 @@ public class AdUnitProcessor {
         if (unit.getCpc() == null || unit.getCpc() == 0) {
             unit.setCpc(0L);
         }
-        if (unit.getCpv() == null || unit.getCpv() == 0) {
-            unit.setCpv(0L);
-        }
-        // if the internal vpc is not set, set it to the cpv
-        if (unit.getInternaCpv() == null || unit.getInternaCpv() == 0L) {
-            unit.setInternaCpv(0L);
-        }
-
         // if the currently not set, set it to dollar
         if (StringUtils.isBlank(unit.getCurrency())) {
             unit.setCurrency(DEFAULT_CURRENCY);
@@ -340,10 +334,6 @@ public class AdUnitProcessor {
 
 
         for (AdUnit adUnit : adUnits) {
-            if (adUnit.getCpv() == null || adUnit.getCpv() == 0L) {
-                logger.warn("failed inserting adunit due to no cpv: " + adUnit.toString());
-                continue;
-            }
             adUnit = modifyAdUnitForInsert(adUnit);
             logger.info("Loading adunit" + adUnit.toString());
             try {
