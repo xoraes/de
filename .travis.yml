@@ -64,3 +64,7 @@ deploy:
     on:
       repo: dailymotion/pixelle-de
       branch: prod
+
+notifications:
+  slack:
+    secure: "kSl7hWQwb1X+A1k1iSlMOA/U/hNTK4M02CFMdD1JdikO14ZjSaYpSJbs9emNYWTvL4LzrG+hhqWMqVLQNEGJJSbK7Vt8ZoM4ilnDcxGWoAtjjT99Djm5pvWxHZ5rNn2cXXUuoV2gqCYseVvRA958eloMIePWekQ3oMqcU+eUK7E="
