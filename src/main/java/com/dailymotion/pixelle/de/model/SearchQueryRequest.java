@@ -42,6 +42,8 @@ public class SearchQueryRequest {
     private String format;
     @JsonProperty("time")
     private String time;
+    @JsonProperty("domain")
+    private String domain;
     @JsonProperty("browser")
     private String browser;
     @JsonProperty("playlist")

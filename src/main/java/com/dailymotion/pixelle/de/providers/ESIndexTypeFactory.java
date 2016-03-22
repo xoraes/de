@@ -121,6 +121,8 @@ final class ESIndexTypeFactory {
         builder.startObject("devices").field("type", "string").field("index", "not_analyzed").endObject();
         builder.startObject("status").field("type", "string").field("index", "not_analyzed").endObject();
         builder.startObject("formats").field("type", "string").field("index", "not_analyzed").endObject();
+        builder.startObject("domain_blacklist").field("type", "string").field("index", "not_analyzed").endObject();
+        builder.startObject("domain_whitelist").field("type", "string").field("index", "not_analyzed").endObject();
 
         builder.startObject("cpc").field("type", "integer").endObject();
         builder.startObject("cpv").field("type", "integer").endObject();

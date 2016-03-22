@@ -58,7 +58,6 @@ public class ESAdUnitsIntegrationTest {
         System.out.println("Deleting all known indices");
         DEProcessor.deleteIndex(DeHelper.organicIndex.get());
         DEProcessor.deleteIndex(DeHelper.promotedIndex.get());
-
     }
 
     public static Map<String, Object> createAdUnitDataMap(String id, String cid) {
@@ -126,6 +125,66 @@ public class ESAdUnitsIntegrationTest {
         for (String id : ids) {
             Assert.assertTrue(DEProcessor.deleteById(DeHelper.promotedIndex.get(), DeHelper.adunitsType.get(), id));
         }
+    }
+    @Test
+    public void testDomainWhiteAndBlackList() throws Exception {
+        Map m1 = createAdUnitDataMap("1", "1");
+        m1.put("domain_whitelist", new ArrayList<String>(Arrays.asList("gooddomain.org")));
+        m1.put("domain_blacklist", new ArrayList<String>(Arrays.asList("baddomain.org")));
+
+        loadAdUnitMaps(m1);
+        SearchQueryRequest sq = new SearchQueryRequest();
+        sq.setCategories(new ArrayList(Arrays.asList("cat1")));
+        sq.setDevice("dev1");
+        sq.setFormat(DeHelper.FORMAT.INWIDGET.toString());
+        sq.setTime("2014-11-21T01:00:00Z");
+        sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
+        sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
+        sq.setDebugEnabled(true);
+        sq.setDomain("gooddomain.org");
+        ItemsResponse i = new QueryCommand(sq, 1, "promoted").execute();
+        Assert.assertNotNull(i);
+        Assert.assertTrue(i.getResponse().size() == 1);
+
+        sq.setDomain("baddomain.org");
+        i = new QueryCommand(sq, 1, "promoted").execute();
+        Assert.assertNotNull(i);
+        Assert.assertTrue(i.getResponse().size() == 0);
+
+        //if domain is null and the ad has black or whitelist then we should not show the ad
+        sq.setDomain(null);
+        i = new QueryCommand(sq, 1, "promoted").execute();
+        Assert.assertNotNull(i);
+        Assert.assertTrue(i.getResponse().size() == 0);
+
+        deleteAdUnitsByIds("1");
+    }
+
+    @Test
+    public void testDomainNoListSet() throws Exception {
+        Map m1 = createAdUnitDataMap("1", "1");
+
+        loadAdUnitMaps(m1);
+        SearchQueryRequest sq = new SearchQueryRequest();
+        sq.setCategories(new ArrayList(Arrays.asList("cat1")));
+        sq.setDevice("dev1");
+        sq.setFormat(DeHelper.FORMAT.INWIDGET.toString());
+        sq.setTime("2014-11-21T01:00:00Z");
+        sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
+        sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
+        sq.setDebugEnabled(true);
+        sq.setDomain("domain.org");
+
+        ItemsResponse i = new QueryCommand(sq, 1, "promoted").execute();
+        Assert.assertNotNull(i);
+        Assert.assertTrue(i.getResponse().size() == 1);
+
+        sq.setDomain(null);
+        i = new QueryCommand(sq, 1, "promoted").execute();
+        Assert.assertNotNull(i);
+        Assert.assertTrue(i.getResponse().size() == 1);
+
+        deleteAdUnitsByIds("1");
     }
 
     @Test

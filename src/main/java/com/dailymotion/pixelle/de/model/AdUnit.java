@@ -92,4 +92,8 @@ public class AdUnit {
     private String customVideoUrl;
     @JsonProperty("paused")
     private Boolean paused;
+    @JsonProperty("domain_blacklist")
+    private List<String> domainBlacklist;
+    @JsonProperty("domain_whitelist")
+    private List<String> domainWhitelist;
 }

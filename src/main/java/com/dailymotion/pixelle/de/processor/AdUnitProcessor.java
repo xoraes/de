@@ -51,6 +51,7 @@ import static java.util.Arrays.asList;
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.apache.commons.lang3.StringUtils.lowerCase;
 import static org.eclipse.jetty.http.HttpStatus.BAD_REQUEST_400;
 import static org.eclipse.jetty.http.HttpStatus.INTERNAL_SERVER_ERROR_500;
 import static org.elasticsearch.action.search.SearchType.QUERY_AND_FETCH;
@@ -138,6 +139,20 @@ public class AdUnitProcessor {
             if (!isEmptyList(sq.getLocations())) {
                 fb.mustNot(termsFilter("excluded_locations", toLowerCase(sq.getLocations())));
             }
+            String domain = lowerCase(sq.getDomain());
+            if (isNotBlank(domain) && equalsIgnoreCase(sq.getFormat(), INWIDGET.toString())) {
+                //MUST show the ad if whitelist field is missing OR whitelist matches domain
+                fb.must(orFilter(missingFilter("domain_whitelist"),termsFilter("domain_whitelist", domain)));
+                //MUST NOT show the ad if blacklist file is not missing and terms filter matches domain
+                fb.mustNot(andFilter(notFilter(missingFilter("domain_blacklist")), termsFilter
+                        ("domain_blacklist", domain)));
+            }
+            //this will never be true if we will always get the domain
+            //if the domain is blank, then the white and blacklist must be missing for the ad to be shown
+            if (isBlank(domain) && equalsIgnoreCase(sq.getFormat(), INWIDGET.toString())) {
+                fb.must(andFilter(missingFilter("domain_whitelist"), missingFilter("domain_blacklist")));
+            }
+
             //do not target categories for widget format
             if (!isEmptyList(sq.getCategories()) && !equalsIgnoreCase(sq.getFormat(), INWIDGET.toString())) {
                 fb.mustNot(termsFilter("excluded_categories", toLowerCase(sq.getCategories())));
@@ -415,8 +430,8 @@ public class AdUnitProcessor {
 
     private static List<AdUnitResponse> removeDuplicateCampaigns(int positions, List<AdUnitResponse> units) {
         int count = 1;
-        Map<String, Integer> m = new HashMap<String, Integer>();
-        List<AdUnitResponse> uniqueAds = new ArrayList<AdUnitResponse>();
+        Map<String, Integer> m = new HashMap<>();
+        List<AdUnitResponse> uniqueAds = new ArrayList<>();
 
         for (AdUnitResponse unit : units) {
             if (count > positions) {
