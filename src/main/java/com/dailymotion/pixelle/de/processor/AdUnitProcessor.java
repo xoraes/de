@@ -151,9 +151,9 @@ public class AdUnitProcessor {
             if (levels != null) {
                 int len = levels.length;
                 if (len >= 2) {
-                    domainBuilder.append(levels[len - 1]);
-                    domainBuilder.append(".");
                     domainBuilder.append(levels[len - 2]);
+                    domainBuilder.append(".");
+                    domainBuilder.append(levels[len - 1]);
                     domain = domainBuilder.toString();
                 }
             }
