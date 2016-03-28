@@ -126,6 +126,7 @@ public class ESAdUnitsIntegrationTest {
             Assert.assertTrue(DEProcessor.deleteById(DeHelper.promotedIndex.get(), DeHelper.adunitsType.get(), id));
         }
     }
+
     @Test
     public void testDomainWhiteAndBlackList() throws Exception {
         Map m1 = createAdUnitDataMap("1", "1");
@@ -156,6 +157,44 @@ public class ESAdUnitsIntegrationTest {
         i = new QueryCommand(sq, 1, "promoted").execute();
         Assert.assertNotNull(i);
         Assert.assertTrue(i.getResponse().size() == 0);
+
+        deleteAdUnitsByIds("1");
+    }
+
+    @Test
+    public void testInitiation() throws Exception {
+        Map m1 = createAdUnitDataMap("1", "1");
+        m1.put("initiation", "ctp");
+        loadAdUnitMaps(m1);
+        SearchQueryRequest sq = new SearchQueryRequest();
+        sq.setCategories(new ArrayList(Arrays.asList("cat1")));
+        sq.setDevice("dev1");
+        sq.setFormat(DeHelper.FORMAT.INWIDGET.toString());
+        sq.setTime("2014-11-21T01:00:00Z");
+        sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
+        sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
+        sq.setDebugEnabled(true);
+        sq.setInitType("stp");
+
+        ItemsResponse i = new QueryCommand(sq, 1, "promoted").execute();
+        Assert.assertNotNull(i);
+        Assert.assertTrue(i.getResponse().size() == 0);
+
+        sq.setInitType("ctp");
+        i = new QueryCommand(sq, 1, "promoted").execute();
+        Assert.assertNotNull(i);
+        Assert.assertTrue(i.getResponse().size() == 1);
+
+        sq.setInitType(null);
+        i = new QueryCommand(sq, 1, "promoted").execute();
+        Assert.assertNotNull(i);
+        Assert.assertTrue(i.getResponse().size() == 1);
+
+        sq.setInitType("ctp");
+        m1.put("initiation", "");
+        i = new QueryCommand(sq, 1, "promoted").execute();
+        Assert.assertNotNull(i);
+        Assert.assertTrue(i.getResponse().size() == 1);
 
         deleteAdUnitsByIds("1");
     }

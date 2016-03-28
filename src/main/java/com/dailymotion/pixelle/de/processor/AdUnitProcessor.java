@@ -122,27 +122,44 @@ public class AdUnitProcessor {
             }
             fb.must(termsFilter("languages", toLowerCase(sq.getLanguages())));
             fb.must(termsFilter("locations", toLowerCase(sq.getLocations())));
+            if (isNotBlank(sq.getInitType())) {
+                fb.must(orFilter(missingFilter("initiation"), termFilter("initiation", lowerCase(sq.getInitType())), termFilter("initiation", "all")));
+            }
             fb.mustNot(termFilter("paused", true));
             fb.must(rangeFilter("start_date").lte(sq.getTime()));
             fb.must(rangeFilter("end_date").gte(sq.getTime()));
 
             if (isNotBlank(sq.getDevice())) {
-                fb.must(termsFilter("devices", "all", sq.getDevice().toLowerCase()));
+                fb.must(termsFilter("devices", "all", lowerCase(sq.getDevice())));
             } else {
                 fb.must(termsFilter("devices", "all"));
             }
             if (isNotBlank(sq.getFormat())) {
-                fb.must(termsFilter("formats", "all", sq.getFormat().toLowerCase()));
+                fb.must(termsFilter("formats", "all", lowerCase(sq.getFormat())));
             } else {
                 fb.must(termsFilter("formats", "all"));
             }
             if (!isEmptyList(sq.getLocations())) {
                 fb.mustNot(termsFilter("excluded_locations", toLowerCase(sq.getLocations())));
             }
-            String domain = lowerCase(sq.getDomain());
+
+
+            String[] levels = StringUtils.split(lowerCase(sq.getDomain()), ".");
+            StringBuilder domainBuilder = new StringBuilder();
+            String domain = null;
+
+            if (levels != null) {
+                int len = levels.length;
+                if (len >= 2) {
+                    domainBuilder.append(levels[len - 1]);
+                    domainBuilder.append(".");
+                    domainBuilder.append(levels[len - 2]);
+                    domain = domainBuilder.toString();
+                }
+            }
             if (isNotBlank(domain) && equalsIgnoreCase(sq.getFormat(), INWIDGET.toString())) {
                 //MUST show the ad if whitelist field is missing OR whitelist matches domain
-                fb.must(orFilter(missingFilter("domain_whitelist"),termsFilter("domain_whitelist", domain)));
+                fb.must(orFilter(missingFilter("domain_whitelist"), termsFilter("domain_whitelist", domain)));
                 //MUST NOT show the ad if blacklist file is not missing and terms filter matches domain
                 fb.mustNot(andFilter(notFilter(missingFilter("domain_blacklist")), termsFilter
                         ("domain_blacklist", domain)));
@@ -170,7 +187,7 @@ public class AdUnitProcessor {
                                     rangeFilter("views").lt(500),
                                     rangeFilter("impressions").lt(10000)),
                             ScoreFunctionBuilders.weightFactorFunction(MIN_CTR_BOOST))
-                    .add(notFilter(missingFilter("internal_cpv")),fieldValueFactorFunction("internal_cpv").setWeight
+                    .add(notFilter(missingFilter("internal_cpv")), fieldValueFactorFunction("internal_cpv").setWeight
                             (CPV_WEIGHT));
 
             List<String> excludedAds = sq.getExcludedVideoIds();
