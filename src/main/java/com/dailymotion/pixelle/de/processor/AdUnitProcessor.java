@@ -6,11 +6,13 @@ import com.dailymotion.pixelle.de.model.SearchQueryRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
+import com.netflix.config.DynamicIntProperty;
 import com.netflix.config.DynamicStringProperty;
 import com.netflix.servo.DefaultMonitorRegistry;
 import com.netflix.servo.monitor.BasicCounter;
 import com.netflix.servo.monitor.Counter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.lucene.queryparser.xml.builders.BoostingQueryBuilder;
 import org.apache.lucene.search.Explanation;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.bulk.BulkItemResponse;
@@ -21,7 +23,10 @@ import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.BoolFilterBuilder;
+import org.elasticsearch.index.query.FilterBuilders;
 import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilder;
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.joda.time.DateTime;
@@ -52,6 +57,7 @@ import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.lang3.StringUtils.lowerCase;
+import static org.apache.commons.lang3.StringUtils.substring;
 import static org.eclipse.jetty.http.HttpStatus.BAD_REQUEST_400;
 import static org.eclipse.jetty.http.HttpStatus.INTERNAL_SERVER_ERROR_500;
 import static org.elasticsearch.action.search.SearchType.QUERY_AND_FETCH;
@@ -91,6 +97,9 @@ public class AdUnitProcessor {
             getInstance().getStringProperty("ctr.script.code", "");
     private static final DynamicStringProperty ctrScriptLang =
             getInstance().getStringProperty("ctr.script.lang", "expression");
+    private static final DynamicIntProperty STP_BOOST =
+            getInstance().getIntProperty("stp.boost.percent", 75);
+
     private static Client client;
 
     static {
@@ -122,9 +131,6 @@ public class AdUnitProcessor {
             }
             fb.must(termsFilter("languages", toLowerCase(sq.getLanguages())));
             fb.must(termsFilter("locations", toLowerCase(sq.getLocations())));
-            if (isNotBlank(sq.getInitType())) {
-                fb.must(orFilter(missingFilter("initiation"), termFilter("initiation", lowerCase(sq.getInitType())), termFilter("initiation", "all")));
-            }
             fb.mustNot(termFilter("paused", true));
             fb.must(rangeFilter("start_date").lte(sq.getTime()));
             fb.must(rangeFilter("end_date").gte(sq.getTime()));
@@ -178,7 +184,17 @@ public class AdUnitProcessor {
                     missingFilter("views"),
                     scriptFilter("doc['views'].value < doc['goal_views'].value").lang("expression")));
 
-            QueryBuilder qb = functionScoreQuery(fb)
+
+            ScoreFunctionBuilder sfb = ScoreFunctionBuilders.weightFactorFunction(1);
+            if (sq.getAutoplay() && equalsIgnoreCase(substring(sq.getPattern(), 0, 1), "P") && equalsIgnoreCase
+                    (INWIDGET.toString(), sq.getFormat())){
+                sfb = ScoreFunctionBuilders.weightFactorFunction(STP_BOOST.getValue());
+            }
+
+
+
+            QueryBuilder qb = QueryBuilders.functionScoreQuery(fb)
+                    .add(termFilter("autoplay", true), sfb)
                     .add(andFilter(rangeFilter("clicks").from(0), rangeFilter("impressions").from(0)),
                             scriptFunction(ctrScriptFunction.getValue()).lang(ctrScriptLang.getValue()))
                             //use a default boost equivalent to 100% ctr if adunit was created less than a day from now
@@ -189,6 +205,11 @@ public class AdUnitProcessor {
                             ScoreFunctionBuilders.weightFactorFunction(MIN_CTR_BOOST))
                     .add(notFilter(missingFilter("internal_cpv")), fieldValueFactorFunction("internal_cpv").setWeight
                             (CPV_WEIGHT));
+
+
+
+
+
 
             List<String> excludedAds = sq.getExcludedVideoIds();
             if (!isEmptyList(excludedAds)) {
@@ -214,7 +235,7 @@ public class AdUnitProcessor {
             } catch (ElasticsearchException e) {
                 throw new DeException(e, INTERNAL_SERVER_ERROR_500);
             }
-            adUnitResponses = new ArrayList<AdUnitResponse>();
+            adUnitResponses = new ArrayList<>();
 
             for (SearchHit hit : searchResponse.getHits().getHits()) {
                 try {

@@ -162,10 +162,11 @@ public class ESAdUnitsIntegrationTest {
     }
 
     @Test
-    public void testInitiation() throws Exception {
+    public void testAutoPlayBoost() throws Exception {
         Map m1 = createAdUnitDataMap("1", "1");
-        m1.put("initiation", "ctp");
-        loadAdUnitMaps(m1);
+        Map m2 = createAdUnitDataMap("2", "2");
+        m2.put("autoplay", true);
+        loadAdUnitMaps(m1, m2);
         SearchQueryRequest sq = new SearchQueryRequest();
         sq.setCategories(new ArrayList(Arrays.asList("cat1")));
         sq.setDevice("dev1");
@@ -174,27 +175,26 @@ public class ESAdUnitsIntegrationTest {
         sq.setLanguages(new ArrayList<String>(Arrays.asList("en")));
         sq.setLocations(new ArrayList<String>(Arrays.asList("us")));
         sq.setDebugEnabled(true);
-        sq.setInitType("stp");
+        sq.setAutoplay(true);
+        sq.setPattern("P");
 
-        ItemsResponse i = new QueryCommand(sq, 1, "promoted").execute();
+        ItemsResponse i = new QueryCommand(sq, 2, "promoted").execute();
         Assert.assertNotNull(i);
-        Assert.assertTrue(i.getResponse().size() == 0);
+        Assert.assertTrue(i.getResponse().size() == 2);
 
-        sq.setInitType("ctp");
-        i = new QueryCommand(sq, 1, "promoted").execute();
-        Assert.assertNotNull(i);
-        Assert.assertTrue(i.getResponse().size() == 1);
+        AdUnitResponse r1 = (AdUnitResponse) i.getResponse().get(0);
+        Assert.assertTrue(r1.getAutoplay());
+        Assert.assertEquals("2", r1.getCampaignId());
 
-        sq.setInitType(null);
-        i = new QueryCommand(sq, 1, "promoted").execute();
+        //with autoplay false, we should now get campaign 1
+        sq.setAutoplay(false);
+        i = new QueryCommand(sq, 2, "promoted").execute();
         Assert.assertNotNull(i);
-        Assert.assertTrue(i.getResponse().size() == 1);
+        Assert.assertTrue(i.getResponse().size() == 2);
 
-        sq.setInitType("ctp");
-        m1.put("initiation", "");
-        i = new QueryCommand(sq, 1, "promoted").execute();
-        Assert.assertNotNull(i);
-        Assert.assertTrue(i.getResponse().size() == 1);
+        r1 = (AdUnitResponse) i.getResponse().get(0);
+
+        Assert.assertEquals("1", r1.getCampaignId());
 
         deleteAdUnitsByIds("1");
     }

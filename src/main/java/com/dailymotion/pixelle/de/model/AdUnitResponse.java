@@ -45,6 +45,8 @@ public class AdUnitResponse extends ItemsResponse {
     private Long internalCpv;
     @JsonProperty("currency")
     private String currency;
+    @JsonProperty("autoplay")
+    private Boolean autoplay = false;
     @JsonProperty("resizable_thumbnail_url")
     private String resizableThumbnailUrl;
     @JsonProperty("type")

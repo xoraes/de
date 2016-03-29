@@ -44,8 +44,8 @@ public class SearchQueryRequest {
     private String time;
     @JsonProperty("domain")
     private String domain;
-    @JsonProperty("initiation")
-    private String initType;
+    @JsonProperty("autoplay")
+    private Boolean autoplay = false;
     @JsonProperty("browser")
     private String browser;
     @JsonProperty("playlist")

@@ -96,6 +96,6 @@ public class AdUnit {
     private List<String> domainBlacklist;
     @JsonProperty("domain_whitelist")
     private List<String> domainWhitelist;
-    @JsonProperty("initiation")
-    private String initType;
+    @JsonProperty("autoplay")
+    private Boolean autoplay = false;
 }
