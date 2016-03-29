@@ -12,7 +12,6 @@ import com.netflix.servo.DefaultMonitorRegistry;
 import com.netflix.servo.monitor.BasicCounter;
 import com.netflix.servo.monitor.Counter;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.lucene.queryparser.xml.builders.BoostingQueryBuilder;
 import org.apache.lucene.search.Explanation;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.bulk.BulkItemResponse;
@@ -23,7 +22,6 @@ import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.BoolFilterBuilder;
-import org.elasticsearch.index.query.FilterBuilders;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilder;
@@ -71,7 +69,6 @@ import static org.elasticsearch.index.query.FilterBuilders.scriptFilter;
 import static org.elasticsearch.index.query.FilterBuilders.termFilter;
 import static org.elasticsearch.index.query.FilterBuilders.termsFilter;
 import static org.elasticsearch.index.query.QueryBuilders.filteredQuery;
-import static org.elasticsearch.index.query.QueryBuilders.functionScoreQuery;
 import static org.elasticsearch.index.query.QueryBuilders.matchAllQuery;
 import static org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders.fieldValueFactorFunction;
 import static org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders.scriptFunction;
@@ -187,10 +184,9 @@ public class AdUnitProcessor {
 
             ScoreFunctionBuilder sfb = ScoreFunctionBuilders.weightFactorFunction(1);
             if (sq.getAutoplay() && equalsIgnoreCase(substring(sq.getPattern(), 0, 1), "P") && equalsIgnoreCase
-                    (INWIDGET.toString(), sq.getFormat())){
+                    (INWIDGET.toString(), sq.getFormat())) {
                 sfb = ScoreFunctionBuilders.weightFactorFunction(STP_BOOST.getValue());
             }
-
 
 
             QueryBuilder qb = QueryBuilders.functionScoreQuery(fb)
@@ -205,10 +201,6 @@ public class AdUnitProcessor {
                             ScoreFunctionBuilders.weightFactorFunction(MIN_CTR_BOOST))
                     .add(notFilter(missingFilter("internal_cpv")), fieldValueFactorFunction("internal_cpv").setWeight
                             (CPV_WEIGHT));
-
-
-
-
 
 
             List<String> excludedAds = sq.getExcludedVideoIds();

@@ -196,7 +196,7 @@ public class ESAdUnitsIntegrationTest {
 
         Assert.assertEquals("1", r1.getCampaignId());
 
-        deleteAdUnitsByIds("1");
+        deleteAdUnitsByIds("1", "2");
     }
 
     @Test
